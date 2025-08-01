@@ -3,6 +3,8 @@ import random
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+from django.core.validators import RegexValidator
+
 
 from administrator.manager import UserManager
 
@@ -10,31 +12,20 @@ from administrator.manager import UserManager
 
 
 class User(AbstractUser):
-    username = models.CharField(max_length=20, unique=True)
+    username = None
     email = models.EmailField(max_length=40, unique=True)
-    state_code = models.CharField(max_length=15, unique=True)
-    profile_picture = models.ImageField(upload_to='profile_picture/', null=True, blank=True)
-    
+    phone_regex = RegexValidator(
+        regex=r'^(?:\+234|0)[789][01]\d{8}$',
+        message="Phone number must be a valid Nigerian number (e.g., 08012345678 or +2348012345678)."
+    ) 
     def save(self, *args, **kwargs):
-        if not self.profile_picture:
-            import os
-            import random
-            from django.conf import settings
-            
-            # List all files in the 'profile_picture' folder
-            profile_pictures_path = os.path.join(settings.MEDIA_ROOT, 'profile_picture')
-            profile_pictures = os.listdir(profile_pictures_path)
-
-            # Pick a random profile picture
-            random_picture = random.choice(profile_pictures)
-
-            # Set the profile picture path
-            self.profile_picture = f"profile_picture/{random_picture}"
+        self.first_name = self.first_name.capitalize()
+        self.last_name = self.last_name.capitalize()
         super().save(*args, **kwargs)
 
     objects=UserManager( )
     USERNAME_FIELD ='email'
-    REQUIRED_FIELDS=[]
+    REQUIRED_FIELDS=['first_name',"last_name"]
 
     class Meta:
         ordering = ['-id']

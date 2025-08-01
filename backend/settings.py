@@ -40,7 +40,6 @@ SYSTEM_DEFINE_APPS = [
 APPLICATION_APPS = [
     'administrator',
     'aso',
-    # 'chat'
 ]
 
 
@@ -101,17 +100,6 @@ DATABASES = {
 }
 
 
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [('127.0.0.1', 6379)],
-#         },
-#     },
-# }
-
-
-
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
@@ -147,7 +135,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 if DEBUG:
-    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 else:
     EMAIL_BACKEND ='django.core.mail.backends.smtp.EmailBackend'
     
