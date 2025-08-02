@@ -6,9 +6,10 @@ urlpatterns = [
         "user/",
         include(
             [
-                path("create/", RegisterUser.as_view()),
-                path("login/", LoginView.as_view()),
-                path('verify/email/<uidb64>/<token>/', VerifyEmailView.as_view(), name='verify-email')
+                path("magic-login/", SendMagicLinkView.as_view()),
+                path("verify/magic/login/<uidb64>/<token>/<url_email>/", MagicLoginView.as_view(), name="verify-magic-login"),
+                path("resend-link/", ResendVerificationEmailView.as_view()),
+                path('verify/email/<uidb64>/<token>/<url_email>/', VerifyEmailView.as_view(), name='verify-email')
             ]
         )
     ),
