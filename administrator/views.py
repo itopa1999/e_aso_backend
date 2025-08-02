@@ -260,3 +260,39 @@ class MagicLoginView(APIView):
         response.set_cookie("name", user.first_name, max_age=86400, **cookie_settings)
 
         return response
+    
+    
+
+class UserProfileSummaryView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserOrderSummarySerializer
+    swagger_schema = TaggedAutoSchema
+    def get(self, request):
+        user = request.user
+        orders = Order.objects.filter(user=user).order_by('-created_at')
+        data = {
+            'first_name': user.first_name or "Not set",
+            'last_name': user.last_name or "Not set",
+            'email': user.email,
+            'total_orders': orders.count(),
+            'recent_orders': orders[:5]
+        }
+        serializer = UserOrderSummarySerializer(data)
+        return Response(serializer.data)
+
+
+class UpdateUserView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserUpdateSerializer
+    swagger_schema = TaggedAutoSchema
+
+    def put(self, request):
+        user = request.user
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response({
+                "message": "User updated successfully",
+            }, status=status.HTTP_200_OK)
+        return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)

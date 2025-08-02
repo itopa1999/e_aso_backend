@@ -74,3 +74,4 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 admin.site.register(WatchList)
+admin.site.register(Category)

@@ -19,14 +19,15 @@ class Product(models.Model):
         ('Best Seller', 'Best Seller'),
         ('Limited', 'Limited')
     ]
+    product_number = models.CharField(max_length=100, null=True, blank=True, editable=False)
     category = models.ManyToManyField(Category, related_name="product")
 
     title = models.CharField(max_length=255, db_index=True)
     slug = models.SlugField(unique=True)
     description = models.TextField()
     
-    current_price = models.DecimalField(max_digits=10, decimal_places=2, db_index=True)
-    original_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    current_price = models.DecimalField(max_digits=10, decimal_places=2, db_index=True, null=True, blank=True)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_percent = models.PositiveIntegerField(null=True, blank=True)
     
     rating = models.FloatField(default=0.0)
@@ -37,6 +38,29 @@ class Product(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.product_number:
+            last_product = Product.objects.order_by('-id').first()
+            next_id = 1 if not last_product else last_product.id + 1
+            self.product_number = f"#AO-P-{str(next_id).zfill(4)}"
+            
+            
+        if self.discount_percent:
+            if self.discount_percent:
+                # Ensure consistent Decimal types
+                discount = Decimal(self.discount_percent) / Decimal('100')
+                self.current_price = self.original_price - (self.original_price * discount)
+            else:
+                self.current_price = self.original_price
+        else:
+            # No discount: set both prices the same
+            if self.original_price:
+                self.current_price = self.original_price
+            else:
+                self.original_price = self.current_price
+
+        super().save(*args, **kwargs)
     
     class Meta:
         ordering = ['-created_at']
@@ -52,7 +76,7 @@ class Product(models.Model):
 class ProductColor(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='colors')
     color_name = models.CharField(max_length=100)
-    hex_code = models.CharField(max_length=7)
+    hex_code = models.CharField(max_length=7, null=True, blank=True)
     
     class Meta:
         unique_together = ('product', 'color_name')
@@ -169,17 +193,32 @@ class CartItem(models.Model):
 
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
-    order_number = models.CharField(max_length=20, unique=True, db_index=True)
+    order_number = models.CharField(max_length=20, unique=True, db_index=True, null=True, blank=True, editable=False)
 
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total = models.DecimalField(max_digits=10, decimal_places=2)
 
-    tracking_number = models.CharField(max_length=50, null=True, blank=True)
+    tracking_number = models.CharField(max_length=50, null=True, blank=True, editable=False)
     carrier = models.CharField(max_length=100, blank=True, default="Aso Oke Express")
 
     created_at = models.DateTimeField(auto_now_add=True)
+
+    
+    def save(self, *args, **kwargs):
+        if not self.order_number:
+            last_order = Order.objects.order_by('-id').first()
+            next_id = 1 if not last_order else last_order.id + 1
+            self.order_number = f"#AO-OD-{str(next_id).zfill(4)}"
+
+        if not self.tracking_number:
+            last_order_tracking = Order.objects.order_by('-id').first()
+            next_id = 1 if not last_order_tracking else last_order_tracking.id + 1
+            self.tracking_number = f"#AO-OT-{str(next_id).zfill(4)}"
+            
+        super().save(*args, **kwargs)
+
 
     def __str__(self):
         return f"Order #{self.order_number} by {self.user.username}"
@@ -239,11 +278,14 @@ class OrderTracking(models.Model):
         ('cancelled', 'Cancelled'),
     ]
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='tracking_events')
-
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='placed')
     date = models.DateTimeField()
     description = models.TextField()
     completed = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ('status', 'order')
+        ordering = ['-id']
 
     def __str__(self):
-        return f"{self.step} - {self.order.order_number}"
+        return f"{self.status} - {self.order.order_number}"
