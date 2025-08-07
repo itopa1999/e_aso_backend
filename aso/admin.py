@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Cart, CartItem, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, ProductDetail, ProductImage, Category, ShippingAddress, WatchList
-
+from .exports import ProductResource
+from import_export.admin import ImportExportModelAdmin
 
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
@@ -23,11 +24,13 @@ class ProductImageInline(admin.TabularInline):
 
 
 @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    list_display = ('title', 'current_price', 'badge', 'created_at')
+class ProductAdmin(ImportExportModelAdmin):
+    resource_class = ProductResource
+    
+    list_display = ('title', 'current_price', 'badge', 'category_names', 'created_at')
     search_fields = ('title',)
     list_filter = ('badge', 'created_at', 'category')
-    prepopulated_fields = {'slug': ('title',)}
+    # prepopulated_fields = {'slug': ('title',)}
     filter_horizontal = ('category',)
 
     inlines = [

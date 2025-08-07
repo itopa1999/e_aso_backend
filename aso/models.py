@@ -2,6 +2,8 @@ from django.db import models
 from administrator.models import User
 from django.contrib.auth import get_user_model
 from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
 # Create your models here.
 
 
@@ -23,7 +25,6 @@ class Product(models.Model):
     category = models.ManyToManyField(Category, related_name="product")
 
     title = models.CharField(max_length=255, db_index=True)
-    slug = models.SlugField(unique=True)
     description = models.TextField()
     
     current_price = models.DecimalField(max_digits=10, decimal_places=2, db_index=True, null=True, blank=True)
@@ -38,6 +39,8 @@ class Product(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    
+    display_product = models.BooleanField(default=True)
     
     def save(self, *args, **kwargs):
         if not self.product_number:
@@ -71,6 +74,10 @@ class Product(models.Model):
 
     def __str__(self):
         return self.title
+    
+    @property
+    def category_names(self):
+        return ", ".join([cat.name for cat in self.category.all()])
 
 
 class ProductColor(models.Model):
@@ -203,6 +210,7 @@ class Order(models.Model):
     tracking_number = models.CharField(max_length=50, null=True, blank=True, editable=False)
     carrier = models.CharField(max_length=100, blank=True, default="Aso Oke Express")
 
+    delivery_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     
@@ -216,6 +224,9 @@ class Order(models.Model):
             last_order_tracking = Order.objects.order_by('-id').first()
             next_id = 1 if not last_order_tracking else last_order_tracking.id + 1
             self.tracking_number = f"#AO-OT-{str(next_id).zfill(4)}"
+            
+        if self.delivery_date is None:
+            self.delivery_date = (self.created_at or timezone.now()).date() + timedelta(days=7)
             
         super().save(*args, **kwargs)
 
@@ -236,6 +247,13 @@ class OrderItem(models.Model):
 
     def total_price(self):
         return self.price * self.quantity
+    
+    class Meta:
+        unique_together = ('order', 'product')
+        indexes = [
+            models.Index(fields=['order']),
+            models.Index(fields=['product']),
+        ]
 
     def __str__(self):
         return f"{self.product.title} x{self.quantity}"
