@@ -300,7 +300,7 @@ if not DEBUG:
     }
     
     
-BASE_URL = "http://127.0.0.1:5501"
+BASE_URL = "https://itopa1999.github.io/e_aso_frontend"
 
 
 # Common cookie settings
