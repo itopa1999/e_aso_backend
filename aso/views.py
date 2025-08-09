@@ -1,4 +1,6 @@
-from django.shortcuts import render
+from django.shortcuts import redirect, render
+import requests as req
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -9,13 +11,24 @@ from rest_framework.filters import OrderingFilter
 from .models import *
 from administrator.swagger import TaggedAutoSchema
 from .serializers import *
-
-
+from .deliveryFee import delivery_fees
+from .paystack import *
 from django.db.models import Q
-
+from rest_framework.exceptions import AuthenticationFailed
 
 # Create your views here.
 
+class OptionalJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
+        header = self.get_header(request)
+        if header is None:
+            return None  # No token → AnonymousUser
+
+        try:
+            return super().authenticate(request)
+        except AuthenticationFailed:
+            # Invalid/expired token → Ignore, treat as anonymous
+            return None
 
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
@@ -151,6 +164,7 @@ class AddToCartView(generics.GenericAPIView):
 
     def post(self, request):
         product_id = request.GET.get("product_id")
+        quantity = request.GET.get("quantity", 1)
 
         if not product_id:
             return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -165,7 +179,7 @@ class AddToCartView(generics.GenericAPIView):
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
-            defaults={"quantity": 1}
+            defaults={"quantity": int(quantity)}
         )
 
         if created:
@@ -235,43 +249,138 @@ class RemoveCartItemView(APIView):
             return Response({"error": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
     
 
+class UpdateCartStateView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def post(self, request):
+        state = request.data.get("state")
+
+        try:
+            cart = request.user.cart
+        except Cart.DoesNotExist:
+            pass
+        cart.state = state
+        cart.save()
+        return Response(status=200)
+    
+    
+class PlaceOrderView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ShippingInfoSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data.get("shipping_info"))
+        serializer.is_valid(raise_exception=True)
+        
+        shipping_data = serializer.validated_data
+
+        try:
+            cart = request.user.cart
+        except Cart.DoesNotExist:
+            return Response({"error": "Cart not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+        expected_total = cart.total()
+        user_total = Decimal(shipping_data["total"])
+
+        if expected_total != user_total:
+            return Response({
+                "error": f"Total mismatch. Expected ₦{expected_total}, got ₦{user_total}"
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Print shipping info
+        print("Received Order Shipping Info:")
+        for key, value in shipping_data.items():
+            print(f"{key}: {value}")
+            
+        checkout_link = initiate(request, user=request.user, cart_id=cart.id, data=shipping_data)
+
+        if not checkout_link:
+            return Response({"error": "Payment initialization failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response({
+            "message": "Order initialized successfully.",
+            "checkout_url": checkout_link,
+        }, status=status.HTTP_200_OK) 
+        
+        
+class PaystackConfirmSubscriptionView(APIView):
+    def get(self, request, reference, *args, **kwargs):
+        if not reference:
+            return Response({"error": "No reference provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        result = validate(reference)
+
+        if result.get("success"):
+            order = result.get("order")
+            return redirect(
+                f"{settings.BASE_URL}/order-success.html"
+                f"?order_id={order['id']}"
+                f"&order_number={order['order_number']}"
+                f"&amount={order['amount']}"
+                f"&created_at={order['created_at']}"
+            )
+        else:
+            return Response({"error": result["error"]}, status=status.HTTP_400_BAD_REQUEST)
+
+    
+    
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.filter(display_product = True)
+    authentication_classes = [OptionalJWTAuthentication]
     permission_classes = [AllowAny]
     serializer_class = WatchlistProductSerializer
     swagger_schema = TaggedAutoSchema
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['badge']
-    ordering_fields = ['current_price', 'rating']
+    ordering_fields = ['current_price', 'rating', 'created_at']
     
     def get_queryset(self):
         queryset = super().get_queryset()
         max_price = self.request.query_params.get('max_price')
+        min_price = self.request.query_params.get('min_price')
         rating = self.request.query_params.get('rating')
         search = self.request.query_params.get('search')
         cat = self.request.query_params.get('category')
+        
+        if min_price:
+            queryset = queryset.filter(current_price__gte=min_price)
 
         if max_price:
             queryset = queryset.filter(current_price__lte=max_price)
 
         if rating:
             queryset = queryset.filter(rating=rating)
-            
+
         if cat:
-            queryset = queryset.filter(category__name=cat)
+            queryset = queryset.filter(category__name__icontains=cat)
 
         if search:
             queryset = queryset.filter(
-                Q(title__icontains=search) | Q(product_number__icontains=search)
+                Q(title__icontains=search) |
+                Q(product_number__icontains=search) |
+                Q(category__name__icontains=search)
             )
-            
+
         return queryset
         
 
     
     def get_serializer_context(self):
         return {"request": self.request}
+    
+    
+    
+class ProductDetailView(generics.RetrieveAPIView):
+    queryset = Product.objects.filter(display_product=True)
+    serializer_class = ProductDetailFullSerializer
+    authentication_classes = [OptionalJWTAuthentication]
+    permission_classes = [AllowAny]
+    lookup_field = 'id'
+    
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
     
     
 
@@ -333,3 +442,19 @@ class ProductBulkImportView(APIView):
             "products_created": created_count,
             "errors": errors
         }, status=status.HTTP_200_OK)
+        
+
+
+class ActivateProductsAPIView(APIView):
+    def post(self, request):
+        products_to_update = Product.objects.filter(display_product=False)
+        count = products_to_update.update(display_product=True)
+        return Response({"message": f"{count} products activated."}, status=status.HTTP_200_OK)
+    
+    
+class DeliveryFeeAPIView(APIView):
+    authentication_classes = [OptionalJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        return Response({"delivery_fees": delivery_fees})

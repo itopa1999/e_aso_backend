@@ -7,6 +7,7 @@ urlpatterns = [
         include(
             [
                 path("", ProductListView.as_view()),
+                path('<int:id>/', ProductDetailView.as_view(), name='product-detail'),
                 path("categories/", CategoriesView.as_view()),
                 path("lists/", UserOrderListView.as_view()),
                 path('order-details/<int:pk>/', OrderDetailView.as_view()),
@@ -20,8 +21,12 @@ urlpatterns = [
                 path('add-to-cart/', AddToCartView.as_view()),
                 path('cart/update-quantity/', UpdateCartQuantityView.as_view()),
                 path('cart/remove-item/', RemoveCartItemView.as_view()),
+                path("cart/update-state/", UpdateCartStateView.as_view(), name="update-cart-state"),
+                path('place-orders/', PlaceOrderView.as_view(), name='place-order'),
+                path('paystack-confirm-subscription/<str:reference>/', PaystackConfirmSubscriptionView.as_view(), name='paystack-confirm-subscription'),
                 path('import-products/', ProductBulkImportView.as_view(), name='import-products'),
-                
+                path('activate-products/', ActivateProductsAPIView.as_view()),
+                path('delivery-fees/', DeliveryFeeAPIView.as_view(), name='delivery-fees'),
                 
                 
             ]

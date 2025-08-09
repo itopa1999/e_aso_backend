@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Cart, CartItem, Category, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductSize, ShippingAddress, WatchList
+from .models import Cart, CartItem, Category, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress, WatchList
 from django.utils.timesince import timesince
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -147,8 +147,8 @@ class CartItemSerializer(serializers.ModelSerializer):
 class CartDetailSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     subtotal = serializers.SerializerMethodField()
+    # tax = serializers.SerializerMethodField()
     shipping = serializers.SerializerMethodField()
-    tax = serializers.SerializerMethodField()
     discount = serializers.SerializerMethodField()
     total = serializers.SerializerMethodField()
 
@@ -159,7 +159,7 @@ class CartDetailSerializer(serializers.ModelSerializer):
             'items',
             'subtotal',
             'shipping',
-            'tax',
+            # 'tax',
             'discount',
             'total',
         ]
@@ -170,8 +170,8 @@ class CartDetailSerializer(serializers.ModelSerializer):
     def get_shipping(self, obj):
         return obj.shipping_cost()
 
-    def get_tax(self, obj):
-        return obj.tax()
+    # def get_tax(self, obj):
+    #     return obj.tax()
 
     def get_discount(self, obj):
         return obj.discount()
@@ -207,7 +207,15 @@ class AddToCartCountResponseSerializer(serializers.Serializer):
     
     
     
-    
+class ShippingInfoSerializer(serializers.Serializer):
+    first_name = serializers.CharField()
+    last_name = serializers.CharField()
+    address = serializers.CharField()
+    city = serializers.CharField()
+    state = serializers.CharField()
+    phone = serializers.CharField()
+    alt_phone = serializers.CharField(allow_blank=True, required=False)
+    total = serializers.DecimalField(max_digits=10, decimal_places=2)
     
     
 
@@ -248,7 +256,7 @@ class ProductImportSerializer(serializers.Serializer):
             display_product = False
         )
         for cat_name in category_names:
-            category_obj, _ = Category.objects.get_or_create(name__icontains=cat_name)
+            category_obj, _ = Category.objects.get_or_create(name=cat_name)
             product.category.add(category_obj)
 
         # Handle sizes
@@ -269,3 +277,85 @@ class ProductImportSerializer(serializers.Serializer):
             )
 
         return product
+
+
+
+
+
+class CategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['name', 'description']
+
+
+class ProductDetailColorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductColor
+        fields = ['color_name', 'hex_code']
+
+
+class ProductSizeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSize
+        fields = ['size_label']
+
+
+class ProductDetailByIdSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductDetail
+        fields = ['tab', 'title', 'content']
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['image', 'alt_text']
+        
+        
+class RelatedProductSerializer(serializers.ModelSerializer):
+    product_image = serializers.SerializerMethodField() 
+    class Meta:
+        model = Product
+        fields = ['id','title', 'product_image','current_price',]
+        
+    def get_product_image(self, obj):
+        request = self.context.get('request')
+        if obj.main_image and hasattr(obj.main_image, 'url'):
+            return request.build_absolute_uri(obj.main_image.url)
+        return None
+
+
+class ProductDetailFullSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(many=True)
+    colors = ProductDetailColorSerializer(many=True)
+    sizes = ProductSizeSerializer(many=True)
+    details = ProductDetailByIdSerializer(many=True)
+    images = ProductImageSerializer(many=True)
+    related_products = serializers.SerializerMethodField()
+    watchlisted = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id', 'product_number', 'title', 'description', 'badge', 'main_image',
+            'current_price', 'original_price', 'discount_percent',
+            'rating', 'reviews_count', 'category', 'colors', 'sizes',
+            'details', 'images', 'related_products', 'watchlisted', 'created_at'
+        ]
+        
+    def get_related_products(self, obj):
+        return RelatedProductSerializer(
+            Product.objects.filter(
+                category__in=obj.category.all()
+            )
+            .exclude(id=obj.id)
+            .distinct()[:8],
+            many=True,
+            context=self.context
+        ).data
+        
+    def get_watchlisted(self, obj):
+        request = self.context.get("request")
+        if request and request.user and request.user.is_authenticated:
+            return WatchList.objects.filter(user=request.user, product=obj).exists()
+        return False

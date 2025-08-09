@@ -4,6 +4,8 @@ from django.contrib.auth import get_user_model
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
+
+from aso.deliveryFee import DELIVERY_FEES
 # Create your models here.
 
 
@@ -142,6 +144,7 @@ class WatchList(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Meta:
+        unique_together = ('user', 'product')
         ordering = ['-created_at']
 
     def __str__(self):
@@ -156,21 +159,22 @@ class Cart(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
 
     def subtotal(self):
         return sum(item.subtotal() for item in self.items.all())
 
     def shipping_cost(self):
-        return Decimal("5000.00")  # static for now
+        return Decimal(DELIVERY_FEES.get(self.state, 0))  # static for now
 
-    def tax(self):
-        return self.subtotal() * Decimal("0.05")  # 5% tax example
+    # def tax(self):
+    #     return self.subtotal() * Decimal("0.05")  # 5% tax example
 
     def discount(self):
         return Decimal("0.00")  # set by logic/rules
 
     def total(self):
-        return self.subtotal() + self.shipping_cost() + self.tax() - self.discount()
+        return self.subtotal() + self.shipping_cost() - self.discount()
 
     def __str__(self):
         return f"{self.user.username}'s Cart"
@@ -270,7 +274,6 @@ class ShippingAddress(models.Model):
     state = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
     alt_phone = models.CharField(max_length=20)
-    email = models.EmailField()
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.address}"
@@ -279,11 +282,9 @@ class ShippingAddress(models.Model):
 class PaymentDetail(models.Model):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment_detail')
     method = models.CharField(max_length=50)  # e.g. 'Mastercard', 'Bank Transfer'
-    card_last4 = models.CharField(max_length=4, blank=True, null=True)
-    expiry_date = models.CharField(max_length=10, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.method} ending in {self.card_last4}" if self.card_last4 else self.method
+        return f"{self.method}"
 
 
 class OrderTracking(models.Model):

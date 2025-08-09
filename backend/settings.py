@@ -50,7 +50,6 @@ THIRD_PARTIES_APPS = [
     "rest_framework_simplejwt",
     'drf_yasg',
     'django_filters',
-    'import_export',
 ]
 
 INSTALLED_APPS = SYSTEM_DEFINE_APPS + APPLICATION_APPS + THIRD_PARTIES_APPS
@@ -311,3 +310,5 @@ COOKIE_SETTINGS = {
     "samesite": "Lax",
     "secure": not DEBUG  # True only in production
 }
+
+PAYSTACK_SECRET_KEY=os.getenv('PAYSTACK_SECRET_KEY')
