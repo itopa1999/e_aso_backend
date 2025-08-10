@@ -300,7 +300,7 @@ if not DEBUG:
     }
     
     
-BASE_URL = "https://itopa1999.github.io/e_aso_frontend"
+BASE_URL = os.getenv('BASE_URL')
 
 
 # Common cookie settings
@@ -308,7 +308,7 @@ COOKIE_SETTINGS = {
     'path': '/',
     "httponly": False,
     "samesite": "Lax",
-    "secure": not DEBUG  # True only in production
+    "secure": os.getenv('SECURE')
 }
 
 PAYSTACK_SECRET_KEY=os.getenv('PAYSTACK_SECRET_KEY')
