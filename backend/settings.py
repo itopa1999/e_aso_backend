@@ -316,9 +316,10 @@ BASE_URL =os.getenv('BASE_URL')
 # Common cookie settings
 COOKIE_SETTINGS = {
     'path': '/',
-    "httponly": False,
-    "samesite": "Lax",
-    "secure": os.getenv('SECURE')
+    'httponly': False,
+    'samesite': 'Lax',  # or 'None' if needed
+    'secure': os.getenv('SECURE', 'False').lower() == 'true',
 }
+
 
 PAYSTACK_SECRET_KEY=os.getenv('PAYSTACK_SECRET_KEY')
