@@ -21,7 +21,7 @@ class RegUserSerializer(serializers.ModelSerializer):
         user = User.objects.create(
             # first_name=first_name,
             # last_name=last_name,
-            **validated_data
+            **validated_data,
         )
         return user
     

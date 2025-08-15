@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
-
+from django.core.mail import send_mail
+from administrator.models import UserVerification
 from .models import *
 from administrator.swagger import TaggedAutoSchema
 from .serializers import *
@@ -15,7 +16,7 @@ from .deliveryFee import delivery_fees
 from .paystack import *
 from django.db.models import Q
 from rest_framework.exceptions import AuthenticationFailed
-
+import random, textwrap
 # Create your views here.
 
 class OptionalJWTAuthentication(JWTAuthentication):
@@ -382,6 +383,18 @@ class ProductDetailView(generics.RetrieveAPIView):
         context['request'] = self.request
         return context
     
+    def retrieve(self, request, *args, **kwargs):
+        # Get the product
+        instance = self.get_object()
+
+        # Increment reviews_count
+        instance.reviews_count = (instance.reviews_count or 0) + 1
+        instance.save(update_fields=['reviews_count'])
+
+        # Serialize and return response
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+    
     
 
 class CartAndWatchlistCountView(generics.GenericAPIView):
@@ -444,7 +457,284 @@ class ProductBulkImportView(APIView):
         }, status=status.HTTP_200_OK)
         
 
+class RiderDashboardView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = RiderDashboardSerializer
 
+    def get(self, request, *args, **kwargs):
+        rider = request.user
+
+        # Only allow if user is a rider
+        if not rider.groups.filter(name__iexact='rider').exists():
+            return Response({"error": "Not authorized"}, status=401)
+
+        profile_data = {
+            "name": f"{rider.first_name} {rider.last_name}",
+            "rider_id": rider.rider_number,
+            "deliveries_count": Order.objects.filter(
+                dispatcher=rider,
+                delivery_date__isnull=False
+            ).count()
+        }
+
+        # Get query param for product_id filter
+        search = request.query_params.get("search")
+        recent_orders = Order.objects.filter(
+            dispatcher=rider,
+            delivery_date__isnull=False
+        )
+        if search:
+            recent_orders = recent_orders.filter(
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search) |
+                Q(order_number__icontains=search) |
+                Q(total__icontains=search)
+                )
+
+        recent_orders = recent_orders.order_by('-delivery_date')
+
+        # Paginate
+        page = self.paginate_queryset(recent_orders)
+        if page is not None:
+            return self.get_paginated_response({
+                "profile": profile_data,
+                "recent_deliveries": RiderDashboardSerializer({
+                    "profile": profile_data,
+                    "recent_deliveries": page
+                }).data["recent_deliveries"]
+            })
+
+        serializer = self.get_serializer({
+            "profile": profile_data,
+            "recent_deliveries": recent_orders
+        })
+        return Response(serializer.data)
+
+
+class SendOtpView(generics.GenericAPIView):
+    serializer_class = SendOtpSerializer
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        rider = request.user
+
+        # Only allow if user is a rider
+        if not rider.groups.filter(name__iexact='rider').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        order_number = serializer.validated_data["order_number"]
+
+        # Validate order existence
+        try:
+            order = Order.objects.get(order_number=order_number)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        if OrderTracking.objects.filter(order=order, status__in=["delivered", "cancelled"]).exists():
+            return Response(
+                {"error": "Order already delivered or cancelled, OTP not required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not OrderTracking.objects.filter(order=order, status="in_transit").exists():
+            return Response(
+                {"error": "Order is not currently in transit, OTP cannot be sent."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+        user = order.user
+
+        # Create or update verification
+        verification, _ = UserVerification.objects.get_or_create(user=user)
+        verification.token = str(random.randint(100000, 999999))
+        verification.created_at = timezone.now()
+        verification.is_verified = False
+        verification.save()
+
+        # Send OTP via email
+        send_mail(
+            subject="Your Delivery OTP",
+            message = textwrap.dedent(f"""
+                Dear {user.first_name or "Valued Customer"},
+
+                Your **One-Time Password (OTP)** is: **{verification.token}**  
+
+                This OTP will expire in **10 minutes** for your security.  
+                If you did not request this code, please ignore this message.
+
+                Need help? Contact us:  
+                📞 +234 1 700 0000  
+                ✉️ support@aso-okemarketplace.ng  
+
+                Preserving Nigeria’s textile heritage,  
+                **The Aso Oke & Aso Ofi Marketplace Team**
+            """),
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[user.email],
+            fail_silently=False
+        )
+
+        return Response({"message": "OTP sent to customer's email"}, status=status.HTTP_200_OK)
+
+
+class VerifyOtpView(generics.GenericAPIView):
+    serializer_class = VerifyOtpSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        rider = request.user
+
+        # Only allow if user is a rider
+        if not rider.groups.filter(name__iexact='rider').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        order_number = serializer.validated_data["order_number"]
+        otp = serializer.validated_data["otp"]
+
+        # Validate order existence
+        try:
+            order = Order.objects.get(order_number=order_number)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Validate verification record
+        try:
+            verification = UserVerification.objects.get(user=order.user)
+        except UserVerification.DoesNotExist:
+            return Response({"error": "No OTP found for this user"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check expiration
+        if timezone.now() > verification.created_at + timezone.timedelta(minutes=10):
+            return Response({"error": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check match
+        if int(verification.token) != int(otp):
+            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        verification.is_verified = True
+        verification.save()
+
+        # Fetch shipping address
+        shipping = getattr(order, 'shipping_address', None)
+
+        # Fetch order items
+        items = order.items.select_related('product').all()
+        order_items_data = [
+            {
+                "product_id" : item.product.id,
+                "product": item.product.title,
+                "quantity": item.quantity,
+                "price": f"₦{item.price:,.0f}",
+                "total_price": f"₦{item.total_price():,.0f}",
+                "image": request.build_absolute_uri(item.product.main_image.url) if item.product.main_image else None
+            }
+            for item in items
+        ]
+
+        # Prepare response data
+        order_data = {
+            "message": "OTP verified successfully",
+            "order_details": {
+                "order_id": order.order_number,
+                "customer": f"{order.user.first_name} {order.user.last_name}" if order.user.last_name else "Not Set",
+                "delivery_address": f"{shipping.address}, {shipping.city}, {shipping.state}" if shipping else "",
+                "contact": shipping.phone if shipping.phone else shipping.alt_phone,
+                "order_date": order.created_at.strftime("%b %d, %Y"),
+                "total_amount": f"₦{order.total:,.0f}",
+                "items": order_items_data
+            }
+        }
+
+        return Response(order_data, status=status.HTTP_200_OK)
+    
+class MarkOrderAsDeliveredView(generics.GenericAPIView):
+    serializer_class = MarkOrderAsDeliveredSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        rider = request.user
+
+        # Only allow if user is a rider
+        if not rider.groups.filter(name__iexact='rider').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        order_number = serializer.validated_data["order_number"]
+        delivery_notes = serializer.validated_data["delivery_notes"]
+        stars = serializer.validated_data.get("stars")
+        
+        if not stars or not str(stars).isdigit() or not (1 <= int(stars) <= 5):
+            return Response({"error": "Please provide a valid star rating between 1 and 5"}, status=400)
+
+        # Find the order
+        try:
+            order = Order.objects.get(order_number=order_number)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found"}, status=404)
+
+        # Create tracking event
+        tracking_event = OrderTracking.objects.create(
+            order=order,
+            status="delivered",
+            date=timezone.now(),
+            description=delivery_notes or "Order marked as delivered.",
+            completed=True
+        )
+        
+        OrderFeedBack.objects.update_or_create(
+            order=order,
+            defaults={
+                "stars": int(stars),
+                "comment": delivery_notes
+            }
+        )
+
+        # Update order delivery date
+        order.dispatcher = rider
+        order.delivery_date = timezone.now()
+        order.save()
+        
+        
+
+        # Send email to customer
+        send_mail(
+            subject="Your Order Has Been Delivered",
+            message = textwrap.dedent(f"""
+                Dear {order.user.get_full_name() or "Valued Customer"},
+
+                Your order **{order.order_number}** has been successfully delivered.  
+                Thank you for shopping with us!
+
+                Need help? Contact us:  
+                📞 +234 1 700 0000  
+                ✉️ support@aso-okemarketplace.ng  
+
+                Preserving Nigeria’s textile heritage,  
+                **The Aso Oke & Aso Ofi Marketplace Team**
+            """),
+            from_email=settings.EMAIL_HOST_USER,
+            recipient_list=[order.user.email],
+            fail_silently=False,
+        )
+        
+
+        return Response({
+            "message": "Order marked as delivered successfully",
+            "order_number": order.order_number
+        })
+
+    
+    
+    
+    
 class ActivateProductsAPIView(APIView):
     def post(self, request):
         products_to_update = Product.objects.filter(display_product=False)

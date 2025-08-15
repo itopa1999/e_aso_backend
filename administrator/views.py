@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode
-
+import textwrap
 
 
 from rest_framework.permissions import IsAuthenticated
@@ -51,8 +51,25 @@ class VerifyEmailView(APIView):
 
             verification.is_verified = True
             verification.save()
+            
+            refresh = RefreshToken.for_user(user)
+            access_token = str(refresh.access_token)
 
-            return redirect(f"{settings.BASE_URL}/email-verified.html?email={verification.user.email}")
+            response = redirect(
+                f"{settings.BASE_URL}/email-verified.html?email={verification.user.email}"
+            )
+
+            # Set cookies
+            cookie_settings = settings.COOKIE_SETTINGS
+            response.set_cookie("access", access_token, max_age=86400, **cookie_settings)  # 1 day
+            response.set_cookie("refresh", str(refresh), max_age=604800, **cookie_settings) # 7 days
+            response.set_cookie("email", user.email, max_age=86400, **cookie_settings)
+            response.set_cookie("name", user.first_name, max_age=86400, **cookie_settings)
+            
+            group_name = user.groups.first().name if user.groups.exists() else ""
+            response.set_cookie("group", group_name, max_age=86400, **cookie_settings)
+
+            return response
         except Exception as e:
             return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=false")
     
@@ -81,7 +98,22 @@ class ResendVerificationEmailView(generics.GenericAPIView):
                 
                 send_mail(
                     subject="Your Magic Login Link",
-                    message=f"Click to log in: {verification_link}\nThis link expires in 10 minutes.",
+                    message= textwrap.dedent(f"""
+                        Dear {user.first_name or "Valued Customer" },
+
+                        Here’s your secure **Magic Login Link** to access your Aso Oke & Aso Ofi Marketplace account:
+
+                        {verification_link }
+
+                        This link will expire in **10 minutes** for your security. If you did not request this login, please ignore this email.
+
+                        Need help? Contact us:  
+                        📞 +234 1 700 0000  
+                        ✉️ support@aso-okemarketplace.ng  
+
+                        Preserving Nigeria’s textile heritage,  
+                        **The Aso Oke & Aso Ofi Marketplace Team** 
+                        """),
                     from_email=settings.EMAIL_HOST_USER,
                     recipient_list=[email],
                     fail_silently=False
@@ -105,7 +137,7 @@ class ResendVerificationEmailView(generics.GenericAPIView):
             )
 
             subject = "Verify Your Email - Aso Oke & Aso Ofi Marketplace"
-            message = f"""
+            message = textwrap.dedent(f"""
                 Dear {user.first_name or 'Valued Customer'},
 
                 Welcome back to Aso Oke & Aso Ofi Marketplace!
@@ -118,7 +150,7 @@ class ResendVerificationEmailView(generics.GenericAPIView):
 
                 Thanks,
                 The Aso Oke & Aso Ofi Marketplace Team
-                """
+                """)
 
             send_mail(
                 subject,
@@ -165,7 +197,7 @@ class SendMagicLinkView(generics.GenericAPIView):
                 
                 subject = "Verify Your Email - Aso Oke & Aso Ofi Marketplace"
         
-                message = f"""
+                message = textwrap.dedent(f"""
                     Dear {user.first_name or 'Valued Customer'},
 
                     Welcome to Aso Oke & Aso Ofi Marketplace - Nigeria's premier destination for authentic traditional fabrics and textiles!
@@ -181,10 +213,10 @@ class SendMagicLinkView(generics.GenericAPIView):
                     ✨ Custom tailoring services
 
                     Why verify your email?
-                    ✓ Secure your account
-                    ✓ Receive order updates
-                    ✓ Get exclusive member discounts
-                    ✓ Access your purchase history
+                    ✅ Secure your account  
+                    ✅ Receive order updates  
+                    ✅ Access exclusive member discounts  
+                    ✅ View and manage your order history 
 
                     The verification link will expire in 24 hours. If you didn't create an account with us, please ignore this email.
 
@@ -197,7 +229,7 @@ class SendMagicLinkView(generics.GenericAPIView):
                     The Aso Oke & Aso Ofi Marketplace Team
 
                     Celebrating Nigeria's Rich Textile Traditions Since 2020
-                    """
+                    """)
 
                 # Send the verification email with the token
                 send_mail(
@@ -223,7 +255,20 @@ class SendMagicLinkView(generics.GenericAPIView):
         
         send_mail(
             subject="Your Magic Login Link",
-            message=f"Click to log in: {verification_link}\nThis link expires in 10 minutes.",
+            message=textwrap.dedent(f"""
+                Dear {user.first_name or 'Valued Customer'},
+
+                Welcome back to Aso Oke & Aso Ofi Marketplace!
+
+                Please verify your email address by clicking the link below:
+
+                {verification_link}
+
+                This link will expire in 10 minutes. If you didn't request this email, you can safely ignore it.
+
+                Thanks,
+                The Aso Oke & Aso Ofi Marketplace Team
+                """),
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[email],
             fail_silently=False
@@ -258,6 +303,9 @@ class MagicLoginView(APIView):
         response.set_cookie("refresh", str(refresh), max_age=604800, **cookie_settings)      # 7 days
         response.set_cookie("email", user.email, max_age=86400, **cookie_settings)
         response.set_cookie("name", user.first_name, max_age=86400, **cookie_settings)
+        
+        group_name = user.groups.first().name if user.groups.exists() else ""
+        response.set_cookie("group", group_name, max_age=86400, **cookie_settings)
 
         return response
     

@@ -17,7 +17,8 @@ class User(AbstractUser):
     phone_regex = RegexValidator(
         regex=r'^(?:\+234|0)[789][01]\d{8}$',
         message="Phone number must be a valid Nigerian number (e.g., 08012345678 or +2348012345678)."
-    ) 
+    )
+    rider_number = models.CharField(max_length=40, unique=True, null=True, blank=True)
     def save(self, *args, **kwargs):
         self.first_name = self.first_name.capitalize()
         self.last_name = self.last_name.capitalize()

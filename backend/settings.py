@@ -37,6 +37,8 @@ SYSTEM_DEFINE_APPS = [
     
 ]
 
+print(DEBUG)
+
 APPLICATION_APPS = [
     'administrator',
     'aso',
@@ -122,9 +124,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
-MEDIA_URL = "/media/"
+if DEBUG:
+    # When in development, serve static files from "static" folder directly
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, "static"),
+    ]
+else:
+    # In production, use collectstatic output
+    STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+
+MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
@@ -300,7 +310,7 @@ if not DEBUG:
     }
     
     
-BASE_URL = os.getenv('BASE_URL')
+BASE_URL =os.getenv('BASE_URL')
 
 
 # Common cookie settings

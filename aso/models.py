@@ -213,8 +213,11 @@ class Order(models.Model):
 
     tracking_number = models.CharField(max_length=50, null=True, blank=True, editable=False)
     carrier = models.CharField(max_length=100, blank=True, default="Aso Oke Express")
-
+    
+    dispatcher = models.ForeignKey(User, on_delete=models.DO_NOTHING, null=True, blank=True, related_name='rider')
     delivery_date = models.DateField(null=True, blank=True)
+    
+    estimated_delivery_date = models.DateField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     
@@ -229,8 +232,8 @@ class Order(models.Model):
             next_id = 1 if not last_order_tracking else last_order_tracking.id + 1
             self.tracking_number = f"#AO-OT-{str(next_id).zfill(4)}"
             
-        if self.delivery_date is None:
-            self.delivery_date = (self.created_at or timezone.now()).date() + timedelta(days=7)
+        if self.estimated_delivery_date is None:
+            self.estimated_delivery_date = (self.created_at or timezone.now()).date() + timedelta(days=7)
             
         super().save(*args, **kwargs)
 
@@ -308,3 +311,15 @@ class OrderTracking(models.Model):
 
     def __str__(self):
         return f"{self.status} - {self.order.order_number}"
+    
+    
+    
+class OrderFeedBack(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='feedback')
+    stars = models.PositiveSmallIntegerField()
+    comment = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Feedback for Order {self.order.order_number} - {self.stars} Stars"
+    
