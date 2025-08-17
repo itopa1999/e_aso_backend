@@ -11,7 +11,7 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode
 import textwrap
-
+from urllib.parse import urlencode
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -55,21 +55,19 @@ class VerifyEmailView(APIView):
             refresh = RefreshToken.for_user(user)
             access_token = str(refresh.access_token)
 
-            response = redirect(
-                f"{settings.BASE_URL}/email-verified.html?email={verification.user.email}"
-            )
-
-            # Set cookies
-            cookie_settings = settings.COOKIE_SETTINGS
-            response.set_cookie("access", access_token, max_age=86400, **cookie_settings)  # 1 day
-            response.set_cookie("refresh", str(refresh), max_age=604800, **cookie_settings) # 7 days
-            response.set_cookie("email", user.email, max_age=86400, **cookie_settings)
-            response.set_cookie("name", user.first_name, max_age=86400, **cookie_settings)
-            
             group_name = user.groups.first().name if user.groups.exists() else ""
-            response.set_cookie("group", group_name, max_age=86400, **cookie_settings)
 
-            return response
+            # Build redirect with query params
+            params = urlencode({
+                "access": access_token,
+                "refresh": str(refresh),
+                "email": user.email,
+                "name": user.first_name,
+                "group": group_name
+            })
+
+            return redirect(f"{settings.BASE_URL}/index.html?{params}")
+
         except Exception as e:
             return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=false")
     
@@ -295,19 +293,18 @@ class MagicLoginView(APIView):
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
 
-        # Prepare response with cookies
-        cookie_settings = settings.COOKIE_SETTINGS
-        response = HttpResponseRedirect(f"{settings.BASE_URL}/index.html")
-        # Set cookies
-        response.set_cookie("access", access_token, max_age=86400, **cookie_settings)       # 1 day
-        response.set_cookie("refresh", str(refresh), max_age=604800, **cookie_settings)      # 7 days
-        response.set_cookie("email", user.email, max_age=86400, **cookie_settings)
-        response.set_cookie("name", user.first_name, max_age=86400, **cookie_settings)
-        
         group_name = user.groups.first().name if user.groups.exists() else ""
-        response.set_cookie("group", group_name, max_age=86400, **cookie_settings)
 
-        return response
+        # Build redirect with query params
+        params = urlencode({
+            "access": access_token,
+            "refresh": str(refresh),
+            "email": user.email,
+            "name": user.first_name,
+            "group": group_name
+        })
+
+        return redirect(f"{settings.BASE_URL}/index.html?{params}")
     
     
 

@@ -37,7 +37,6 @@ SYSTEM_DEFINE_APPS = [
     
 ]
 
-print(DEBUG)
 
 APPLICATION_APPS = [
     'administrator',
@@ -128,7 +127,7 @@ STATIC_URL = '/static/'
 if DEBUG:
     # When in development, serve static files from "static" folder directly
     STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, "static"),
+        os.path.join(BASE_DIR, "media"),
     ]
 else:
     # In production, use collectstatic output
