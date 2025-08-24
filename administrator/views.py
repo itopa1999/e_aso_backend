@@ -19,7 +19,8 @@ from rest_framework.response import Response
 from rest_framework import status, generics
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
-from administrator.utils import generate_magic_token, validate_magic_token
+from aso.models import OrderTracking, Product
+from utils.magic_link import generate_magic_token, validate_magic_token
 
 
 from .models import User, UserVerification
@@ -34,42 +35,7 @@ User = get_user_model()
 class VerifyEmailView(APIView):
     swagger_schema = TaggedAutoSchema
     def get(self, request, uidb64, token, url_email):
-        try:
-            uid = urlsafe_base64_decode(uidb64).decode()
-            user = get_object_or_404(User, id=uid)
-            verification = get_object_or_404(UserVerification, user=user, token=token)
-            if verification.is_token_expired():
-                return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={verification.user.email}&is_login=false")
-
-            # Check if the user has already been verified
-            if verification.is_verified:
-                return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={verification.user.email}&is_login=false")
-            
-            # Activate user
-            user.is_active = True
-            user.save()
-
-            verification.is_verified = True
-            verification.save()
-            
-            refresh = RefreshToken.for_user(user)
-            access_token = str(refresh.access_token)
-
-            group_name = user.groups.first().name if user.groups.exists() else ""
-
-            # Build redirect with query params
-            params = urlencode({
-                "access": access_token,
-                "refresh": str(refresh),
-                "email": user.email,
-                "name": user.first_name,
-                "group": group_name
-            })
-
-            return redirect(f"{settings.BASE_URL}/index.html?{params}")
-
-        except Exception as e:
-            return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=false")
+        "pass"
     
     
 class ResendVerificationEmailView(generics.GenericAPIView):
@@ -293,7 +259,7 @@ class MagicLoginView(APIView):
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
 
-        group_name = user.groups.first().name if user.groups.exists() else ""
+        group_names = ", ".join(user.groups.values_list('name', flat=True))
 
         # Build redirect with query params
         params = urlencode({
@@ -301,7 +267,7 @@ class MagicLoginView(APIView):
             "refresh": str(refresh),
             "email": user.email,
             "name": user.first_name,
-            "group": group_name
+            "group": group_names
         })
 
         return redirect(f"{settings.BASE_URL}/index.html?{params}")
@@ -319,6 +285,7 @@ class UserProfileSummaryView(generics.GenericAPIView):
             'first_name': user.first_name or "Not set",
             'last_name': user.last_name or "Not set",
             'email': user.email,
+            'phone':user.phone or "Not set",
             'total_orders': orders.count(),
             'recent_orders': orders[:5]
         }
@@ -341,3 +308,114 @@ class UpdateUserView(generics.GenericAPIView):
                 "message": "User updated successfully",
             }, status=status.HTTP_200_OK)
         return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+    
+    
+
+
+# ADMIN VIEWS
+
+from django.utils import timezone
+from django.db.models import Count
+from datetime import timedelta
+from calendar import monthrange
+from django.db.models import Sum
+
+
+class DashboardAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = DashboardSerializer
+    swagger_schema = TaggedAutoSchema
+    def get(self, request):
+        admin = request.user
+
+        # Only allow if user is a rider
+        if not admin.groups.filter(name__iexact='admin').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        
+        now = timezone.now()
+        current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        last_month_end = current_month_start - timedelta(days=1)
+        last_month_start = last_month_end.replace(day=1)
+        
+        # --- Current Month Counts ---
+        products_current = Product.objects.filter(created_at__gte=current_month_start).count()
+        orders_current = Order.objects.filter(created_at__gte=current_month_start).count()
+        customers_current = Order.objects.filter(created_at__gte=current_month_start).values('user').distinct().count()
+
+        # --- Last Month Counts ---
+        products_last = Product.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).count()
+        orders_last = Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).count()
+        customers_last = Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).values('user').distinct().count()
+
+        def calculate_change(current, last):
+            if last == 0 and current == 0:
+                return {"change": "0%", "direction": "no change"}
+            if last == 0:
+                return {"change": "+100%", "direction": "up"}
+            percent_change = ((current - last) / last) * 100
+            direction = "up" if percent_change >= 0 else "down"
+            return {"change": f"{abs(percent_change):.2f}%", "direction": direction}
+        
+        order_stats = {
+            "total_products": {
+                "value": Product.objects.count(),
+                **calculate_change(products_current, products_last),
+            },
+            "total_orders": {
+                "value": Order.objects.count(),
+                **calculate_change(orders_current, orders_last),
+            },
+            "total_customers": {
+                "value": Order.objects.values('user').distinct().count(),
+                **calculate_change(customers_current, customers_last),
+            },
+        }
+        
+        # --- Top Products ---
+        top_products_qs = (
+            OrderItem.objects
+            .select_related('product')
+            .values('product', 'product__title')
+            .annotate(sold_count=Sum('quantity'))
+            .order_by('-sold_count')[:10]
+        )
+
+        top_products_data = [
+            {"product": OrderItem.objects.filter(product_id=item['product']).first().product, "sold_count": item['sold_count']}
+            for item in top_products_qs
+        ]
+
+        top_products_serialized = DashboardTopProductSerializer(top_products_data, many=True).data
+
+        # Stats
+        stats = (
+            OrderTracking.objects
+            .values('status')
+            .annotate(count=Count('id'))
+            .order_by('status')
+        )
+
+        # Convert to desired format (name and value)
+        status_data = [
+            {
+                "name": dict(OrderTracking.STATUS_CHOICES).get(stat['status'], stat['status']),
+                "value": stat['count']
+            }
+            for stat in stats
+        ]
+        
+        # Recent orders
+        recent_orders = Order.objects.all()[:10]
+        recent_orders_serialized = DashboardOrderSerializer(recent_orders, many=True).data
+                
+        
+        # --- Response ---
+        return Response({
+            "stats": status_data,
+            "order_status": order_stats,
+            "top_products": top_products_serialized,
+            "recent_orders": recent_orders_serialized,
+        })
+        
+        

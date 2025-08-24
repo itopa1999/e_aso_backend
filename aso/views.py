@@ -31,6 +31,7 @@ class OptionalJWTAuthentication(JWTAuthentication):
             # Invalid/expired token → Ignore, treat as anonymous
             return None
 
+# this endpo
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated]
@@ -652,6 +653,64 @@ class VerifyOtpView(generics.GenericAPIView):
         }
 
         return Response(order_data, status=status.HTTP_200_OK)
+
+
+
+class RiderOderDetailsView(generics.GenericAPIView):
+    serializer_class = RiderOderDetailsSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        rider = request.user
+
+        # Only allow if user is a rider
+        if not rider.groups.filter(name__iexact='rider').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        order_number = serializer.validated_data["order_number"]
+
+        # Validate order existence
+        try:
+            order = Order.objects.get(order_number=order_number)
+        except Order.DoesNotExist:
+            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Fetch shipping address
+        shipping = getattr(order, 'shipping_address', None)
+
+        # Fetch order items
+        items = order.items.select_related('product').all()
+        order_items_data = [
+            {
+                "product_id" : item.product.id,
+                "product": item.product.title,
+                "quantity": item.quantity,
+                "price": f"₦{item.price:,.0f}",
+                "total_price": f"₦{item.total_price():,.0f}",
+                "image": request.build_absolute_uri(item.product.main_image.url) if item.product.main_image else None
+            }
+            for item in items
+        ]
+
+        # Prepare response data
+        order_data = {
+            "message": "OTP verified successfully",
+            "order_details": {
+                "order_id": order.order_number,
+                "customer": f"{order.user.first_name} {order.user.last_name}" if order.user.last_name else "Not Set",
+                "delivery_address": f"{shipping.address}, {shipping.city}, {shipping.state}" if shipping else "",
+                "contact": shipping.phone if shipping.phone else shipping.alt_phone,
+                "order_date": order.created_at.strftime("%b %d, %Y"),
+                "total_amount": f"₦{order.total:,.0f}",
+                "items": order_items_data
+            }
+        }
+
+        return Response(order_data, status=status.HTTP_200_OK)
+
     
 class MarkOrderAsDeliveredView(generics.GenericAPIView):
     serializer_class = MarkOrderAsDeliveredSerializer

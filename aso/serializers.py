@@ -393,7 +393,14 @@ class VerifyOtpSerializer(serializers.Serializer):
     order_number = serializers.CharField(required=True)
     otp = serializers.IntegerField(required=True)
     
+    
+class RiderOderDetailsSerializer(serializers.Serializer):
+    order_number = serializers.CharField(required=True)
+    
 class MarkOrderAsDeliveredSerializer(serializers.Serializer):
     order_number = serializers.CharField(required=True)
     delivery_notes = serializers.CharField(required=False, allow_blank=True)
     stars = serializers.IntegerField(required=True)
+    
+    
+    

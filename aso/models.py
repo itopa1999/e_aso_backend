@@ -177,7 +177,7 @@ class Cart(models.Model):
         return self.subtotal() + self.shipping_cost() - self.discount()
 
     def __str__(self):
-        return f"{self.user.username}'s Cart"
+        return f"{self.user.first_name}'s Cart"
 
     class Meta:
         indexes = [models.Index(fields=["user"])]

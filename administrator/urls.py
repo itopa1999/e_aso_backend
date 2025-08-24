@@ -15,4 +15,12 @@ urlpatterns = [
             ]
         )
     ),
+    path(
+        "admin/",
+        include(
+            [
+                path("dashboard/", DashboardAPIView.as_view()),
+            ]
+        )
+    ),
 ]
