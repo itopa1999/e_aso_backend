@@ -20,6 +20,7 @@ urlpatterns = [
                 path('cart/', CartDetailAPIView.as_view(), name='cart-detail'),
                 path('add-to-cart/', AddToCartView.as_view()),
                 path('cart/update-quantity/', UpdateCartQuantityView.as_view()),
+                path('cart/update-desc/', UpdateCartDescView.as_view()),
                 path('cart/remove-item/', RemoveCartItemView.as_view()),
                 path("cart/update-state/", UpdateCartStateView.as_view(), name="update-cart-state"),
                 path('place-orders/', PlaceOrderView.as_view(), name='place-order'),

@@ -166,7 +166,8 @@ class AddToCartView(generics.GenericAPIView):
 
     def post(self, request):
         product_id = request.GET.get("product_id")
-        quantity = request.GET.get("quantity", 1)
+        quantity = request.GET.get("quantity")
+        desc = request.data.get("desc", "{}") 
 
         if not product_id:
             return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -175,16 +176,29 @@ class AddToCartView(generics.GenericAPIView):
             product = Product.objects.get(id=product_id)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            desc_data = json.loads(desc) if isinstance(desc, str) else desc
+        except json.JSONDecodeError:
+            return Response({"error": "Invalid desc format"}, status=status.HTTP_400_BAD_REQUEST)
+
 
         cart, _ = Cart.objects.get_or_create(user=request.user)
         items_moved = 0
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
-            defaults={"quantity": int(quantity)}
+            defaults={"quantity": int(quantity) if quantity else 1, "desc": desc_data or {}}
         )
 
-        if created:
+        if not created:
+            # Update quantity and desc if already in cart
+            if quantity is not None:
+                cart_item.quantity = int(quantity)
+            if desc_data:
+                cart_item.desc = desc_data
+            cart_item.save()
+        else:
             items_moved += 1
 
         serializer = AddToCartCountResponseSerializer({"items_added": items_moved})
@@ -222,6 +236,32 @@ class UpdateCartQuantityView(APIView):
         try:
             item = CartItem.objects.get(id=item_id, cart__user=request.user)
             item.quantity = quantity
+            item.save()
+            return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
+
+        except CartItem.DoesNotExist:
+            return Response({"detail": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
+    
+    
+    
+class UpdateCartDescView(APIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = UpdateDescSerializer
+    swagger_schema = TaggedAutoSchema 
+    
+    def patch(self, request):
+        serializer = UpdateDescSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        item_id = serializer.validated_data["item_id"]
+        desc = serializer.validated_data["desc"]
+        
+        print(item_id, desc)
+
+        try:
+            item = CartItem.objects.get(id=item_id, cart__user=request.user)
+            item.desc = desc
             item.save()
             return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
 
@@ -423,12 +463,15 @@ class CartAndWatchlistCountView(generics.GenericAPIView):
         return Response(serializer.data)
     
     
-class CategoriesView(generics.ListAPIView):
+class CategoriesView(APIView):
     serializer_class = CategoriesSerializer
-    swagger_schema = TaggedAutoSchema
 
-    def get_queryset(self):
-        return Category.objects.all()
+    # @swagger_auto_schema(tags=["Categories"])
+    swagger_schema = TaggedAutoSchema
+    def get(self, request):
+        categories = Category.objects.all()
+        serializer = self.serializer_class(categories, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     
     
@@ -633,7 +676,8 @@ class VerifyOtpView(generics.GenericAPIView):
                 "quantity": item.quantity,
                 "price": f"₦{item.price:,.0f}",
                 "total_price": f"₦{item.total_price():,.0f}",
-                "image": request.build_absolute_uri(item.product.main_image.url) if item.product.main_image else None
+                "image": request.build_absolute_uri(item.product.main_image.url) if item.product.main_image else None,
+                "desc": item.desc
             }
             for item in items
         ]
@@ -648,9 +692,12 @@ class VerifyOtpView(generics.GenericAPIView):
                 "contact": shipping.phone if shipping.phone else shipping.alt_phone,
                 "order_date": order.created_at.strftime("%b %d, %Y"),
                 "total_amount": f"₦{order.total:,.0f}",
+                "other_info": order.other_info,
                 "items": order_items_data
             }
         }
+        
+        print(order_data)
 
         return Response(order_data, status=status.HTTP_200_OK)
 
@@ -690,7 +737,8 @@ class RiderOderDetailsView(generics.GenericAPIView):
                 "quantity": item.quantity,
                 "price": f"₦{item.price:,.0f}",
                 "total_price": f"₦{item.total_price():,.0f}",
-                "image": request.build_absolute_uri(item.product.main_image.url) if item.product.main_image else None
+                "image": request.build_absolute_uri(item.product.main_image.url) if item.product.main_image else None,
+                "desc": item.desc
             }
             for item in items
         ]
@@ -705,9 +753,12 @@ class RiderOderDetailsView(generics.GenericAPIView):
                 "contact": shipping.phone if shipping.phone else shipping.alt_phone,
                 "order_date": order.created_at.strftime("%b %d, %Y"),
                 "total_amount": f"₦{order.total:,.0f}",
+                "other_info": order.other_info,
                 "items": order_items_data
             }
         }
+        
+        print(order_data)
 
         return Response(order_data, status=status.HTTP_200_OK)
 

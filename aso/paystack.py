@@ -15,7 +15,7 @@ def initiate(request, user, cart_id, data):
     redirect_url = request.build_absolute_uri(
         reverse('paystack-confirm-subscription', kwargs={"reference": ref})
     )
-    
+        
     paystack_data = {
         "email": user.email,
         "amount": amount,
@@ -54,7 +54,7 @@ def validate(reference):
         metadata = result['data'].get('metadata', {})
         cart_id = metadata.get('cart_id')
         data = metadata.get('data', {})
-
+        
         try:
             with transaction.atomic():
                 cart = Cart.objects.get(id=cart_id)
@@ -66,7 +66,8 @@ def validate(reference):
                     subtotal=cart.subtotal(),
                     shipping_fee=cart.shipping_cost(),
                     discount=cart.discount(),
-                    total=cart.total()
+                    total=cart.total(),
+                    other_info = data.get("otherInfo")
                 )
 
                 # 2. Create Order Items
@@ -75,7 +76,8 @@ def validate(reference):
                         order=order,
                         product=item.product,
                         quantity=item.quantity,
-                        price=item.product.current_price  # snapshot
+                        price=item.product.current_price,  # snapshot
+                        desc = item.desc
                     )
 
                 # 3. Save Shipping Address

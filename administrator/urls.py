@@ -20,6 +20,8 @@ urlpatterns = [
         include(
             [
                 path("dashboard/", DashboardAPIView.as_view()),
+                path("products/", ProductAPIView.as_view()),
+                
             ]
         )
     ),

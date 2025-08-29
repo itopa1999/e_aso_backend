@@ -186,6 +186,7 @@ class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
+    desc = models.JSONField(null=True, blank=True)
 
     def subtotal(self):
         return self.product.current_price * self.quantity
@@ -206,6 +207,8 @@ class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     order_number = models.CharField(max_length=20, unique=True, db_index=True, null=True, blank=True, editable=False)
 
+    other_info = models.TextField(null=True, blank=True)
+    
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
@@ -251,6 +254,7 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)  # snapshot of product price at purchase
+    desc = models.JSONField(null=True, blank=True)
 
     def total_price(self):
         return self.price * self.quantity

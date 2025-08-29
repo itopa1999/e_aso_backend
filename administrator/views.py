@@ -319,7 +319,9 @@ from django.db.models import Count
 from datetime import timedelta
 from calendar import monthrange
 from django.db.models import Sum
-
+from rest_framework.filters import OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import Q
 
 class DashboardAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -419,3 +421,50 @@ class DashboardAPIView(generics.GenericAPIView):
         })
         
         
+        
+class ProductAPIView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ProductSerializer
+    swagger_schema = TaggedAutoSchema
+
+    queryset = Product.objects.filter(display_product=True)
+    filter_backends = [DjangoFilterBackend, OrderingFilter]
+    filterset_fields = ['badge']
+    ordering_fields = ['current_price', 'rating', 'created_at']
+
+    def get_queryset(self):
+        admin = self.request.user
+
+        # Only allow if user is a rider
+        if not admin.groups.filter(name__iexact='admin').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        queryset = super().get_queryset()
+
+        # Extract query parameters
+        max_price = self.request.query_params.get('max_price')
+        min_price = self.request.query_params.get('min_price')
+        rating = self.request.query_params.get('rating')
+        search = self.request.query_params.get('search')
+        category = self.request.query_params.get('category')
+
+        # Apply filters dynamically
+        if min_price:
+            queryset = queryset.filter(current_price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(current_price__lte=max_price)
+        if rating:
+            queryset = queryset.filter(rating__gte=rating)
+        if category:
+            queryset = queryset.filter(category__name__icontains=category)
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(product_number__icontains=search) |
+                Q(category__name__icontains=search)
+            )
+
+        return queryset
+
+    def get_serializer_context(self):
+        return {"request": self.request}

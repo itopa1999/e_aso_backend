@@ -8,7 +8,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
     product_id = serializers.IntegerField(source = 'product.id')
     class Meta:
         model = OrderItem
-        fields = ['product_name', 'product_id', 'price', 'quantity', 'product_image']
+        fields = ['product_name', 'product_id', 'price', 'quantity', 'desc', 'product_image']
         
     def get_product_image(self, obj):
         request = self.context.get('request')
@@ -34,7 +34,7 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'order_number', 'created_at', 'order_status',
+            'id', 'order_number', 'created_at', 'order_status', 'other_info',
             'order_items', 'subtotal', 'shipping', 'discount', 'total'
         ]
 
@@ -75,7 +75,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'order_number', 'created_at', 'subtotal', 'shipping_fee', 'discount',
+            'id', 'order_number', 'created_at', 'subtotal', 'shipping_fee', 'discount', 'other_info',
             'total', 'tracking_number', 'carrier','order_status', 'estimated_delivery_date',
             'items', 'tracking', 'shipping_address', 'payment_detail'
         ]
@@ -125,7 +125,8 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_title = serializers.CharField(source="product.title")
     product_price = serializers.DecimalField(source="product.current_price", max_digits=10, decimal_places=2)
     product_image = serializers.ImageField(source="product.main_image")
-
+    product_colors = serializers.SerializerMethodField()
+    product_sizes = serializers.SerializerMethodField()
     subtotal = serializers.SerializerMethodField()
 
     class Meta:
@@ -136,9 +137,25 @@ class CartItemSerializer(serializers.ModelSerializer):
             'product_title',
             'product_price',
             'product_image',
+            'product_colors',
+            'product_sizes',
             'quantity',
-            'subtotal'
+            'subtotal',
+            "desc"
         ]
+        
+    def get_product_colors(self, obj):
+        """Return all available colors for the product as a list of dicts."""
+        return [
+            {
+                "name": color.color_name,
+            }
+            for color in obj.product.colors.all()
+        ]
+
+    def get_product_sizes(self, obj):
+        """Return all available sizes for the product as a list of size labels."""
+        return [size.size_label for size in obj.product.sizes.all()]
 
     def get_subtotal(self, obj):
         return obj.subtotal()
@@ -188,8 +205,12 @@ class CategoriesSerializer(serializers.ModelSerializer):
 
 
 class UpdateQuantitySerializer(serializers.Serializer):
-    item_id = serializers.IntegerField()
+    item_id = serializers.IntegerField(required = True)
     quantity = serializers.IntegerField(min_value=1)
+    
+class UpdateDescSerializer(serializers.Serializer):
+    item_id = serializers.IntegerField(required = True)
+    desc = serializers.JSONField(required = True)
     
     
 class DeleteItemFromCartSerializer(serializers.Serializer):
@@ -216,6 +237,7 @@ class ShippingInfoSerializer(serializers.Serializer):
     phone = serializers.CharField()
     alt_phone = serializers.CharField(allow_blank=True, required=False)
     total = serializers.DecimalField(max_digits=10, decimal_places=2)
+    otherInfo = serializers.CharField(required=False)
     
     
 

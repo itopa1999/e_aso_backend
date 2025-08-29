@@ -2,7 +2,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
 from administrator.models import User
-from aso.models import Order, OrderItem, Product
+from aso.models import Category, Order, OrderItem, Product, ProductColor, ProductDetail, ProductImage, ProductSize
 
 
 class RegUserSerializer(serializers.ModelSerializer):
@@ -92,3 +92,73 @@ class DashboardSerializer(serializers.Serializer):
     order_status = serializers.DictField()
     recent_orders = DashboardOrderSerializer(many=True)
     top_products = DashboardTopProductSerializer(many=True)
+
+
+
+class AdminCategorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'description']
+        
+        
+class AdminProductColorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductColor
+        fields = ['id', 'color_name', 'hex_code']
+        
+        
+class AdminProductSizeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductSize
+        fields = ['id', 'size_label']
+
+
+class AdminProductDetailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductDetail
+        fields = ['id', 'tab', 'title', 'content']
+
+
+class AdminProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'image', 'alt_text']
+        
+        
+class ProductSerializer(serializers.ModelSerializer):
+    categories = AdminCategorySerializer(many=True, source='category', read_only=True)
+    colors = AdminProductColorSerializer(many=True, read_only=True)
+    sizes = AdminProductSizeSerializer(many=True, read_only=True)
+    details = AdminProductDetailSerializer(many=True, read_only=True)
+    images = AdminProductImageSerializer(many=True, read_only=True)
+    related_orders = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            'id',
+            'product_number',
+            'title',
+            'description',
+            'current_price',
+            'original_price',
+            'discount_percent',
+            'rating',
+            'reviews_count',
+            'badge',
+            'main_image',
+            'display_product',
+            'created_at',
+            'updated_at',
+            'categories',
+            'colors',
+            'sizes',
+            'details',
+            'images',
+            "related_orders"
+        ]
+        
+    def get_related_orders(self, obj):
+        # Get all orders that have this product in their order items
+        orders = Order.objects.filter(items__product=obj).distinct()
+        return DashboardOrderSerializer(orders, many=True).data
