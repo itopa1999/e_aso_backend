@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Cart, CartItem, Order, OrderFeedBack, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, ProductDetail, ProductImage, Category, ShippingAddress, WatchList
+from .models import Cart, CartItem, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, ProductDetail, ProductImage, Category, ShippingAddress, WatchList
 
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
@@ -68,11 +68,22 @@ class PaymentDetailInline(admin.TabularInline):
 class OrderFeedBackInline(admin.TabularInline):
     model = OrderFeedBack
     extra = 0
+    
+class OrderReturnInline(admin.TabularInline):
+    model = OrderReturn
+    extra = 0
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['order_number', 'user', 'total', 'created_at']
-    inlines = [OrderItemInline, TrackingInline, ShippingAddressItemInline, PaymentDetailInline, OrderFeedBackInline]
+    inlines = [
+        OrderItemInline, 
+        TrackingInline, 
+        ShippingAddressItemInline, 
+        PaymentDetailInline, 
+        OrderFeedBackInline,
+        OrderReturnInline
+        ]
 
 
 

@@ -20,6 +20,7 @@ from rest_framework import status, generics
 from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from aso.models import OrderTracking, Product
+from aso.serializers import OrderSerializer
 from utils.magic_link import generate_magic_token, validate_magic_token
 
 
@@ -468,3 +469,88 @@ class ProductAPIView(generics.ListAPIView):
 
     def get_serializer_context(self):
         return {"request": self.request}
+    
+    
+    
+
+class OrderListView(generics.ListAPIView):
+    queryset = Order.objects.all()
+    serializer_class = AdminOrderDetailSerializer
+    filter_backends = [DjangoFilterBackend]
+    
+    def get_queryset(self):
+        admin = self.request.user
+
+        # Only allow if user is a rider
+        if not admin.groups.filter(name__iexact='admin').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        queryset = super().get_queryset()
+
+        # Extract query parameters
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(order_number__icontains=search) |
+                Q(user__first_name__icontains=search) |
+                Q(user__last_name__icontains=search)
+            )
+
+        if queryset is None:
+            queryset = queryset.filter(id=search)
+        return queryset
+
+    def get_serializer_context(self):
+        return {"request": self.request}
+    
+    
+
+class UpdateOrderTrackingAPIView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = OrderTrackingUpdateSerializer
+
+    def post(self, request, *args, **kwargs):
+        admin = self.request.user
+
+        # Only allow if user is a rider
+        if not admin.groups.filter(name__iexact='admin').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tracking = serializer.update_status()
+        return Response({
+            "message": f"Order {tracking.order.order_number} updated to {tracking.status} successfully.",
+        }, status=status.HTTP_200_OK)
+        
+        
+        
+class UserOrderListView(generics.ListAPIView):
+    queryset = User.objects.prefetch_related('orders', 'groups').all()
+    serializer_class = UserOrderListSerializer
+    
+    def get_queryset(self):
+        admin = self.request.user
+
+        # Only allow if user is a rider
+        if not admin.groups.filter(name__iexact='admin').exists():
+            return Response({"error": "Not authorized"}, status=401)
+        
+        queryset = super().get_queryset()
+
+        # Extract query parameters
+
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(phone__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) |
+                Q(email__icontains=search) |
+                Q(groups__name__icontains=search)
+            )
+
+        if queryset is None:
+            queryset = queryset.filter(id=search)
+        return queryset.distinct()

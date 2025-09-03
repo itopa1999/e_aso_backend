@@ -327,3 +327,14 @@ class OrderFeedBack(models.Model):
     def __str__(self):
         return f"Feedback for Order {self.order.order_number} - {self.stars} Stars"
     
+    
+    
+class OrderReturn(models.Model):
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='return_product')
+    reason = models.CharField(max_length=500)
+    message = models.TextField(max_length=1000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"return request for Order {self.order.order_number}"
+    
