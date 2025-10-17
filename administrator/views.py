@@ -310,7 +310,68 @@ class UpdateUserView(generics.GenericAPIView):
             }, status=status.HTTP_200_OK)
         return Response({"error": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
     
-    
+
+class ResendOtpView(generics.GenericAPIView):
+    serializer_class = ResendOtpSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User with this email does not exist."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        verification, created = UserVerification.objects.get_or_create(user=user)
+
+        if verification.is_verified:
+            return Response({"error": "User is already verified."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Only resend if expired
+        if not verification.is_token_expired():
+            return Response({"error": "OTP still valid. Please use the existing code."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        verification.generate_token()
+        verification.save()
+
+        subject = "Admin Action Verification Code - Aso Oke & Aso Ofi Marketplace"
+
+        message = textwrap.dedent(f"""
+            Dear {user.first_name or user.username},
+
+            A request was made to perform a sensitive administrative action on your account.
+
+            To proceed, please use the verification code below:
+
+            Verification Code: {verification.token}
+
+            ⚠️ For security reasons, this code is valid for 10 minutes only. 
+            If you did not initiate this request, please ignore this email and ensure your account remains secure.
+
+            Best regards,  
+            Security Team  
+            Aso Oke & Aso Ofi Marketplace
+            """)
+
+
+        # Send the verification email with the token
+        send_mail(
+            subject,
+            message,
+            settings.EMAIL_HOST_USER,
+            [user.email],
+            fail_silently=False,
+        )
+
+        return Response({"message": "New OTP generated and sent."},
+                        status=status.HTTP_200_OK)
+
 
 
 # ADMIN VIEWS
@@ -554,3 +615,64 @@ class UserOrderListView(generics.ListAPIView):
         if queryset is None:
             queryset = queryset.filter(id=search)
         return queryset.distinct()
+
+
+
+
+
+
+
+from django.db import transaction
+
+
+
+class BulkUpdateProductBadgesView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = BulkUpdateBadgesSerializer
+    
+    def patch(self, request):
+        """
+        Bulk update product badges
+        Body: {
+            "badge": "New",
+            "product_ids": [1, 2, 3],
+            "product_titles": ["Product A", "Product B"]
+        }
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        validated_data = serializer.validated_data
+        badge = validated_data['badge']
+        product_ids = validated_data.get('product_ids', [])
+        product_titles = validated_data.get('product_titles', [])
+                
+        try:
+            with transaction.atomic():
+                updated_count = 0
+                
+                # Update by IDs
+                if product_ids:
+                    count_by_id = Product.objects.filter(
+                        id__in=product_ids
+                    ).update(badge=badge)
+                    updated_count += count_by_id
+                
+                # Update by titles
+                if product_titles:
+                    count_by_title = Product.objects.filter(
+                        title__in=product_titles
+                    ).update(badge=badge)
+                    updated_count += count_by_title
+                
+                return Response({
+                    "message": f"Successfully updated badges for {updated_count} products",
+                    "badge": badge,
+                    "updated_count": updated_count
+                }, status=status.HTTP_200_OK)
+                
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred during update: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

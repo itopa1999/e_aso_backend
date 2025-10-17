@@ -34,6 +34,11 @@ class ResendLinkSerializer(serializers.Serializer):
     is_login = serializers.BooleanField(required=True)
 
 
+class ResendOtpSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+
+
+
 
 class RecentOrderSerializer(serializers.ModelSerializer):
     latest_tracking_status = serializers.SerializerMethodField()
@@ -304,3 +309,80 @@ class UserOrderListSerializer(serializers.ModelSerializer):
         return list(obj.groups.values_list('name', flat=True))
         
     
+
+
+
+
+
+
+class BulkUpdateBadgesSerializer(serializers.Serializer):
+    badge = serializers.ChoiceField(
+        choices=[
+            ('New', 'New'),
+            ('Best Seller', 'Best Seller'), 
+            ('Limited', 'Limited'),
+            ('', 'Remove Badge')
+        ],
+        required=True,
+        help_text="The badge to assign to products"
+    )
+    product_ids = serializers.ListField(
+        child=serializers.IntegerField(min_value=1),
+        required=False,
+        default=[],
+        help_text="List of product IDs to update"
+    )
+    product_titles = serializers.ListField(
+        child=serializers.CharField(max_length=255),
+        required=False, 
+        default=[],
+        help_text="List of product titles to update"
+    )
+
+    def validate(self, data):
+        """
+        Validate that at least one of product_ids or product_titles is provided
+        """
+        product_ids = data.get('product_ids', [])
+        product_titles = data.get('product_titles', [])
+        
+        if not product_ids and not product_titles:
+            raise serializers.ValidationError(
+                "Either product_ids or product_titles must be provided"
+            )
+        
+        return data
+
+    def validate_product_ids(self, value):
+        """
+        Validate that product IDs exist in database
+        """
+        if value:
+            existing_ids = set(Product.objects.filter(
+                id__in=value
+            ).values_list('id', flat=True))
+            
+            non_existing_ids = set(value) - existing_ids
+            
+            if non_existing_ids:
+                raise serializers.ValidationError(
+                    f"Products with these IDs do not exist: {list(non_existing_ids)}"
+                )
+        return value
+
+    def validate_product_titles(self, value):
+        """
+        Validate that product titles exist in database
+        """
+        if value:
+            existing_titles = set(Product.objects.filter(
+                title__in=value
+            ).values_list('title', flat=True))
+            
+            non_existing_titles = set(value) - existing_titles
+            
+            if non_existing_titles:
+                raise serializers.ValidationError(
+                    f"Products with these titles do not exist: {list(non_existing_titles)}"
+                )
+        return value
