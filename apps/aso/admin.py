@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Cart, CartItem, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, ProductDetail, ProductImage, Category, ShippingAddress, WatchList
+from .models import (
+    Cart, CartItem, Order, OrderFeedBack, OrderItem, OrderReturn, 
+    OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, 
+    ProductDetail, ProductImage, LookUp, ShippingAddress, WatchList
+)
 
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
@@ -44,7 +48,7 @@ class CartItemInline(admin.TabularInline):
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
     inlines = [CartItemInline]
-    list_display = ['user', 'created_at', 'updated_at']
+    list_display = ['user', 'created_at', 'modified_at']
     
     
 
@@ -88,4 +92,20 @@ class OrderAdmin(admin.ModelAdmin):
 
 
 admin.site.register(WatchList)
-admin.site.register(Category)
+@admin.register(LookUp)
+class LookUpAdmin(admin.ModelAdmin):
+    fieldsets = (
+        ("Lookup Information", {
+            "fields": ("name", "category", "description")
+        }),
+        ("Data Information", {
+            "classes": ("collapse",),
+            "fields": (
+                "created_by",
+                "modified_by",
+                "is_deleted",
+                "deleted_at",
+                "deleted_by",
+            ),
+        }),
+    )

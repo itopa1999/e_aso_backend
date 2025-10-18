@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import Cart, CartItem, Category, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress, WatchList
+
+from utils.enum import LookUpsCategories
+from .models import Cart, CartItem, LookUp, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress, WatchList
 from django.utils.timesince import timesince
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -197,10 +199,10 @@ class CartDetailSerializer(serializers.ModelSerializer):
         return obj.total()
     
     
-class CategoriesSerializer(serializers.ModelSerializer):
+class LookUpsSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
-        fields = ['name']
+        model = LookUp
+        fields = ['name', 'category']
 
 
 
@@ -251,9 +253,10 @@ class ProductDetailSerializer(serializers.Serializer):
 
 class ProductImportSerializer(serializers.Serializer):
     title = serializers.CharField()
+    badge = serializers.CharField()
     description = serializers.CharField()
     original_price = serializers.DecimalField(max_digits=10, decimal_places=2)
-    discount_percent = serializers.IntegerField()
+    discount_percent = serializers.IntegerField(required=False)
     rating = serializers.FloatField()
     category = serializers.ListField(child=serializers.CharField())
     sizes = serializers.ListField(child=serializers.CharField())
@@ -267,19 +270,66 @@ class ProductImportSerializer(serializers.Serializer):
         size_list = validated_data.pop('sizes')
         color_list = validated_data.pop('colors')
         details_list = validated_data.pop('details')
+        badge_name = validated_data.pop('badge', None)
+        
 
         # Handle categories
         product = Product.objects.create(
             title=validated_data['title'],
             description=validated_data['description'],
             original_price=validated_data['original_price'],
-            discount_percent=validated_data['discount_percent'],
+            discount_percent=validated_data.get('discount_percent'),
             rating=validated_data['rating'],
             display_product = False
         )
         for cat_name in category_names:
-            category_obj, _ = Category.objects.get_or_create(name=cat_name)
-            product.category.add(category_obj)
+            try:
+                lookup_category = LookUpsCategories.PRODUCT_CATEGORY
+
+                existing_lookup = LookUp.objects.filter(
+                    category=lookup_category,
+                    name__iexact=cat_name.strip()
+                ).first()
+
+                if existing_lookup:
+                    product.category.add(existing_lookup)
+                else:
+                    new_lookup = LookUp.objects.create(
+                        name=cat_name.strip(),
+                        category=lookup_category
+                    )
+                    product.category.add(new_lookup)
+                    print(f"✅ Created new lookup '{cat_name}' under category '{lookup_category}'")
+
+            except LookUp.DoesNotExist:
+                print(f"⚠️ Skipping category '{cat_name}' — lookup category not found.")
+                continue
+            
+        if badge_name:
+            try:
+                lookup_category = LookUpsCategories.BADGE_CATEGORY
+
+                existing_badge = LookUp.objects.filter(
+                    category=lookup_category,
+                    name__iexact=badge_name.strip()
+                ).first()
+
+                if existing_badge:
+                    product.badge = existing_badge.name
+                else:
+                    new_badge = LookUp.objects.create(
+                        name=badge_name.strip(),
+                        category=lookup_category
+                    )
+                    product.badge = new_badge.name
+                    print(f"✅ Created new badge '{badge_name}' under category '{lookup_category}'")
+
+                product.save()
+
+            except LookUp.DoesNotExist:
+                print(f"⚠️ Skipping badge '{badge_name}' — lookup category not found.")
+
+
 
         # Handle sizes
         for size_label in size_list:
@@ -304,9 +354,9 @@ class ProductImportSerializer(serializers.Serializer):
 
 
 
-class CategorySerializer(serializers.ModelSerializer):
+class LookUpSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
+        model = LookUp
         fields = ['name', 'description']
 
 
@@ -348,7 +398,7 @@ class RelatedProductSerializer(serializers.ModelSerializer):
 
 
 class ProductDetailFullSerializer(serializers.ModelSerializer):
-    category = CategorySerializer(many=True)
+    category = LookUpSerializer(many=True)
     colors = ProductDetailColorSerializer(many=True)
     sizes = ProductSizeSerializer(many=True)
     details = ProductDetailByIdSerializer(many=True)

@@ -463,14 +463,14 @@ class CartAndWatchlistCountView(generics.GenericAPIView):
         return Response(serializer.data)
     
     
-class CategoriesView(APIView):
-    serializer_class = CategoriesSerializer
+class LookUpView(APIView):
+    serializer_class = LookUpsSerializer
 
     # @swagger_auto_schema(tags=["Categories"])
     # swagger_schema = TaggedAutoSchema
     def get(self, request):
-        categories = Category.objects.all()
-        serializer = self.serializer_class(categories, many=True)
+        lookups = LookUp.objects.all()
+        serializer = self.serializer_class(lookups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
     

@@ -6,25 +6,22 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.aso.deliveryFee import DELIVERY_FEES
+from utils.base_model import BaseModel
 # Create your models here.
 
 
-class Category(models.Model):
+class LookUp(BaseModel):
     name = models.CharField(max_length=100, unique=True, db_index=True)
+    category = models.CharField(max_length=100, blank=False, null=True)
     description = models.TextField(blank=True)
 
     def __str__(self):
         return self.name
 
 
-class Product(models.Model):
-    Badge = [
-        ('New', 'New'),
-        ('Best Seller', 'Best Seller'),
-        ('Limited', 'Limited')
-    ]
+class Product(BaseModel):
     product_number = models.CharField(max_length=100, null=True, blank=True, editable=False)
-    category = models.ManyToManyField(Category, related_name="product")
+    category = models.ManyToManyField(LookUp, related_name="product")
 
     title = models.CharField(max_length=255, db_index=True)
     description = models.TextField()
@@ -36,11 +33,8 @@ class Product(models.Model):
     rating = models.FloatField(default=0.0)
     reviews_count = models.PositiveIntegerField(default=0)
 
-    badge = models.CharField(max_length=50, blank=True, choices=Badge, default="New")
+    badge = models.CharField(max_length=50, blank=True, default="New")
     main_image = models.ImageField(upload_to='products/main/', null=True, blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     
     display_product = models.BooleanField(default=True)
     
@@ -82,7 +76,7 @@ class Product(models.Model):
         return ", ".join([cat.name for cat in self.category.all()])
 
 
-class ProductColor(models.Model):
+class ProductColor(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='colors')
     color_name = models.CharField(max_length=100)
     hex_code = models.CharField(max_length=7, null=True, blank=True)
@@ -95,7 +89,7 @@ class ProductColor(models.Model):
     
 
 
-class ProductSize(models.Model):
+class ProductSize(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='sizes')
     size_label = models.CharField(max_length=50)  # e.g. 5, 6, 7, 8 yards
     
@@ -107,7 +101,7 @@ class ProductSize(models.Model):
     
     
 
-class ProductDetail(models.Model):
+class ProductDetail(BaseModel):
     TAB_CHOICES = [
         ('description', 'Description'),
         ('details', 'Product Details'),
@@ -123,7 +117,7 @@ class ProductDetail(models.Model):
     
     
     
-class ProductImage(models.Model):
+class ProductImage(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='products/gallery/')
     alt_text = models.CharField(max_length=255, blank=True)
@@ -137,12 +131,10 @@ class ProductImage(models.Model):
         return f"{self.product.title}"
     
     
-class WatchList(models.Model):
+class WatchList(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='watchlist_product')
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlist_user')
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    
+        
     class Meta:
         unique_together = ('user', 'product')
         ordering = ['-created_at']
@@ -155,10 +147,8 @@ class WatchList(models.Model):
     
 User = get_user_model()
 
-class Cart(models.Model):
+class Cart(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     state = models.CharField(max_length=100, blank=True, null=True)
 
     def subtotal(self):
@@ -182,7 +172,7 @@ class Cart(models.Model):
     class Meta:
         indexes = [models.Index(fields=["user"])]
 
-class CartItem(models.Model):
+class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
@@ -203,7 +193,7 @@ class CartItem(models.Model):
         
         
 
-class Order(models.Model):
+class Order(BaseModel):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     order_number = models.CharField(max_length=20, unique=True, db_index=True, null=True, blank=True, editable=False)
 
@@ -221,7 +211,6 @@ class Order(models.Model):
     delivery_date = models.DateField(null=True, blank=True)
     
     estimated_delivery_date = models.DateField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     
     def save(self, *args, **kwargs):
@@ -249,7 +238,7 @@ class Order(models.Model):
         indexes = [models.Index(fields=['order_number']), models.Index(fields=['user'])]
 
 
-class OrderItem(models.Model):
+class OrderItem(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
@@ -270,7 +259,7 @@ class OrderItem(models.Model):
         return f"{self.product.title} x{self.quantity}"
 
 
-class ShippingAddress(models.Model):
+class ShippingAddress(BaseModel):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='shipping_address')
 
     first_name = models.CharField(max_length=100)
@@ -286,7 +275,7 @@ class ShippingAddress(models.Model):
         return f"{self.first_name} {self.last_name} - {self.address}"
 
 
-class PaymentDetail(models.Model):
+class PaymentDetail(BaseModel):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment_detail')
     method = models.CharField(max_length=50)  # e.g. 'Mastercard', 'Bank Transfer'
 
@@ -294,7 +283,7 @@ class PaymentDetail(models.Model):
         return f"{self.method}"
 
 
-class OrderTracking(models.Model):
+class OrderTracking(BaseModel):
     STATUS_CHOICES = [
         ('placed', 'Order Placed'),
         ('processing', 'Processing'),
@@ -318,22 +307,20 @@ class OrderTracking(models.Model):
     
     
     
-class OrderFeedBack(models.Model):
+class OrderFeedBack(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='feedback')
     stars = models.PositiveSmallIntegerField()
     comment = models.TextField(blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"Feedback for Order {self.order.order_number} - {self.stars} Stars"
     
     
     
-class OrderReturn(models.Model):
+class OrderReturn(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='return_product')
     reason = models.CharField(max_length=500)
     message = models.TextField(max_length=1000)
-    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"return request for Order {self.order.order_number}"
