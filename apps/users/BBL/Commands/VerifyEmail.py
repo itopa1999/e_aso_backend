@@ -1,18 +1,17 @@
 from django.conf import settings
-from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404, redirect
 from urllib.parse import urlencode
-from apps.administrator.models import User, UserVerification
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
+from apps.users.models import User, UserVerification
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 
 class VerifyEmailCommand:
-
     @staticmethod
-    def verify_email(uidb64, token, url_email): 
+    def Execute(uidb64, token, url_email): 
         try:
-            uid = urlsafe_base64_encode(uidb64).decode()
+            uid = urlsafe_base64_decode(uidb64).decode()
             user = get_object_or_404(User, id=uid)
             verification = get_object_or_404(UserVerification, user=user, token=token)
             if verification.is_token_expired():
@@ -20,6 +19,7 @@ class VerifyEmailCommand:
 
             # Check if the user has already been verified
             if verification.is_verified:
+                print("hi12")
                 return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={verification.user.email}&is_login=false")
             
             # Activate user
@@ -46,4 +46,5 @@ class VerifyEmailCommand:
             return redirect(f"{settings.BASE_URL}/index.html?{params}")
 
         except Exception as e:
+            print("hi3")
             return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=false")

@@ -1,27 +1,9 @@
-from django.contrib.auth.hashers import make_password
-from django.core.mail import send_mail
-from django.contrib.auth import get_user_model
-from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
-from datetime import datetime
 from django.db.models import Q
-from django.urls import reverse
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_decode
-import textwrap
-from urllib.parse import urlencode
-
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
-from rest_framework_simplejwt.tokens import RefreshToken, AccessToken
 
 from apps.aso.models import OrderTracking, Product
-from apps.aso.serializers import OrderSerializer
-from utils.magic_link import generate_magic_token, validate_magic_token
 
 
 from utils.swagger import TaggedAutoSchema
@@ -334,3 +316,18 @@ class BulkUpdateProductBadgesView(generics.GenericAPIView):
                 {"error": f"An error occurred during update: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+            
+            
+            
+
+class ResendOtpView(generics.GenericAPIView):
+    serializer_class = ResendOtpSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+        result = ResendOtpCommand.execute(email)
+        return Response(result.to_dict(), status=result.status_code)

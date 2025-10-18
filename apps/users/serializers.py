@@ -27,11 +27,6 @@ class ResendLinkSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     is_login = serializers.BooleanField(required=True)
 
-
-class ResendOtpSerializer(serializers.Serializer):
-    email = serializers.EmailField(required=True)
-
-
 class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

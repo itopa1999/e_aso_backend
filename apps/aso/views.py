@@ -475,7 +475,9 @@ class CategoriesView(APIView):
     
     
     
-class ProductBulkImportView(APIView):
+class ProductBulkImportView(generics.GenericAPIView):
+    # permission_classes = [IsAuthenticated]
+    serializer_class = ProductImportSerializer
     def post(self, request):
         if not isinstance(request.data, list):
             return Response({'error': 'Data must be a list of products'}, status=status.HTTP_400_BAD_REQUEST)

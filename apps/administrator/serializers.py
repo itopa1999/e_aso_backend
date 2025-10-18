@@ -7,6 +7,8 @@ from apps.users.models import User
 
 
         
+class ResendOtpSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
 
         
         

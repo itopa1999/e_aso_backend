@@ -26,20 +26,20 @@ def send_custom_email(
     """
 
     body = textwrap.dedent(f"""
-        Dear {greeting_name},
+    Dear {greeting_name},
 
-        {message.strip()}
+    {message.strip()}
     """)
 
     if support_footer:
         body += textwrap.dedent("""
 
-            Need help? Contact us:  
-            📞 +234 1 700 0000  
-            ✉️ support@aso-okemarketplace.ng  
+        Need help? Contact us:  
+        📞 +234 1 700 0000  
+        ✉️ support@aso-okemarketplace.ng  
 
-            Preserving Nigeria’s textile heritage,  
-            The Aso Oke & Aso Ofi Marketplace Team
+        Preserving Nigeria’s textile heritage,  
+        The Aso Oke & Aso Ofi Marketplace Team
         """)
 
     send_mail(

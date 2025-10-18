@@ -5,6 +5,9 @@ from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from .schema import BothHttpAndHttpsSchemaGenerator, swagger_protect
+
+
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -17,36 +20,38 @@ schema_view = get_schema_view(
     ),
     public=True,
     permission_classes=(permissions.AllowAny,),
+    generator_class=BothHttpAndHttpsSchemaGenerator,
+
 )
 
 urlpatterns = [
     path('backdoor/', admin.site.urls),
-    path('admins/api/', include('apps.administrator.urls')),
+    # path('admins/api/', include('apps.administrator.urls')),
     path('aso/api/', include('apps.aso.urls')),
     path('auth/api/', include('apps.users.urls')),
     
-    path(
+        path(
         "doc/",
         include(
             [
                 path(
                     "swagger/",
-                    schema_view.with_ui("swagger", cache_timeout=0),
+                    swagger_protect(schema_view.with_ui("swagger", cache_timeout=0)),
                     name="schema-swagger-ui",
                 ),
                 path(
                     "swagger.json",
-                    schema_view.without_ui(cache_timeout=0),
+                    swagger_protect(schema_view.without_ui(cache_timeout=0)),
                     name="schema-json",
                 ),
                 path(
                     "redoc/",
-                    schema_view.with_ui("redoc", cache_timeout=0),
+                    swagger_protect(schema_view.with_ui("redoc", cache_timeout=0)),
                     name="schema-redoc",
                 ),
             ]
         ),
-    )
+    ),
 ] 
 
 # Serve static and media files based on DEBUG
