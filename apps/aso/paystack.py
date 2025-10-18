@@ -57,7 +57,7 @@ def validate(reference):
         
         try:
             with transaction.atomic():
-                cart = Cart.objects.get(id=cart_id)
+                cart = Cart.objects.get(id=cart_id, is_deleted = False)
                 user = cart.user
 
                 # 1. Create Order

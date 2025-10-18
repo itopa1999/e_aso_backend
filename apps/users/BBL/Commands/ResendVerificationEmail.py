@@ -17,7 +17,7 @@ class ResendVerificationEmailCommand:
         isLogin = validatedData["is_login"]
 
         try:
-            user = User.objects.get(email=email)
+            user = User.objects.get(email=email, is_deleted = False)
 
             # 🔹 Magic login flow
             if isLogin:
@@ -64,7 +64,7 @@ class ResendVerificationEmailCommand:
                     status_code=HTTPStatus.BAD_REQUEST
                 )
 
-            verification, _ = UserVerification.objects.get_or_create(user=user)
+            verification, _ = UserVerification.objects.get_or_create(user=user, is_deleted = False)
             verification.generate_token()
             verification.save()
 

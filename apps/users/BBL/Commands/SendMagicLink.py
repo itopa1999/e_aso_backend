@@ -19,7 +19,7 @@ class SendMagicLinkCommand:
         try:
             email = validatedData.get("email")
             try:
-                user = User.objects.get(email=email)
+                user = User.objects.get(email=email, is_deleted = False)
                 is_new_user = False
             except User.DoesNotExist:
                 is_new_user = True

@@ -11,7 +11,6 @@ from django.core.mail import send_mail
 from apps.users.models import UserVerification
 from utils.permissions import IsCustomerPermission, IsRiderPermission
 from .models import *
-from utils.swagger import TaggedAutoSchema
 from .serializers import *
 from .deliveryFee import delivery_fees
 from .paystack import *
@@ -32,14 +31,13 @@ class OptionalJWTAuthentication(JWTAuthentication):
             # Invalid/expired token → Ignore, treat as anonymous
             return None
 
-# this endpo
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).prefetch_related('items', 'tracking_events')
+        return Order.objects.filter(user=self.request.user, is_deleted = False).prefetch_related('items', 'tracking_events')
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -53,7 +51,7 @@ class OrderDetailView(generics.RetrieveAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user)
+        return Order.objects.filter(user=self.request.user, is_deleted = False)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -74,11 +72,11 @@ class ReorderItemsView(generics.GenericAPIView):
             return Response({"error": "order_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            order = Order.objects.get(id=order_id, user=user)
+            order = Order.objects.get(id=order_id, user=user, is_deleted = False)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        cart, _ = Cart.objects.get_or_create(user=user)
+        cart, _ = Cart.objects.get_or_create(user=user, is_deleted = False)
         items_added = 0
 
         for item in order.items.all():
@@ -102,7 +100,7 @@ class WatchlistProductsView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return Product.objects.filter(watchlist_product__user=user)
+        return Product.objects.filter(watchlist_product__user=user, is_deleted = False)
     
 
 class ToggleWatchlistView(APIView):
@@ -110,7 +108,7 @@ class ToggleWatchlistView(APIView):
     # swagger_schema = TaggedAutoSchema
     def put(self, request, product_id):
         user = request.user
-        watchlist_item, created = WatchList.objects.get_or_create(user=user, product_id=product_id)
+        watchlist_item, created = WatchList.objects.get_or_create(user=user, product_id=product_id, is_deleted = False)
 
         if not created:
             # Already exists, so remove it
@@ -128,7 +126,7 @@ class RemoveAllWatchlistView(APIView):
 
     def delete(self, request):
         user = request.user
-        deleted_count, _ = WatchList.objects.filter(user=user).delete()
+        deleted_count, _ = WatchList.objects.filter(user=user, is_deleted = False).delete()
         return Response({"message": f"{deleted_count} items removed."}, status=status.HTTP_200_OK)
     
     
@@ -139,11 +137,11 @@ class MoveAllToCartView(generics.GenericAPIView):
 
     def post(self, request):
         user = request.user
-        watchlist_items = WatchList.objects.filter(user=user)
+        watchlist_items = WatchList.objects.filter(user=user, is_deleted = False)
         if not watchlist_items.exists():
             return Response({"items_moved": 0}, status=status.HTTP_200_OK)
 
-        cart, _ = Cart.objects.get_or_create(user=user)
+        cart, _ = Cart.objects.get_or_create(user=user, is_deleted = False)
         items_moved = 0
 
         for item in watchlist_items:
@@ -151,7 +149,8 @@ class MoveAllToCartView(generics.GenericAPIView):
             cart_item, created = CartItem.objects.get_or_create(
                 cart=cart,
                 product=product,
-                defaults={'quantity': 1}
+                defaults={'quantity': 1},
+                is_deleted = False
             )
             if created:
                 items_moved += 1
@@ -174,7 +173,7 @@ class AddToCartView(generics.GenericAPIView):
             return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            product = Product.objects.get(id=product_id)
+            product = Product.objects.get(id=product_id, is_deleted = False)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
         
@@ -184,12 +183,13 @@ class AddToCartView(generics.GenericAPIView):
             return Response({"error": "Invalid desc format"}, status=status.HTTP_400_BAD_REQUEST)
 
 
-        cart, _ = Cart.objects.get_or_create(user=request.user)
+        cart, _ = Cart.objects.get_or_create(user=request.user, is_deleted = False)
         items_moved = 0
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
-            defaults={"quantity": int(quantity) if quantity else 1, "desc": desc_data or {}}
+            defaults={"quantity": int(quantity) if quantity else 1, "desc": desc_data or {}},
+            is_deleted = False
         )
 
         if not created:
@@ -213,7 +213,7 @@ class CartDetailAPIView(generics.GenericAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def get(self, request, *args, **kwargs):
-        cart, created = Cart.objects.get_or_create(user=request.user)
+        cart, created = Cart.objects.get_or_create(user=request.user, is_deleted = False)
         serializer = self.get_serializer(cart)
         return Response(serializer.data)
 
@@ -235,7 +235,7 @@ class UpdateCartQuantityView(APIView):
         print(item_id, quantity)
 
         try:
-            item = CartItem.objects.get(id=item_id, cart__user=request.user)
+            item = CartItem.objects.get(id=item_id, cart__user=request.user, is_deleted = False)
             item.quantity = quantity
             item.save()
             return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
@@ -261,7 +261,7 @@ class UpdateCartDescView(APIView):
         print(item_id, desc)
 
         try:
-            item = CartItem.objects.get(id=item_id, cart__user=request.user)
+            item = CartItem.objects.get(id=item_id, cart__user=request.user, is_deleted = False)
             item.desc = desc
             item.save()
             return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
@@ -284,7 +284,7 @@ class RemoveCartItemView(APIView):
         item_id = serializer.validated_data["item_id"]
 
         try:
-            item = CartItem.objects.get(id=item_id, cart__user=request.user)
+            item = CartItem.objects.get(id=item_id, cart__user=request.user, is_deleted = False)
             item.delete()
             return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
 
@@ -368,7 +368,7 @@ class PaystackConfirmSubscriptionView(APIView):
     
     
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.filter(display_product = True)
+    queryset = Product.objects.filter(display_product = True, is_deleted = False)
     authentication_classes = [OptionalJWTAuthentication]
     permission_classes = [AllowAny]
     serializer_class = WatchlistProductSerializer
@@ -414,7 +414,7 @@ class ProductListView(generics.ListAPIView):
     
     
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.filter(display_product=True)
+    queryset = Product.objects.filter(display_product=True, is_deleted = False)
     serializer_class = ProductDetailFullSerializer
     authentication_classes = [OptionalJWTAuthentication]
     permission_classes = [AllowAny]
@@ -449,12 +449,12 @@ class CartAndWatchlistCountView(generics.GenericAPIView):
         watchlist_count = 0
 
         try:
-            cart = Cart.objects.get(user=request.user)
+            cart = Cart.objects.get(user=request.user, is_deleted = False)
             cart_count = cart.items.count()
         except Cart.DoesNotExist:
             pass
 
-        watchlist_count = WatchList.objects.filter(user=request.user).count()
+        watchlist_count = WatchList.objects.filter(user=request.user, is_deleted = False).count()
 
         serializer = CartAndWatchlistCountSerializer({
             'item_count': cart_count,
@@ -470,7 +470,7 @@ class LookUpView(APIView):
     # @swagger_auto_schema(tags=["Categories"])
     # swagger_schema = TaggedAutoSchema
     def get(self, request):
-        lookups = LookUp.objects.all()
+        lookups = LookUp.objects.filter(is_deleted = False)
         serializer = self.serializer_class(lookups, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
@@ -489,7 +489,7 @@ class RiderDashboardView(generics.GenericAPIView):
             "rider_id": rider.rider_number,
             "deliveries_count": Order.objects.filter(
                 dispatcher=rider,
-                delivery_date__isnull=False
+                delivery_date__isnull=False, is_deleted = False
             ).count()
         }
 
@@ -497,7 +497,7 @@ class RiderDashboardView(generics.GenericAPIView):
         search = request.query_params.get("search")
         recent_orders = Order.objects.filter(
             dispatcher=rider,
-            delivery_date__isnull=False
+            delivery_date__isnull=False, is_deleted = False
         )
         if search:
             recent_orders = recent_orders.filter(
@@ -539,17 +539,17 @@ class SendOtpView(generics.GenericAPIView):
 
         # Validate order existence
         try:
-            order = Order.objects.get(order_number=order_number)
+            order = Order.objects.get(order_number=order_number, is_deleted = False)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
         
-        if OrderTracking.objects.filter(order=order, status__in=["delivered", "cancelled"]).exists():
+        if OrderTracking.objects.filter(order=order, status__in=["delivered", "cancelled"], is_deleted = False).exists():
             return Response(
                 {"error": "Order already delivered or cancelled, OTP not required."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        if not OrderTracking.objects.filter(order=order, status="in_transit").exists():
+        if not OrderTracking.objects.filter(order=order, status="in_transit", is_deleted = False).exists():
             return Response(
                 {"error": "Order is not currently in transit, OTP cannot be sent."},
                 status=status.HTTP_400_BAD_REQUEST
@@ -559,7 +559,7 @@ class SendOtpView(generics.GenericAPIView):
         user = order.user
 
         # Create or update verification
-        verification, _ = UserVerification.objects.get_or_create(user=user)
+        verification, _ = UserVerification.objects.get_or_create(user=user, is_deleted = False)
         verification.token = str(random.randint(100000, 999999))
         verification.created_at = timezone.now()
         verification.is_verified = False
@@ -605,13 +605,13 @@ class VerifyOtpView(generics.GenericAPIView):
 
         # Validate order existence
         try:
-            order = Order.objects.get(order_number=order_number)
+            order = Order.objects.get(order_number=order_number, is_deleted = False)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
         # Validate verification record
         try:
-            verification = UserVerification.objects.get(user=order.user)
+            verification = UserVerification.objects.get(user=order.user, is_deleted = False)
         except UserVerification.DoesNotExist:
             return Response({"error": "No OTP found for this user"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -677,7 +677,7 @@ class RiderOderDetailsView(generics.GenericAPIView):
 
         # Validate order existence
         try:
-            order = Order.objects.get(order_number=order_number)
+            order = Order.objects.get(order_number=order_number, is_deleted = False)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -738,7 +738,7 @@ class MarkOrderAsDeliveredView(generics.GenericAPIView):
 
         # Find the order
         try:
-            order = Order.objects.get(order_number=order_number)
+            order = Order.objects.get(order_number=order_number, is_deleted = False)
         except Order.DoesNotExist:
             return Response({"error": "Order not found"}, status=404)
 

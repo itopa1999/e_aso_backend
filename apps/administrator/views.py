@@ -35,14 +35,14 @@ class DashboardAPIView(generics.GenericAPIView):
         last_month_start = last_month_end.replace(day=1)
         
         # --- Current Month Counts ---
-        products_current = Product.objects.filter(created_at__gte=current_month_start).count()
-        orders_current = Order.objects.filter(created_at__gte=current_month_start).count()
-        customers_current = Order.objects.filter(created_at__gte=current_month_start).values('user').distinct().count()
+        products_current = Product.objects.filter(created_at__gte=current_month_start, is_deleted = False).count()
+        orders_current = Order.objects.filter(created_at__gte=current_month_start, is_deleted = False).count()
+        customers_current = Order.objects.filter(created_at__gte=current_month_start, is_deleted = False).values('user').distinct().count()
 
         # --- Last Month Counts ---
-        products_last = Product.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).count()
-        orders_last = Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).count()
-        customers_last = Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end).values('user').distinct().count()
+        products_last = Product.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end, is_deleted = False).count()
+        orders_last = Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end, is_deleted = False).count()
+        customers_last = Order.objects.filter(created_at__gte=last_month_start, created_at__lte=last_month_end, is_deleted = False).values('user').distinct().count()
 
         def calculate_change(current, last):
             if last == 0 and current == 0:
@@ -55,11 +55,11 @@ class DashboardAPIView(generics.GenericAPIView):
         
         order_stats = {
             "total_products": {
-                "value": Product.objects.count(),
+                "value": Product.objects.filter(is_deleted=False).count(),
                 **calculate_change(products_current, products_last),
             },
             "total_orders": {
-                "value": Order.objects.count(),
+                "value": Order.objects.filter(is_deleted=False).count(),
                 **calculate_change(orders_current, orders_last),
             },
             "total_customers": {
@@ -78,7 +78,7 @@ class DashboardAPIView(generics.GenericAPIView):
         )
 
         top_products_data = [
-            {"product": OrderItem.objects.filter(product_id=item['product']).first().product, "sold_count": item['sold_count']}
+            {"product": OrderItem.objects.filter(product_id=item['product'], is_deleted = False).first().product, "sold_count": item['sold_count']}
             for item in top_products_qs
         ]
 
@@ -102,7 +102,7 @@ class DashboardAPIView(generics.GenericAPIView):
         ]
         
         # Recent orders
-        recent_orders = Order.objects.all()[:10]
+        recent_orders = Order.objects.filter(is_deleted = False)[:10]
         recent_orders_serialized = DashboardOrderSerializer(recent_orders, many=True).data
                 
         
@@ -121,7 +121,7 @@ class ProductAPIView(generics.ListAPIView):
     serializer_class = ProductSerializer
     # swagger_schema = TaggedAutoSchema
 
-    queryset = Product.objects.filter(display_product=True)
+    queryset = Product.objects.filter(display_product=True, is_deleted = False)
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ['badge']
     ordering_fields = ['current_price', 'rating', 'created_at']
@@ -161,7 +161,7 @@ class ProductAPIView(generics.ListAPIView):
     
 
 class OrderListView(generics.ListAPIView):
-    queryset = Order.objects.all()
+    queryset = Order.objects.filter(is_deleted = False)
     serializer_class = AdminOrderDetailSerializer
     filter_backends = [DjangoFilterBackend]
     permission_classes = [IsAuthenticated, IsAdminPermission]
@@ -266,14 +266,14 @@ class BulkUpdateProductBadgesView(generics.GenericAPIView):
                 # Update by IDs
                 if product_ids:
                     count_by_id = Product.objects.filter(
-                        id__in=product_ids
+                        id__in=product_ids, is_deleted = False
                     ).update(badge=badge)
                     updated_count += count_by_id
                 
                 # Update by titles
                 if product_titles:
                     count_by_title = Product.objects.filter(
-                        title__in=product_titles
+                        title__in=product_titles, is_deleted = False
                     ).update(badge=badge)
                     updated_count += count_by_title
                 
@@ -321,7 +321,7 @@ class ProductBulkImportView(generics.GenericAPIView):
 class ActivateProductsAPIView(APIView):
     permission_classes = [IsAuthenticated, IsAdminPermission]
     def post(self, request):
-        products_to_update = Product.objects.filter(display_product=False)
+        products_to_update = Product.objects.filter(display_product=False, is_deleted = False)
         count = products_to_update.update(display_product=True)
         return Response({"message": f"{count} products activated."}, status=status.HTTP_200_OK)
     

@@ -48,7 +48,7 @@ def enforce_order_tracking_rules(sender, instance, **kwargs):
     ]
 
     # Get all existing tracking entries for the same order
-    existing_entries = OrderTracking.objects.filter(order=instance.order).order_by('id')
+    existing_entries = OrderTracking.objects.filter(order=instance.order, is_deleted = False).order_by('id')
 
     # Rule 1: Stop if delivered or cancelled already exists
     if existing_entries.filter(status='delivered').exists() or existing_entries.filter(status='cancelled').exists():

@@ -40,7 +40,7 @@ class Product(BaseModel):
     
     def save(self, *args, **kwargs):
         if not self.product_number:
-            last_product = Product.objects.order_by('-id').first()
+            last_product = Product.objects.filter(is_deleted = False).order_by('-id').first()
             next_id = 1 if not last_product else last_product.id + 1
             self.product_number = f"#AO-P-{str(next_id).zfill(4)}"
             
@@ -215,12 +215,12 @@ class Order(BaseModel):
     
     def save(self, *args, **kwargs):
         if not self.order_number:
-            last_order = Order.objects.order_by('-id').first()
+            last_order = Order.objects.filter(is_deleted = False).order_by('-id').first()
             next_id = 1 if not last_order else last_order.id + 1
             self.order_number = f"#AO-OD-{str(next_id).zfill(4)}"
 
         if not self.tracking_number:
-            last_order_tracking = Order.objects.order_by('-id').first()
+            last_order_tracking = Order.objects.filter(is_deleted = False).order_by('-id').first()
             next_id = 1 if not last_order_tracking else last_order_tracking.id + 1
             self.tracking_number = f"#AO-OT-{str(next_id).zfill(4)}"
             

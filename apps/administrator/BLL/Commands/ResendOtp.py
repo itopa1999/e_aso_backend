@@ -11,14 +11,14 @@ class ResendOtpCommand:
     def Execute(email):
         try:
             try:
-                user = User.objects.get(email=email)
+                user = User.objects.get(email=email, is_deleted = False)
             except User.DoesNotExist:
                 return BaseResult(
                     status_code=HTTPStatus.NOT_FOUND,
                     message="User with this email does not exist"
                 )
 
-            verification, created = UserVerification.objects.get_or_create(user=user)
+            verification, created = UserVerification.objects.get_or_create(user=user, is_deleted = False)
 
             if verification.is_verified:
                 return BaseResult(

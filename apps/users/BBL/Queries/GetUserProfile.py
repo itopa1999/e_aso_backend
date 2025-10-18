@@ -9,7 +9,7 @@ class GetUserProfileSummaryQuery:
     @staticmethod
     def query(user):
         try:
-            orders = Order.objects.filter(user=user).order_by('-created_at')
+            orders = Order.objects.filter(user=user, is_deleted = False).order_by('-created_at')
 
             data = {
                 "first_name": user.first_name or "Not set",

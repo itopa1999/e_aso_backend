@@ -112,7 +112,7 @@ class ProductSerializer(serializers.ModelSerializer):
         
     def get_related_orders(self, obj):
         # Get all orders that have this product in their order items
-        orders = Order.objects.filter(items__product=obj).distinct()
+        orders = Order.objects.filter(items__product=obj, is_deleted = False).distinct()
         return DashboardOrderSerializer(orders, many=True).data
 
 
@@ -211,7 +211,7 @@ class OrderTrackingUpdateSerializer(serializers.Serializer):
     comment = serializers.CharField()
 
     def validate_order_number(self, value):
-        if not Order.objects.filter(order_number=value).exists():
+        if not Order.objects.filter(order_number=value, is_deleted = False).exists():
             raise serializers.ValidationError("Order not found.")
         return value
 
@@ -220,7 +220,7 @@ class OrderTrackingUpdateSerializer(serializers.Serializer):
         new_status = self.validated_data['new_status']
         comment = self.validated_data['comment']
 
-        order = Order.objects.get(order_number=order_number)
+        order = Order.objects.get(order_number=order_number, is_deleted = False)
 
         # Create new tracking entry
         new_tracking = OrderTracking.objects.create(
@@ -306,7 +306,7 @@ class BulkUpdateBadgesSerializer(serializers.Serializer):
         """
         if value:
             existing_ids = set(Product.objects.filter(
-                id__in=value
+                id__in=value, is_deleted = False
             ).values_list('id', flat=True))
             
             non_existing_ids = set(value) - existing_ids
@@ -323,7 +323,7 @@ class BulkUpdateBadgesSerializer(serializers.Serializer):
         """
         if value:
             existing_titles = set(Product.objects.filter(
-                title__in=value
+                title__in=value, is_deleted = False
             ).values_list('title', flat=True))
             
             non_existing_titles = set(value) - existing_titles
@@ -382,7 +382,8 @@ class ProductImportSerializer(serializers.Serializer):
 
                 existing_lookup = LookUp.objects.filter(
                     category=lookup_category,
-                    name__iexact=cat_name.strip()
+                    name__iexact=cat_name.strip(),
+                    is_deleted = False
                 ).first()
 
                 if existing_lookup:
@@ -405,7 +406,8 @@ class ProductImportSerializer(serializers.Serializer):
 
                 existing_badge = LookUp.objects.filter(
                     category=lookup_category,
-                    name__iexact=badge_name.strip()
+                    name__iexact=badge_name.strip(),
+                    is_deleted = False
                 ).first()
 
                 if existing_badge:

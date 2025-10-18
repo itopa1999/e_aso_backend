@@ -117,7 +117,7 @@ class WatchlistProductSerializer(serializers.ModelSerializer):
     def get_watchlisted(self, obj):
         request = self.context.get("request")
         if request and request.user and request.user.is_authenticated:
-            return WatchList.objects.filter(user=request.user, product=obj).exists()
+            return WatchList.objects.filter(user=request.user, product=obj, is_deleted = False).exists()
         return False
 
     
@@ -309,7 +309,7 @@ class ProductDetailFullSerializer(serializers.ModelSerializer):
     def get_related_products(self, obj):
         return RelatedProductSerializer(
             Product.objects.filter(
-                category__in=obj.category.all()
+                category__in=obj.category.all(), is_deleted = False
             )
             .exclude(id=obj.id)
             .distinct()[:8],
@@ -320,7 +320,7 @@ class ProductDetailFullSerializer(serializers.ModelSerializer):
     def get_watchlisted(self, obj):
         request = self.context.get("request")
         if request and request.user and request.user.is_authenticated:
-            return WatchList.objects.filter(user=request.user, product=obj).exists()
+            return WatchList.objects.filter(user=request.user, product=obj, is_deleted = False).exists()
         return False
 
 
