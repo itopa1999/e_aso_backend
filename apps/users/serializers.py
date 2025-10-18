@@ -1,6 +1,5 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ParseError
-
+from django.contrib.auth.models import Group
 from apps.aso.models import Order
 from apps.users.models import User
 
@@ -13,10 +12,12 @@ class RegUserSerializer(serializers.ModelSerializer):
         
     def create(self, validated_data):
         user = User.objects.create(
-            # first_name=first_name,
-            # last_name=last_name,
             **validated_data,
         )
+        
+        customer_group, created = Group.objects.get_or_create(name="Customer")
+        user.groups.add(customer_group)
+        
         return user
     
     

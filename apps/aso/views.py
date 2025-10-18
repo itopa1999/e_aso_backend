@@ -9,6 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from django.core.mail import send_mail
 from apps.users.models import UserVerification
+from utils.permissions import IsCustomerPermission, IsRiderPermission
 from .models import *
 from utils.swagger import TaggedAutoSchema
 from .serializers import *
@@ -34,7 +35,7 @@ class OptionalJWTAuthentication(JWTAuthentication):
 # this endpo
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def get_queryset(self):
@@ -48,7 +49,7 @@ class UserOrderListView(generics.ListAPIView):
     
 class OrderDetailView(generics.RetrieveAPIView):
     serializer_class = OrderDetailSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def get_queryset(self):
@@ -62,7 +63,7 @@ class OrderDetailView(generics.RetrieveAPIView):
     
 class ReorderItemsView(generics.GenericAPIView):
     serializer_class = AddToCartCountResponseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def post(self, request):
@@ -96,7 +97,7 @@ class ReorderItemsView(generics.GenericAPIView):
 
 class WatchlistProductsView(generics.ListAPIView):
     serializer_class = WatchlistProductSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def get_queryset(self):
@@ -105,7 +106,7 @@ class WatchlistProductsView(generics.ListAPIView):
     
 
 class ToggleWatchlistView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
     def put(self, request, product_id):
         user = request.user
@@ -122,7 +123,7 @@ class ToggleWatchlistView(APIView):
         
 
 class RemoveAllWatchlistView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def delete(self, request):
@@ -133,7 +134,7 @@ class RemoveAllWatchlistView(APIView):
     
 class MoveAllToCartView(generics.GenericAPIView):
     serializer_class = AddToCartCountResponseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def post(self, request):
@@ -161,7 +162,7 @@ class MoveAllToCartView(generics.GenericAPIView):
     
 class AddToCartView(generics.GenericAPIView):
     serializer_class = AddToCartCountResponseSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
     def post(self, request):
@@ -207,7 +208,7 @@ class AddToCartView(generics.GenericAPIView):
 
 
 class CartDetailAPIView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     serializer_class = CartDetailSerializer
     # swagger_schema = TaggedAutoSchema
 
@@ -219,7 +220,7 @@ class CartDetailAPIView(generics.GenericAPIView):
         
 
 class UpdateCartQuantityView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     serializer_class = UpdateQuantitySerializer
     # swagger_schema = TaggedAutoSchema 
     
@@ -245,7 +246,7 @@ class UpdateCartQuantityView(APIView):
     
     
 class UpdateCartDescView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     serializer_class = UpdateDescSerializer
     # swagger_schema = TaggedAutoSchema 
     
@@ -271,7 +272,7 @@ class UpdateCartDescView(APIView):
 
 
 class RemoveCartItemView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     serializer_class = DeleteItemFromCartSerializer
     # swagger_schema = TaggedAutoSchema
     
@@ -292,7 +293,7 @@ class RemoveCartItemView(APIView):
     
 
 class UpdateCartStateView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
 
     def post(self, request):
         state = request.data.get("state")
@@ -439,7 +440,7 @@ class ProductDetailView(generics.RetrieveAPIView):
     
 
 class CartAndWatchlistCountView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
     serializer_class = OrderDetailSerializer
     # swagger_schema = TaggedAutoSchema
     
@@ -475,44 +476,13 @@ class LookUpView(APIView):
     
     
     
-class ProductBulkImportView(generics.GenericAPIView):
-    # permission_classes = [IsAuthenticated]
-    serializer_class = ProductImportSerializer
-    def post(self, request):
-        if not isinstance(request.data, list):
-            return Response({'error': 'Data must be a list of products'}, status=status.HTTP_400_BAD_REQUEST)
-
-        created_count = 0
-        errors = []
-
-        for idx, item in enumerate(request.data):
-            serializer = ProductImportSerializer(data=item)
-            if serializer.is_valid():
-                serializer.save()
-                created_count += 1
-            else:
-                errors.append({
-                    "index": idx,
-                    "errors": serializer.errors
-                })
-
-        return Response({
-            "message": "Import finished",
-            "products_created": created_count,
-            "errors": errors
-        }, status=status.HTTP_200_OK)
-        
 
 class RiderDashboardView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRiderPermission]
     serializer_class = RiderDashboardSerializer
 
     def get(self, request, *args, **kwargs):
         rider = request.user
-
-        # Only allow if user is a rider
-        if not rider.groups.filter(name__iexact='rider').exists():
-            return Response({"error": "Not authorized"}, status=401)
 
         profile_data = {
             "name": f"{rider.first_name} {rider.last_name}",
@@ -559,15 +529,10 @@ class RiderDashboardView(generics.GenericAPIView):
 
 class SendOtpView(generics.GenericAPIView):
     serializer_class = SendOtpSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRiderPermission]
 
     def post(self, request, *args, **kwargs):
-        rider = request.user
 
-        # Only allow if user is a rider
-        if not rider.groups.filter(name__iexact='rider').exists():
-            return Response({"error": "Not authorized"}, status=401)
-        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order_number = serializer.validated_data["order_number"]
@@ -628,15 +593,10 @@ class SendOtpView(generics.GenericAPIView):
 
 class VerifyOtpView(generics.GenericAPIView):
     serializer_class = VerifyOtpSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRiderPermission]
     
     def post(self, request, *args, **kwargs):
-        rider = request.user
 
-        # Only allow if user is a rider
-        if not rider.groups.filter(name__iexact='rider').exists():
-            return Response({"error": "Not authorized"}, status=401)
-        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -707,15 +667,9 @@ class VerifyOtpView(generics.GenericAPIView):
 
 class RiderOderDetailsView(generics.GenericAPIView):
     serializer_class = RiderOderDetailsSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRiderPermission]
     
-    def post(self, request, *args, **kwargs):
-        rider = request.user
-
-        # Only allow if user is a rider
-        if not rider.groups.filter(name__iexact='rider').exists():
-            return Response({"error": "Not authorized"}, status=401)
-        
+    def post(self, request, *args, **kwargs):        
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -767,14 +721,10 @@ class RiderOderDetailsView(generics.GenericAPIView):
     
 class MarkOrderAsDeliveredView(generics.GenericAPIView):
     serializer_class = MarkOrderAsDeliveredSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsRiderPermission]
     
     def post(self, request, *args, **kwargs):
         rider = request.user
-
-        # Only allow if user is a rider
-        if not rider.groups.filter(name__iexact='rider').exists():
-            return Response({"error": "Not authorized"}, status=401)
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -842,17 +792,6 @@ class MarkOrderAsDeliveredView(generics.GenericAPIView):
             "message": "Order marked as delivered successfully",
             "order_number": order.order_number
         })
-
-    
-    
-    
-    
-class ActivateProductsAPIView(APIView):
-    def post(self, request):
-        products_to_update = Product.objects.filter(display_product=False)
-        count = products_to_update.update(display_product=True)
-        return Response({"message": f"{count} products activated."}, status=status.HTTP_200_OK)
-    
     
 class DeliveryFeeAPIView(APIView):
     authentication_classes = [OptionalJWTAuthentication]

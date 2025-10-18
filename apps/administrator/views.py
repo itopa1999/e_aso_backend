@@ -2,11 +2,9 @@ from django.db.models import Q
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, generics
-
+from rest_framework.views import APIView
 from apps.aso.models import OrderTracking, Product
-
-
-from utils.swagger import TaggedAutoSchema
+from utils.permissions import IsAdminPermission
 from .serializers import *
 # Create your views here. 
 
@@ -26,16 +24,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 
 class DashboardAPIView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = DashboardSerializer
     # swagger_schema = TaggedAutoSchema
     def get(self, request):
-        admin = request.user
-
-        # Only allow if user is a rider
-        if not admin.groups.filter(name__iexact='admin').exists():
-            return Response({"error": "Not authorized"}, status=401)
-        
         
         now = timezone.now()
         current_month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -125,7 +117,7 @@ class DashboardAPIView(generics.GenericAPIView):
         
         
 class ProductAPIView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = ProductSerializer
     # swagger_schema = TaggedAutoSchema
 
@@ -135,12 +127,6 @@ class ProductAPIView(generics.ListAPIView):
     ordering_fields = ['current_price', 'rating', 'created_at']
 
     def get_queryset(self):
-        admin = self.request.user
-
-        # Only allow if user is a rider
-        if not admin.groups.filter(name__iexact='admin').exists():
-            return Response({"error": "Not authorized"}, status=401)
-        
         queryset = super().get_queryset()
 
         # Extract query parameters
@@ -178,14 +164,9 @@ class OrderListView(generics.ListAPIView):
     queryset = Order.objects.all()
     serializer_class = AdminOrderDetailSerializer
     filter_backends = [DjangoFilterBackend]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     
-    def get_queryset(self):
-        admin = self.request.user
-
-        # Only allow if user is a rider
-        if not admin.groups.filter(name__iexact='admin').exists():
-            return Response({"error": "Not authorized"}, status=401)
-        
+    def get_queryset(self):        
         queryset = super().get_queryset()
 
         # Extract query parameters
@@ -208,15 +189,10 @@ class OrderListView(generics.ListAPIView):
     
 
 class UpdateOrderTrackingAPIView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = OrderTrackingUpdateSerializer
 
     def post(self, request, *args, **kwargs):
-        admin = self.request.user
-
-        # Only allow if user is a rider
-        if not admin.groups.filter(name__iexact='admin').exists():
-            return Response({"error": "Not authorized"}, status=401)
         
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -230,13 +206,9 @@ class UpdateOrderTrackingAPIView(generics.GenericAPIView):
 class UserOrderListView(generics.ListAPIView):
     queryset = User.objects.prefetch_related('orders', 'groups').all()
     serializer_class = UserOrderListSerializer
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     
     def get_queryset(self):
-        admin = self.request.user
-
-        # Only allow if user is a rider
-        if not admin.groups.filter(name__iexact='admin').exists():
-            return Response({"error": "Not authorized"}, status=401)
         
         queryset = super().get_queryset()
 
@@ -267,7 +239,7 @@ from django.db import transaction
 
 
 class BulkUpdateProductBadgesView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = BulkUpdateBadgesSerializer
     
     def patch(self, request):
@@ -316,13 +288,48 @@ class BulkUpdateProductBadgesView(generics.GenericAPIView):
                 {"error": f"An error occurred during update: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-            
-            
-            
+
+
+class ProductBulkImportView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, IsAdminPermission]
+    serializer_class = ProductImportSerializer
+    def post(self, request):
+        if not isinstance(request.data, list):
+            return Response({'error': 'Data must be a list of products'}, status=status.HTTP_400_BAD_REQUEST)
+
+        created_count = 0
+        errors = []
+
+        for idx, item in enumerate(request.data):
+            serializer = ProductImportSerializer(data=item)
+            if serializer.is_valid():
+                serializer.save()
+                created_count += 1
+            else:
+                errors.append({
+                    "index": idx,
+                    "errors": serializer.errors
+                })
+
+        return Response({
+            "message": "Import finished",
+            "products_created": created_count,
+            "errors": errors
+        }, status=status.HTTP_200_OK)
+        
+        
+class ActivateProductsAPIView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminPermission]
+    def post(self, request):
+        products_to_update = Product.objects.filter(display_product=False)
+        count = products_to_update.update(display_product=True)
+        return Response({"message": f"{count} products activated."}, status=status.HTTP_200_OK)
+    
+     
 
 class ResendOtpView(generics.GenericAPIView):
     serializer_class = ResendOtpSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     
     def post(self, request):
         serializer = self.get_serializer(data=request.data)

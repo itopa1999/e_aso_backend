@@ -1,13 +1,8 @@
-from django.contrib.auth.hashers import make_password
-from django.core.mail import send_mail
 from django.contrib.auth import get_user_model
-from django.conf import settings
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, redirect
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status, generics
+from rest_framework import generics
 from apps.users.BBL.Commands.MagicLogin import MagicLoginCommand
 from apps.users.BBL.Commands.UpdateUser import UpdateUserCommand
 from apps.users.BBL.Commands.VerifyEmail import VerifyEmailCommand

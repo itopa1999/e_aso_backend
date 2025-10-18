@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ParseError
 
-from apps.aso.models import Category, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
+from apps.aso.models import Category, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
 from apps.users.models import User
+from utils.enum import LookUpsCategories
 
 
 
@@ -332,3 +333,114 @@ class BulkUpdateBadgesSerializer(serializers.Serializer):
                     f"Products with these titles do not exist: {list(non_existing_titles)}"
                 )
         return value
+
+
+class ImportProductColorSerializer(serializers.Serializer):
+    name = serializers.CharField()
+    hex = serializers.CharField()
+
+class ImportProductDetailSerializer(serializers.Serializer):
+    tab = serializers.ChoiceField(choices=["description", "details", "shipping"])
+    content = serializers.CharField()
+
+    
+    
+class ProductImportSerializer(serializers.Serializer):
+    title = serializers.CharField()
+    badge = serializers.CharField()
+    description = serializers.CharField()
+    original_price = serializers.DecimalField(max_digits=10, decimal_places=2)
+    discount_percent = serializers.IntegerField(required=False)
+    rating = serializers.FloatField()
+    category = serializers.ListField(child=serializers.CharField())
+    sizes = serializers.ListField(child=serializers.CharField())
+    colors = ImportProductColorSerializer(many=True)
+    details = ImportProductDetailSerializer(many=True)
+
+    def create(self, validated_data):
+        from decimal import Decimal
+
+        category_names = validated_data.pop('category')
+        size_list = validated_data.pop('sizes')
+        color_list = validated_data.pop('colors')
+        details_list = validated_data.pop('details')
+        badge_name = validated_data.pop('badge', None)
+        
+
+        # Handle categories
+        product = Product.objects.create(
+            title=validated_data['title'],
+            description=validated_data['description'],
+            original_price=validated_data['original_price'],
+            discount_percent=validated_data.get('discount_percent'),
+            rating=validated_data['rating'],
+            display_product = False
+        )
+        for cat_name in category_names:
+            try:
+                lookup_category = LookUpsCategories.PRODUCT_CATEGORY
+
+                existing_lookup = LookUp.objects.filter(
+                    category=lookup_category,
+                    name__iexact=cat_name.strip()
+                ).first()
+
+                if existing_lookup:
+                    product.category.add(existing_lookup)
+                else:
+                    new_lookup = LookUp.objects.create(
+                        name=cat_name.strip(),
+                        category=lookup_category
+                    )
+                    product.category.add(new_lookup)
+                    print(f"✅ Created new lookup '{cat_name}' under category '{lookup_category}'")
+
+            except LookUp.DoesNotExist:
+                print(f"⚠️ Skipping category '{cat_name}' — lookup category not found.")
+                continue
+            
+        if badge_name:
+            try:
+                lookup_category = LookUpsCategories.BADGE_CATEGORY
+
+                existing_badge = LookUp.objects.filter(
+                    category=lookup_category,
+                    name__iexact=badge_name.strip()
+                ).first()
+
+                if existing_badge:
+                    product.badge = existing_badge.name
+                else:
+                    new_badge = LookUp.objects.create(
+                        name=badge_name.strip(),
+                        category=lookup_category
+                    )
+                    product.badge = new_badge.name
+                    print(f"✅ Created new badge '{badge_name}' under category '{lookup_category}'")
+
+                product.save()
+
+            except LookUp.DoesNotExist:
+                print(f"⚠️ Skipping badge '{badge_name}' — lookup category not found.")
+
+
+
+        # Handle sizes
+        for size_label in size_list:
+            ProductSize.objects.create(product=product, size_label=size_label)
+
+        # Handle colors
+        for color in color_list:
+            ProductColor.objects.create(product=product, color_name=color['name'], hex_code=color.get('hex'))
+
+        # Handle details
+        for detail in details_list:
+            ProductDetail.objects.create(
+                product=product,
+                tab=detail['tab'],
+                title=detail['tab'].capitalize(),
+                content=detail['content']
+            )
+
+        return product
+

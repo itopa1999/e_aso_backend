@@ -25,8 +25,6 @@ urlpatterns = [
                 path("cart/update-state/", UpdateCartStateView.as_view(), name="update-cart-state"),
                 path('place-orders/', PlaceOrderView.as_view(), name='place-order'),
                 path('paystack-confirm-subscription/<str:reference>/', PaystackConfirmSubscriptionView.as_view(), name='paystack-confirm-subscription'),
-                path('import-products/', ProductBulkImportView.as_view(), name='import-products'),
-                path('activate-products/', ActivateProductsAPIView.as_view()),
                 path('delivery-fees/', DeliveryFeeAPIView.as_view(), name='delivery-fees'),
                 
                 path('rider/', RiderDashboardView.as_view()),

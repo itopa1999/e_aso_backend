@@ -1,7 +1,6 @@
 # third party imports
 from rest_framework import permissions
 from rest_framework.permissions import BasePermission
-from apps.administrator.models import User
 
 
 class IsOwnerOrReadOnly(BasePermission):
@@ -16,81 +15,44 @@ class IsOwnerOrReadOnly(BasePermission):
         return obj.user == request.user
 
 
-class IsCDSLeaderPermission(BasePermission):
-
+class IsRiderPermission(BasePermission):
+    message = "Access is not granted."
     def has_permission(self, request, view):
         user = request.user
 
         if not user.is_authenticated:
             return False
 
-        if not user.is_superuser and not user.is_cds_leader:
-            self.message = "Your account doesn't have enough. Please contact support."
+        if not user.groups.filter(name='Rider').exists():
             return False
 
         return True
     
 
-class CanPostPermission(BasePermission):
-
+class IsAdminPermission(BasePermission):
+    message = "Access is not granted."
     def has_permission(self, request, view):
         user = request.user
 
         if not user.is_authenticated:
             return False
 
-        if not user.is_superuser and not user.can_post:
-            self.message = "Your access has been blocked. Please contact support."
+        if not user.groups.filter(name='Admin').exists():
             return False
 
         return True
     
     
 
-class CanPostPermission(BasePermission):
-
+class IsCustomerPermission(BasePermission):
+    message = "Access is not granted."
     def has_permission(self, request, view):
         user = request.user
 
         if not user.is_authenticated:
             return False
 
-        if not user.is_superuser and not user.can_chat:
-            self.message = "Your access has been blocked. Please contact support."
-            return False
-
-        return True
-    
-    
-    
-    
-    
-class CanCommentPermission(BasePermission):
-
-    def has_permission(self, request, view):
-        user = request.user
-
-        if not user.is_authenticated:
-            return False
-
-        if not user.is_superuser and not user.can_comment:
-            self.message = "Your access has been blocked. Please contact support."
-            return False
-
-        return True
-    
-    
-    
-class IsSuperAdminPermission(BasePermission):
-
-    def has_permission(self, request, view):
-        user = request.user
-
-        if not user.is_authenticated:
-            return False
-
-        if not user.is_superuser:
-            self.message = "Your access has been blocked. Please contact support."
+        if not user.groups.filter(name='Customer').exists():
             return False
 
         return True

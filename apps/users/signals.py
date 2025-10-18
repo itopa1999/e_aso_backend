@@ -8,7 +8,7 @@ def assign_rider_number(sender, instance, action, reverse, pk_set, **kwargs):
     if action == "post_add" and not reverse:
         # Get the "Rider" group
         try:
-            rider_group = Group.objects.get(name__iexact="rider")
+            rider_group, created = Group.objects.get_or_create(name__iexact="Rider")
         except Group.DoesNotExist:
             return
         
