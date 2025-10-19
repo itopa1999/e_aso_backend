@@ -8,6 +8,21 @@ from rest_framework import status, generics
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from django.core.mail import send_mail
+from apps.aso.BBL.Commands.Cart.AddToCart import AddToCartCommand
+from apps.aso.BBL.Commands.Cart.MoveAllToCart import MoveAllToCartCommand
+from apps.aso.BBL.Commands.Cart.RemoveCartItem import RemoveCartItemCommand
+from apps.aso.BBL.Commands.Cart.UpdateCartDesc import UpdateCartDescCommand
+from apps.aso.BBL.Commands.Cart.UpdateCartQuantity import UpdateCartQuantityCommand
+from apps.aso.BBL.Commands.Cart.UpdateCartState import UpdateCartStateCommand
+from apps.aso.BBL.Commands.Watchlist.RemoveAllWatchlist import RemoveAllWatchlistCommand
+from apps.aso.BBL.Commands.Cart.ReorderItems import ReorderItemsCommand
+from apps.aso.BBL.Commands.Watchlist.ToggleWatchlist import ToggleWatchlistCommand
+from apps.aso.BBL.Commands.Cart.PlaceOrder import PlaceOrderCommand
+from apps.aso.BBL.Queries.Cart.GetCartDetails import GetCartDetailQuery
+from apps.aso.BBL.Queries.Cart.PaystackConfirm import PaystackConfirmQuery
+from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProductsQuery
+from apps.aso.BBL.Queries.Watchlist.OrderDetails import OrderDetailQuery
+from apps.aso.BBL.Queries.Order.UserOrderList import UserOrderListQuery
 from apps.users.models import UserVerification
 from utils.permissions import IsCustomerPermission, IsRiderPermission
 from .models import *
@@ -34,10 +49,10 @@ class OptionalJWTAuthentication(JWTAuthentication):
 class UserOrderListView(generics.ListAPIView):
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated, IsCustomerPermission]
-    # swagger_schema = TaggedAutoSchema
 
-    def get_queryset(self):
-        return Order.objects.filter(user=self.request.user, is_deleted = False).prefetch_related('items', 'tracking_events')
+    def get(self, request):
+        result = UserOrderListQuery.query(self.request.user)
+        return Response(result.to_dict(), status=result.status_code)
     
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -50,8 +65,9 @@ class OrderDetailView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
-    def get_queryset(self):
-        return Order.objects.filter(user=self.request.user, is_deleted = False)
+    def get(self, request, pk):
+        result = OrderDetailQuery.query(self.request.user, pk)
+        return Response(result.to_dict(), status=result.status_code)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -66,30 +82,8 @@ class ReorderItemsView(generics.GenericAPIView):
 
     def post(self, request):
         order_id = request.GET.get("order_id")
-        user = request.user
-
-        if not order_id:
-            return Response({"error": "order_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            order = Order.objects.get(id=order_id, user=user, is_deleted = False)
-        except Order.DoesNotExist:
-            return Response({"error": "Order not found"}, status=status.HTTP_404_NOT_FOUND)
-
-        cart, _ = Cart.objects.get_or_create(user=user, is_deleted = False)
-        items_added = 0
-
-        for item in order.items.all():
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                product=item.product,
-                defaults={"quantity": item.quantity}
-            )
-            if created:
-                items_added += 1
-
-        serializer = AddToCartCountResponseSerializer({"items_added": items_added})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        result = ReorderItemsCommand.execute(request.user, order_id)
+        return Response(result.to_dict(), status=result.status_code)
     
 
 
@@ -98,26 +92,17 @@ class WatchlistProductsView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
 
-    def get_queryset(self):
-        user = self.request.user
-        return Product.objects.filter(watchlist_product__user=user, is_deleted = False)
+    def get(self, request):
+        result = GetWatchlistProductsQuery.query(request.user)
+        return Response(result.to_dict(), status=result.status_code)
     
 
 class ToggleWatchlistView(APIView):
     permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
     def put(self, request, product_id):
-        user = request.user
-        watchlist_item, created = WatchList.objects.get_or_create(user=user, product_id=product_id, is_deleted = False)
-
-        if not created:
-            # Already exists, so remove it
-            watchlist_item.delete()
-            return Response({"watchlisted": False}, status=status.HTTP_200_OK)
-        else:
-            # Newly added
-            return Response({"watchlisted": True}, status=status.HTTP_200_OK)
-        
+        result = ToggleWatchlistCommand.execute(request.user, product_id)
+        return Response(result.to_dict(), status=result.status_code)
         
 
 class RemoveAllWatchlistView(APIView):
@@ -125,10 +110,8 @@ class RemoveAllWatchlistView(APIView):
     # swagger_schema = TaggedAutoSchema
 
     def delete(self, request):
-        user = request.user
-        deleted_count, _ = WatchList.objects.filter(user=user, is_deleted = False).delete()
-        return Response({"message": f"{deleted_count} items removed."}, status=status.HTTP_200_OK)
-    
+        result = RemoveAllWatchlistCommand.execute(request.user)
+        return Response(result.to_dict(), status=result.status_code)
     
 class MoveAllToCartView(generics.GenericAPIView):
     serializer_class = AddToCartCountResponseSerializer
@@ -136,27 +119,8 @@ class MoveAllToCartView(generics.GenericAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def post(self, request):
-        user = request.user
-        watchlist_items = WatchList.objects.filter(user=user, is_deleted = False)
-        if not watchlist_items.exists():
-            return Response({"items_moved": 0}, status=status.HTTP_200_OK)
-
-        cart, _ = Cart.objects.get_or_create(user=user, is_deleted = False)
-        items_moved = 0
-
-        for item in watchlist_items:
-            product = item.product
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                product=product,
-                defaults={'quantity': 1},
-                is_deleted = False
-            )
-            if created:
-                items_moved += 1
-
-        serializer = AddToCartCountResponseSerializer({"items_added": items_moved})
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        result = MoveAllToCartCommand.execute(request.user)
+        return Response(result.to_dict(), status=result.status_code)
     
     
 class AddToCartView(generics.GenericAPIView):
@@ -165,57 +129,22 @@ class AddToCartView(generics.GenericAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def post(self, request):
-        product_id = request.GET.get("product_id")
-        quantity = request.GET.get("quantity")
-        desc = request.data.get("desc", "{}") 
-
-        if not product_id:
-            return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            product = Product.objects.get(id=product_id, is_deleted = False)
-        except Product.DoesNotExist:
-            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
-        
-        try:
-            desc_data = json.loads(desc) if isinstance(desc, str) else desc
-        except json.JSONDecodeError:
-            return Response({"error": "Invalid desc format"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-        cart, _ = Cart.objects.get_or_create(user=request.user, is_deleted = False)
-        items_moved = 0
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-            defaults={"quantity": int(quantity) if quantity else 1, "desc": desc_data or {}},
-            is_deleted = False
+        result = AddToCartCommand.execute(
+            user=request.user,
+            product_id=request.GET.get("product_id"),
+            quantity=request.GET.get("quantity"),
+            desc=request.data.get("desc", "{}")
         )
-
-        if not created:
-            # Update quantity and desc if already in cart
-            if quantity is not None:
-                cart_item.quantity = int(quantity)
-            if desc_data:
-                cart_item.desc = desc_data
-            cart_item.save()
-        else:
-            items_moved += 1
-
-        serializer = AddToCartCountResponseSerializer({"items_added": items_moved})
-        return Response(serializer.data, status=status.HTTP_200_OK)
-        
-
-
+        return Response(result.to_dict(), status=result.status_code)
+    
 class CartDetailAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsCustomerPermission]
     serializer_class = CartDetailSerializer
     # swagger_schema = TaggedAutoSchema
 
     def get(self, request, *args, **kwargs):
-        cart, created = Cart.objects.get_or_create(user=request.user, is_deleted = False)
-        serializer = self.get_serializer(cart)
-        return Response(serializer.data)
+        result = GetCartDetailQuery.query(request.user)
+        return Response(result.to_dict(), status=result.status_code)
 
         
 
@@ -226,23 +155,8 @@ class UpdateCartQuantityView(APIView):
     
     def patch(self, request):
         serializer = UpdateQuantitySerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-        item_id = serializer.validated_data["item_id"]
-        quantity = serializer.validated_data["quantity"]
-        
-        print(item_id, quantity)
-
-        try:
-            item = CartItem.objects.get(id=item_id, cart__user=request.user, is_deleted = False)
-            item.quantity = quantity
-            item.save()
-            return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
-
-        except CartItem.DoesNotExist:
-            return Response({"detail": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
-    
+        result = UpdateCartQuantityCommand.execute(request.user, serializer)
+        return Response(result.to_dict(), status=result.status_code)
     
     
 class UpdateCartDescView(APIView):
@@ -252,23 +166,8 @@ class UpdateCartDescView(APIView):
     
     def patch(self, request):
         serializer = UpdateDescSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-        item_id = serializer.validated_data["item_id"]
-        desc = serializer.validated_data["desc"]
-        
-        print(item_id, desc)
-
-        try:
-            item = CartItem.objects.get(id=item_id, cart__user=request.user, is_deleted = False)
-            item.desc = desc
-            item.save()
-            return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
-
-        except CartItem.DoesNotExist:
-            return Response({"detail": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
-    
+        result = UpdateCartDescCommand.execute(request.user, serializer)
+        return Response(result.to_dict(), status=result.status_code)
 
 
 class RemoveCartItemView(APIView):
@@ -278,19 +177,8 @@ class RemoveCartItemView(APIView):
     
     def delete(self, request):
         serializer = DeleteItemFromCartSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({'error': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-        
-        item_id = serializer.validated_data["item_id"]
-
-        try:
-            item = CartItem.objects.get(id=item_id, cart__user=request.user, is_deleted = False)
-            item.delete()
-            return Response({'message:': 'Ok'}, status=status.HTTP_200_OK)
-
-        except CartItem.DoesNotExist:
-            return Response({"error": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
-    
+        result = RemoveCartItemCommand.execute(request.user, serializer)
+        return Response(result.to_dict(), status=result.status_code)
 
 class UpdateCartStateView(APIView):
     permission_classes = [IsAuthenticated, IsCustomerPermission]
@@ -298,15 +186,10 @@ class UpdateCartStateView(APIView):
     def post(self, request):
         state = request.data.get("state")
 
-        try:
-            cart = request.user.cart
-        except Cart.DoesNotExist:
-            pass
-        cart.state = state
-        cart.save()
-        return Response(status=200)
+        result = UpdateCartStateCommand.execute(request.user, state)
+        return Response(result.to_dict(), status=result.status_code)
     
-    
+   
 class PlaceOrderView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ShippingInfoSerializer
@@ -314,59 +197,17 @@ class PlaceOrderView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data.get("shipping_info"))
         serializer.is_valid(raise_exception=True)
-        
         shipping_data = serializer.validated_data
 
-        try:
-            cart = request.user.cart
-        except Cart.DoesNotExist:
-            return Response({"error": "Cart not found."}, status=status.HTTP_400_BAD_REQUEST)
-
-        expected_total = cart.total()
-        user_total = Decimal(shipping_data["total"])
-
-        if expected_total != user_total:
-            return Response({
-                "error": f"Total mismatch. Expected ₦{expected_total}, got ₦{user_total}"
-            }, status=status.HTTP_400_BAD_REQUEST)
-
-        # Print shipping info
-        print("Received Order Shipping Info:")
-        for key, value in shipping_data.items():
-            print(f"{key}: {value}")
-            
-        checkout_link = initiate(request, user=request.user, cart_id=cart.id, data=shipping_data)
-
-        if not checkout_link:
-            return Response({"error": "Payment initialization failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response({
-            "message": "Order initialized successfully.",
-            "checkout_url": checkout_link,
-        }, status=status.HTTP_200_OK) 
+        result = PlaceOrderCommand.execute(request, shipping_data)
+        return Response(result.to_dict(), status=result.status_code)
         
         
 class PaystackConfirmSubscriptionView(APIView):
     def get(self, request, reference, *args, **kwargs):
-        if not reference:
-            return Response({"error": "No reference provided"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        result = validate(reference)
+        return PaystackConfirmQuery.execute(reference)
 
-        if result.get("success"):
-            order = result.get("order")
-            return redirect(
-                f"{settings.BASE_URL}/order-success.html"
-                f"?order_id={order['id']}"
-                f"&order_number={order['order_number']}"
-                f"&amount={order['amount']}"
-                f"&created_at={order['created_at']}"
-            )
-        else:
-            return Response({"error": result["error"]}, status=status.HTTP_400_BAD_REQUEST)
 
-    
-    
 class ProductListView(generics.ListAPIView):
     queryset = Product.objects.filter(display_product = True, is_deleted = False)
     authentication_classes = [OptionalJWTAuthentication]

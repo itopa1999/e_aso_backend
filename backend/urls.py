@@ -29,6 +29,7 @@ urlpatterns = [
     # path('admins/api/', include('apps.administrator.urls')),
     path('aso/api/', include('apps.aso.urls')),
     path('auth/api/', include('apps.users.urls')),
+    path('rider/api/', include('apps.rider.urls')),
     
         path(
         "doc/",

@@ -32,10 +32,7 @@ urlpatterns = [
                 path('orders/verify-otp/', VerifyOtpView.as_view(), name='verify-otp'),
                 path('orders/confirm/', MarkOrderAsDeliveredView.as_view()),
                 path('orders/rider-details/', RiderOderDetailsView.as_view()),
-                
-                
-                
             ]
         )
-    ),
+    ),                
 ]
