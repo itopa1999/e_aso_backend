@@ -68,7 +68,6 @@ class VerifyOtpView(generics.GenericAPIView):
             request, order_number, otp
         )
         
-        print(result.to_dict())
         return Response(result.to_dict(), status=result.status_code)
 
 

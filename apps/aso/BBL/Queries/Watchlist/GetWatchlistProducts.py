@@ -7,14 +7,14 @@ from utils.base_result import BaseResultWithData
 
 class GetWatchlistProductsQuery:
     @staticmethod
-    def query(user):
+    def query(user, request=None):
         try:
             queryset = Product.objects.filter(
                 watchlist_product__user=user,
                 is_deleted=False
             )
 
-            serializer = WatchlistProductSerializer(queryset, many=True)
+            serializer = WatchlistProductSerializer(queryset, many=True, context={"request": request})
             return BaseResultWithData(
                 data=serializer.data,
                 status_code=HTTPStatus.OK,

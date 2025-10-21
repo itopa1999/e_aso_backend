@@ -6,6 +6,7 @@ from rest_framework import status, generics
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import OrderingFilter
 from apps.aso.BBL.Commands.Cart.AddToCart import AddToCartCommand
+from apps.aso.BBL.Commands.Cart.DeleteAllCartsItems import DeleteAllCartItemsCommand
 from apps.aso.BBL.Commands.Cart.MoveAllToCart import MoveAllToCartCommand
 from apps.aso.BBL.Commands.Cart.RemoveCartItem import RemoveCartItemCommand
 from apps.aso.BBL.Commands.Cart.UpdateCartDesc import UpdateCartDescCommand
@@ -90,8 +91,11 @@ class WatchlistProductsView(generics.ListAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def get(self, request):
-        result = GetWatchlistProductsQuery.query(request.user)
+        result = GetWatchlistProductsQuery.query(request.user, request)
         return Response(result.to_dict(), status=result.status_code)
+    
+    def get_serializer_context(self):
+        return {"request": self.request}
     
 
 class ToggleWatchlistView(APIView):
@@ -186,6 +190,19 @@ class UpdateCartStateView(APIView):
         result = UpdateCartStateCommand.execute(request.user, state)
         return Response(result.to_dict(), status=result.status_code)
     
+    
+class ClearCartView(APIView):
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
+
+    def delete(self, request):
+        """Delete all cart items for the authenticated user."""
+        user = request.user
+        
+        result = DeleteAllCartItemsCommand.execute(user)
+        return Response(result.to_dict(), status=result.status_code)
+        
+        
+        
    
 class PlaceOrderView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
@@ -271,3 +288,5 @@ class DeliveryFeeAPIView(APIView):
 
     def get(self, request):
         return Response({"delivery_fees": delivery_fees})
+    
+    

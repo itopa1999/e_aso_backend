@@ -1,4 +1,5 @@
 from django.db import models
+from django.forms import ValidationError
 from apps.users.models import User
 from django.contrib.auth import get_user_model
 from decimal import Decimal
@@ -7,6 +8,7 @@ from datetime import timedelta
 
 from apps.aso.deliveryFee import DELIVERY_FEES
 from utils.base_model import BaseModel
+from utils.enum import FeatureNames
 # Create your models here.
 
 
@@ -325,3 +327,36 @@ class OrderReturn(BaseModel):
     def __str__(self):
         return f"return request for Order {self.order.order_number}"
 
+
+class FeatureFlag(BaseModel):
+    name = models.CharField(max_length=100, unique=True, choices=FeatureNames.choices())
+    users = models.ManyToManyField(
+        User,
+        related_name="feature_flags",
+        blank=True,
+        help_text="Specific users who have access to this feature when enabled."
+    )
+    description = models.TextField(blank=True, null=True)
+    is_enabled = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ["name"]
+        verbose_name = "Feature Flag"
+        verbose_name_plural = "Feature Flags"
+
+    def __str__(self):
+        return f"{self.name} ({'Enabled' if self.is_enabled else 'Disabled'})"
+    
+    def clean(self):
+        """
+        Validate that 'name' is defined in the FeatureNames Enum before saving.
+        """
+        if self.name not in FeatureNames.values():
+            raise ValidationError({
+                "name": f"'{self.name}' is not a valid feature name. Must be one of: {', '.join(FeatureNames.values())}"
+            })
+
+    def save(self, *args, **kwargs):
+        # Ensure validation runs before saving
+        self.full_clean()
+        super().save(*args, **kwargs)

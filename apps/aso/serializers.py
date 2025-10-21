@@ -89,6 +89,7 @@ class WatchlistProductSerializer(serializers.ModelSerializer):
     current_price = serializers.SerializerMethodField()
     short_description = serializers.SerializerMethodField()
     watchlisted = serializers.SerializerMethodField()
+    cart_added = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -103,7 +104,8 @@ class WatchlistProductSerializer(serializers.ModelSerializer):
             'discount_percent',
             'rating',
             'reviews_count',
-            'watchlisted'
+            'watchlisted',
+            'cart_added',
         ]
     
     def get_current_price(self, obj):
@@ -116,6 +118,16 @@ class WatchlistProductSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request and request.user and request.user.is_authenticated:
             return WatchList.objects.filter(user=request.user, product=obj, is_deleted = False).exists()
+        return False
+    
+    def get_cart_added(self, obj):
+        request = self.context.get("request")
+        if request and request.user and request.user.is_authenticated:
+            return CartItem.objects.filter(
+                cart__user=request.user,
+                product=obj,
+                is_deleted=False
+            ).exists()
         return False
 
     

@@ -1,16 +1,25 @@
-# apps/aso/commands/add_to_cart_command.py
 from http import HTTPStatus
 import json
+import logging
 from apps.aso.models import Product, Cart, CartItem
 from utils.base_result import BaseResultWithData
+from utils.log_helpers import OperationLogger
 
 
 class AddToCartCommand:
     @staticmethod
     def execute(user, product_id, quantity=None, desc=None):
+        op = OperationLogger(
+            "AddToCartCommand",
+            user=user.id if user else "Anonymous",
+            product_id=product_id
+        )
+        op.start()
+        
         try:
             product = Product.objects.get(id=product_id, is_deleted=False)
-        except Product.DoesNotExist:
+        except Product.DoesNotExist as e:
+            op.fail("Product not found", e)
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.NOT_FOUND,
@@ -19,7 +28,8 @@ class AddToCartCommand:
 
         try:
             desc_data = json.loads(desc) if isinstance(desc, str) else desc
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            op.fail("Invalid desc format", e)
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,
@@ -45,6 +55,7 @@ class AddToCartCommand:
         else:
             items_added += 1
 
+        op.success("Item added to cart")
         return BaseResultWithData(
             data={"items_added": items_added},
             status_code=HTTPStatus.OK,

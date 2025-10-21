@@ -2,7 +2,7 @@ from django.contrib import admin
 
 from utils.base_admin import BaseAdmin
 from .models import (
-    Cart, CartItem, Order, OrderFeedBack, OrderItem, OrderReturn, 
+    Cart, CartItem, FeatureFlag, Order, OrderFeedBack, OrderItem, OrderReturn, 
     OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, 
     ProductDetail, ProductImage, LookUp, ShippingAddress, WatchList
 )
@@ -122,5 +122,19 @@ class LookUpAdmin(BaseAdmin):
     custom_fieldsets  = (
         ("Lookup Information", {
             "fields": ("name", "category", "description")
+        }),
+    )
+    
+
+@admin.register(FeatureFlag)
+class FeatureFlagAdmin(BaseAdmin):
+    list_display = ("name", "is_enabled", "created_at", "modified_at")
+    search_fields = ("name", "description")
+    list_filter = ("is_enabled",)
+    filter_horizontal = ("users",)
+
+    custom_fieldsets = (
+        ("Feature Information", {
+            "fields": ("name", "description", "is_enabled", "users")
         }),
     )

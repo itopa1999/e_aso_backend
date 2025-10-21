@@ -3,6 +3,8 @@
 import os
 import sys
 
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
 
 def main():
     """Run administrative tasks."""
