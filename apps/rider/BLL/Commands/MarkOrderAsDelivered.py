@@ -6,14 +6,18 @@ from django.conf import settings
 from apps.aso.models import Order, OrderFeedBack, OrderTracking
 from utils.base_result import BaseResult, BaseResultWithData
 from utils.email_sender import send_custom_email
+from utils.log_helpers import OperationLogger
 
 
 class MarkOrderAsDeliveredCommand:
     @staticmethod
     def execute(order_number, rider, delivery_notes, stars):
+        op = OperationLogger("MarkOrderAsDeliveredCommand", order_number=order_number, rider=rider)
+        op.start()
         try:
             order = Order.objects.get(order_number=order_number, is_deleted=False)
         except Order.DoesNotExist:
+            op.fail("Order not found")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.NOT_FOUND, 
@@ -21,6 +25,7 @@ class MarkOrderAsDeliveredCommand:
             )
             
         if not stars or not str(stars).isdigit() or not (1 <= int(stars) <= 5):
+            op.fail("Invalid star rating")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST, 
@@ -54,6 +59,8 @@ class MarkOrderAsDeliveredCommand:
             """,
             greeting_name=order.user.first_name or "Valued Customer"
         )
+        
+        op.success("Order marked as delivered successfully")
         
         return BaseResultWithData(
                 data={"order_number": order.order_number},

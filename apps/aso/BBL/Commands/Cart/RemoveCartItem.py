@@ -1,12 +1,17 @@
 from http import HTTPStatus
 from apps.aso.models import CartItem
 from utils.base_result import BaseResultWithData
+from utils.log_helpers import OperationLogger
 
 
 class RemoveCartItemCommand:
     @staticmethod
     def execute(user, serializer):
+        op = OperationLogger("Remove cart item", user=user.id if user else "Anonymous")
+        op.start()
+        
         if not serializer.is_valid():
+            op.fail("Invalid serializer data")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,
@@ -23,6 +28,8 @@ class RemoveCartItemCommand:
             )
 
             item.delete()
+            
+            op.success(f"Removed cart item {item_id}")
 
             return BaseResultWithData(
                 data={"item_id": item_id},
@@ -31,12 +38,14 @@ class RemoveCartItemCommand:
             )
 
         except CartItem.DoesNotExist:
+            op.fail(f"Cart item {item_id} not found")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.NOT_FOUND,
                 message="Cart item not found"
             )
         except Exception as e:
+            op.fail(str(e))
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

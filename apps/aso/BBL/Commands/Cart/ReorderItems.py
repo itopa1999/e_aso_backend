@@ -2,12 +2,17 @@ from apps.aso.models import Order, Cart, CartItem
 from apps.aso.serializers import AddToCartCountResponseSerializer
 from http import HTTPStatus
 from utils.base_result import BaseResultWithData
+from utils.log_helpers import OperationLogger
 
 class ReorderItemsCommand:
 
     @staticmethod
     def execute(user, order_id):
+        op = OperationLogger("Reorder items", user=user.id if user else "Anonymous")
+        op.start()
+        
         if not order_id:
+            op.fail("Missing order_id")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,
@@ -16,6 +21,7 @@ class ReorderItemsCommand:
         try:
             order = Order.objects.get(id=order_id, user=user, is_deleted = False)
         except Order.DoesNotExist:
+            op.fail(f"Order {order_id} not found")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.NOT_FOUND,
@@ -35,6 +41,8 @@ class ReorderItemsCommand:
                 items_added += 1
 
         serializer = AddToCartCountResponseSerializer({"items_added": items_added})
+        
+        op.success(f"Reordered {items_added} items from order {order_id}")
         return BaseResultWithData(
             data=serializer.data,
             status_code=HTTPStatus.OK,

@@ -33,7 +33,15 @@ class ProductImageInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(BaseAdmin):
-    list_display = ('title', 'current_price', 'badge', 'category_names', 'created_at')
+    custom_fieldsets  = (
+        ("Information", {
+            "fields": ('title', 'badge',
+                       'category', 'created_at',
+                       'description','current_price', 'original_price',
+                       'discount_percent','rating','reviews_count', 'main_image',
+                       'display_product')
+        }),
+    )
     search_fields = ('title',)
     list_filter = ('badge', 'created_at', 'category')
     # prepopulated_fields = {'slug': ('title',)}

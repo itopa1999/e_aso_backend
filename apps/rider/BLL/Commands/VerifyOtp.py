@@ -3,14 +3,18 @@ from django.utils import timezone
 from apps.aso.models import Order
 from utils.base_result import BaseResult, BaseResultWithData
 from apps.users.models import UserVerification
+from utils.log_helpers import OperationLogger
 
 
 class VerifyOtpCommand:
     @staticmethod
     def execute(request, order_number, otp):
+        op = OperationLogger("VerifyOtpCommand", order_number=order_number, otp=otp)
+        op.start()
         try:
             order = Order.objects.get(order_number=order_number, is_deleted=False)
         except Order.DoesNotExist:
+            op.fail("Order not found")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.NOT_FOUND, 
@@ -20,6 +24,7 @@ class VerifyOtpCommand:
         try:
             verification = UserVerification.objects.get(user=order.user, is_deleted=False)
         except UserVerification.DoesNotExist:
+            op.fail("No OTP found for user")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST, 
@@ -27,6 +32,7 @@ class VerifyOtpCommand:
             )
 
         if timezone.now() > verification.created_at + timezone.timedelta(minutes=10):
+            op.fail("OTP expired")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST, 
@@ -34,6 +40,7 @@ class VerifyOtpCommand:
             )
 
         if int(verification.token) != int(otp):
+            op.fail("Invalid OTP")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST, 
@@ -74,6 +81,8 @@ class VerifyOtpCommand:
                 "items": order_items_data
             }
         }
+        
+        op.success(f"OTP verified successfully for order {order_number}")
         
         return BaseResultWithData(
             data=order_data,

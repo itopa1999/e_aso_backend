@@ -12,7 +12,8 @@ class AddToCartCommand:
         op = OperationLogger(
             "AddToCartCommand",
             user=user.id if user else "Anonymous",
-            product_id=product_id
+            product_id=product_id,
+            quantity=quantity
         )
         op.start()
         

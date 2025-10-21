@@ -45,3 +45,4 @@ class RiderDashboardQuery:
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
                 message=str(e)
             )
+

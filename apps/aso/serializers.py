@@ -306,6 +306,7 @@ class ProductDetailFullSerializer(serializers.ModelSerializer):
     images = ProductImageSerializer(many=True)
     related_products = serializers.SerializerMethodField()
     watchlisted = serializers.SerializerMethodField()
+    cart_added = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -313,7 +314,7 @@ class ProductDetailFullSerializer(serializers.ModelSerializer):
             'id', 'product_number', 'title', 'description', 'badge', 'main_image',
             'current_price', 'original_price', 'discount_percent',
             'rating', 'reviews_count', 'category', 'colors', 'sizes',
-            'details', 'images', 'related_products', 'watchlisted', 'created_at'
+            'details', 'images', 'related_products', 'watchlisted', 'created_at', 'cart_added'
         ]
         
     def get_related_products(self, obj):
@@ -331,6 +332,16 @@ class ProductDetailFullSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request and request.user and request.user.is_authenticated:
             return WatchList.objects.filter(user=request.user, product=obj, is_deleted = False).exists()
+        return False
+        
+    def get_cart_added(self, obj):
+        request = self.context.get("request")
+        if request and request.user and request.user.is_authenticated:
+            return CartItem.objects.filter(
+                cart__user=request.user,
+                product=obj,
+                is_deleted=False
+            ).exists()
         return False
 
 

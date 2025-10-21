@@ -1,12 +1,16 @@
 from http import HTTPStatus
 from apps.aso.models import CartItem
 from utils.base_result import BaseResultWithData
+from utils.log_helpers import OperationLogger
 
 
 class UpdateCartQuantityCommand:
     @staticmethod
     def execute(user, serializer):
+        op = OperationLogger("Update cart quantity", user=user.id if user else "Anonymous")
+        op.start()
         if not serializer.is_valid():
+            op.fail("Invalid serializer data")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,
@@ -26,6 +30,7 @@ class UpdateCartQuantityCommand:
             item.quantity = quantity
             item.save()
 
+            op.success(f"Updated item {item_id} to quantity {quantity}")
             return BaseResultWithData(
                 data={"item_id": item.id, "quantity": item.quantity},
                 status_code=HTTPStatus.OK,
@@ -33,12 +38,14 @@ class UpdateCartQuantityCommand:
             )
 
         except CartItem.DoesNotExist:
+            op.fail(f"Cart item {item_id} not found")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.NOT_FOUND,
                 message="Cart item not found"
             )
         except Exception as e:
+            op.fail(str(e))
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.INTERNAL_SERVER_ERROR,

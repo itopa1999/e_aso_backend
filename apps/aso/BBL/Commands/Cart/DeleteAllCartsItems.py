@@ -10,17 +10,18 @@ class DeleteAllCartItemsCommand:
         op = OperationLogger(
             "Delete all cart items",
             user=user.id if user else "Anonymous",
-            product_id="None"
         )
         op.start()
         
         deleted_count = CartItem.objects.filter(cart__user=user, is_deleted=False).delete()
         if deleted_count == 0:
+            op.fail("No items to delete")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,
                 message="Already empty"
             )
+        op.success(f"Deleted {deleted_count} cart items")
         return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.OK,
