@@ -1,9 +1,12 @@
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from django.core.mail import send_mail
 from django.conf import settings
 from django.forms import ValidationError
-from .models import OrderTracking
+
+from utils.cache_manager import GlobalCache
+from utils.enum import CacheKeys
+from .models import Cart, CartItem, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, ShippingAddress, WatchList
 import textwrap
 
 @receiver(post_save, sender=OrderTracking)
@@ -73,3 +76,76 @@ def enforce_order_tracking_rules(sender, instance, **kwargs):
             # First status must be 'placed'
             if instance.status != 'placed':
                 raise ValidationError("First tracking status must be 'placed'.")
+            
+            
+            
+def clear_order_cache(user_id, order_id=None):
+    """Clear both user order list and order detail cache."""
+    if not user_id:
+        return
+
+    # Clear user’s order list cache
+    GlobalCache.delete(CacheKeys.format(CacheKeys.USER_ORDERS, user_id=user_id))
+
+    # Clear specific order detail cache (if provided)
+    if order_id:
+        GlobalCache.delete(CacheKeys.format(CacheKeys.ORDER_DETAIL, user_id=user_id, order_id=order_id))
+
+
+
+@receiver([post_save, post_delete], sender=Order)
+@receiver([post_save, post_delete], sender=OrderItem)
+@receiver([post_save, post_delete], sender=ShippingAddress)
+@receiver([post_save, post_delete], sender=OrderTracking)
+@receiver([post_save, post_delete], sender=PaymentDetail)
+@receiver([post_save, post_delete], sender=OrderFeedBack)
+@receiver([post_save, post_delete], sender=OrderReturn)
+def order_related_model_changed(sender, instance, **kwargs):
+    """Automatically clear cache when any related order model changes."""
+    user_id = None
+    order_id = None
+
+    # Figure out user and order depending on the model
+    if hasattr(instance, "order"):  # For related models
+        order = getattr(instance, "order", None)
+        if order:
+            order_id = order.id
+            user_id = getattr(order.user, "id", None)
+    elif isinstance(instance, Order):
+        order_id = instance.id
+        user_id = getattr(instance.user, "id", None)
+
+    # Perform cache clearing
+    clear_order_cache(user_id, order_id)
+
+
+@receiver([post_save, post_delete], sender=WatchList)
+def watchlist_model_changed(sender, instance, **kwargs):
+    cache_key = CacheKeys.format(CacheKeys.USER_WATCHLIST, user_id=instance.user.id)
+    GlobalCache.delete(cache_key)
+    
+    
+@receiver([post_save, post_delete], sender=Cart)
+@receiver([post_save, post_delete], sender=CartItem)
+def watchlist_model_changed(sender, instance, **kwargs):
+    
+    if isinstance(instance, Cart):
+        user_id = instance.user.id
+    elif isinstance(instance, CartItem):
+        user_id = instance.cart.user.id
+    else:
+        return
+    cache_key = CacheKeys.format(CacheKeys.USER_CART, user_id=user_id)
+    GlobalCache.delete(cache_key)
+    
+    
+    
+@receiver([post_save, post_delete], sender=Cart)
+@receiver([post_save, post_delete], sender=CartItem)
+@receiver([post_save, post_delete], sender=WatchList)
+def clear_cart_watchlist_cache(sender, instance, **kwargs):
+
+    user_id = getattr(instance, "user_id", None) or getattr(instance.cart, "user_id", None)
+    if user_id:
+        cache_key = CacheKeys.format(CacheKeys.USER_WATCHLISTCART, user_id=user_id)
+        GlobalCache.delete(cache_key)

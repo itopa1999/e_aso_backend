@@ -5,10 +5,11 @@ from django.contrib.auth import get_user_model
 from decimal import Decimal
 from django.utils import timezone
 from datetime import timedelta
-
+from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.aso.deliveryFee import DELIVERY_FEES
 from utils.base_model import BaseModel
 from utils.enum import FeatureNames
+from django.contrib.postgres.indexes import Index
 # Create your models here.
 
 
@@ -17,27 +18,36 @@ class LookUp(BaseModel):
     category = models.CharField(max_length=100, blank=False, null=True)
     description = models.TextField(blank=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=["name"]),
+            models.Index(fields=["category"]),
+            models.Index(fields=["is_deleted"]),
+        ]
+
     def __str__(self):
         return self.name
 
 
 class Product(BaseModel):
-    product_number = models.CharField(max_length=100, null=True, blank=True, editable=False)
+    product_number = models.CharField(max_length=100, null=True, blank=True, editable=False, db_index=True)
     category = models.ManyToManyField(LookUp, related_name="product")
 
     title = models.CharField(max_length=255, db_index=True)
     description = models.TextField()
-    
-    current_price = models.DecimalField(max_digits=10, decimal_places=2, db_index=True, null=True, blank=True)
+
     original_price = models.DecimalField(max_digits=10, decimal_places=2)
-    discount_percent = models.PositiveIntegerField(null=True, blank=True)
-    
+    current_price = models.DecimalField(max_digits=10, decimal_places=2, db_index=True, null=True, blank=True)
+    discount_percent = models.PositiveIntegerField(
+        null=True, blank=True,
+        validators=[MinValueValidator(0), MaxValueValidator(100)]
+    )
+
     rating = models.FloatField(default=0.0)
     reviews_count = models.PositiveIntegerField(default=0)
 
     badge = models.CharField(max_length=50, blank=True, default="New")
     main_image = models.ImageField(upload_to='products/main/', null=True, blank=True)
-    
     display_product = models.BooleanField(default=True)
     
     def save(self, *args, **kwargs):
@@ -68,6 +78,8 @@ class Product(BaseModel):
         indexes = [
             models.Index(fields=['title']),
             models.Index(fields=['current_price']),
+            models.Index(fields=['product_number']),
+            Index(fields=["id"], name="product_not_deleted_idx", condition=models.Q(is_deleted=False)),
         ]
 
     def __str__(self):
@@ -82,9 +94,10 @@ class ProductColor(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='colors')
     color_name = models.CharField(max_length=100)
     hex_code = models.CharField(max_length=7, null=True, blank=True)
-    
+            
     class Meta:
         unique_together = ('product', 'color_name')
+        indexes = [models.Index(fields=['product', 'color_name'])]
 
     def __str__(self):
         return f"{self.product.title} - {self.color_name}"
@@ -97,6 +110,7 @@ class ProductSize(BaseModel):
     
     class Meta:
         unique_together = ('product', 'size_label')
+        indexes = [models.Index(fields=['product', 'size_label'])]
 
     def __str__(self):
         return f"{self.product.title} - Size {self.size_label}"
@@ -113,6 +127,10 @@ class ProductDetail(BaseModel):
     tab = models.CharField(max_length=50, choices=TAB_CHOICES)
     title = models.CharField(max_length=100)
     content = models.TextField()
+    
+    class Meta:
+        indexes = [models.Index(fields=['product', 'tab'])]
+
 
     def __str__(self):
         return f"{self.product.title} - {self.tab} - {self.title}"
@@ -172,7 +190,11 @@ class Cart(BaseModel):
         return f"{self.user.first_name}'s Cart"
 
     class Meta:
-        indexes = [models.Index(fields=["user"])]
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["state"]),
+            models.Index(fields=["is_deleted"]),
+        ]
 
 class CartItem(BaseModel):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
@@ -188,10 +210,7 @@ class CartItem(BaseModel):
 
     class Meta:
         unique_together = ('cart', 'product')
-        indexes = [
-            models.Index(fields=['cart']),
-            models.Index(fields=['product']),
-        ]
+        indexes = [models.Index(fields=['cart', 'product'])]
         
         
 
@@ -237,7 +256,11 @@ class Order(BaseModel):
 
     class Meta:
         ordering = ['-created_at']
-        indexes = [models.Index(fields=['order_number']), models.Index(fields=['user'])]
+        indexes = [
+            models.Index(fields=['order_number']),
+            models.Index(fields=['user']),
+            models.Index(fields=['created_at']),
+        ]
 
 
 class OrderItem(BaseModel):
@@ -252,10 +275,7 @@ class OrderItem(BaseModel):
     
     class Meta:
         unique_together = ('order', 'product')
-        indexes = [
-            models.Index(fields=['order']),
-            models.Index(fields=['product']),
-        ]
+        indexes = [models.Index(fields=['order', 'product'])]
 
     def __str__(self):
         return f"{self.product.title} x{self.quantity}"
@@ -272,6 +292,9 @@ class ShippingAddress(BaseModel):
     state = models.CharField(max_length=100)
     phone = models.CharField(max_length=20)
     alt_phone = models.CharField(max_length=20)
+    
+    class Meta:
+        indexes = [models.Index(fields=['city', 'state'])]
 
     def __str__(self):
         return f"{self.first_name} {self.last_name} - {self.address}"
@@ -280,6 +303,9 @@ class ShippingAddress(BaseModel):
 class PaymentDetail(BaseModel):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment_detail')
     method = models.CharField(max_length=50)  # e.g. 'Mastercard', 'Bank Transfer'
+    
+    class Meta:
+        indexes = [models.Index(fields=['method'])]
 
     def __str__(self):
         return f"{self.method}"
@@ -303,6 +329,7 @@ class OrderTracking(BaseModel):
     class Meta:
         unique_together = ('status', 'order')
         ordering = ['-id']
+        indexes = [models.Index(fields=['order', 'status', 'date'])]
 
     def __str__(self):
         return f"{self.status} - {self.order.order_number}"
@@ -313,6 +340,9 @@ class OrderFeedBack(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='feedback')
     stars = models.PositiveSmallIntegerField()
     comment = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        indexes = [models.Index(fields=['order'])]
 
     def __str__(self):
         return f"Feedback for Order {self.order.order_number} - {self.stars} Stars"
@@ -323,6 +353,9 @@ class OrderReturn(BaseModel):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='return_product')
     reason = models.CharField(max_length=500)
     message = models.TextField(max_length=1000)
+    
+    class Meta:
+        indexes = [models.Index(fields=['order'])]
 
     def __str__(self):
         return f"return request for Order {self.order.order_number}"
@@ -343,6 +376,7 @@ class FeatureFlag(BaseModel):
         ordering = ["name"]
         verbose_name = "Feature Flag"
         verbose_name_plural = "Feature Flags"
+        indexes = [models.Index(fields=['is_enabled'])]
 
     def __str__(self):
         return f"{self.name} ({'Enabled' if self.is_enabled else 'Disabled'})"

@@ -19,7 +19,6 @@ class VerifyEmailCommand:
 
             # Check if the user has already been verified
             if verification.is_verified:
-                print("hi12")
                 return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={verification.user.email}&is_login=false")
             
             # Activate user
@@ -46,5 +45,4 @@ class VerifyEmailCommand:
             return redirect(f"{settings.BASE_URL}/index.html?{params}")
 
         except Exception as e:
-            print("hi3")
             return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=false")

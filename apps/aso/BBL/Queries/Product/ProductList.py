@@ -1,14 +1,16 @@
 from django.db.models import Q
 from http import HTTPStatus
-from apps.aso.models import Product
-from apps.aso.serializers import WatchlistProductSerializer
 from utils.base_result import BaseResultWithData
+from utils.cache_manager import GlobalCache
+from utils.enum import CacheKeys
 
 
 class ProductListQuery:
     @staticmethod
     def query(params, queryset):
-        try:
+        
+        try:            
+            
             max_price = params.get("max_price")
             min_price = params.get("min_price")
             rating = params.get("rating")
@@ -33,6 +35,7 @@ class ProductListQuery:
                     | Q(product_number__icontains=search)
                     | Q(category__name__icontains=search)
                 )
+                
             return BaseResultWithData(
                 data=queryset,
                 status_code=HTTPStatus.OK,

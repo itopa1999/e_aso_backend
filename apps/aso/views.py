@@ -22,7 +22,7 @@ from apps.aso.BBL.Queries.CartAndWatchlistCount import CartAndWatchlistCountQuer
 from apps.aso.BBL.Queries.LookUpList import LookUpListQuery
 from apps.aso.BBL.Queries.Product.ProductDetails import ProductDetailQuery
 from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProductsQuery
-from apps.aso.BBL.Queries.Watchlist.OrderDetails import OrderDetailQuery
+from apps.aso.BBL.Queries.Order.OrderDetails import OrderDetailQuery
 from apps.aso.BBL.Queries.Order.UserOrderList import UserOrderListQuery
 from apps.aso.BBL.Queries.Product.ProductList import ProductListQuery
 from utils.permissions import IsCustomerPermission
@@ -223,7 +223,7 @@ class PaystackConfirmSubscriptionView(APIView):
 
 
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.filter(display_product = True, is_deleted = False)
+    # queryset = Product.objects.filter(display_product = True, is_deleted = False)
     authentication_classes = [OptionalJWTAuthentication]
     permission_classes = [AllowAny]
     serializer_class = WatchlistProductSerializer
@@ -233,7 +233,7 @@ class ProductListView(generics.ListAPIView):
     ordering_fields = ['current_price', 'rating', 'created_at']
     
     def get_queryset(self):
-        queryset = super().get_queryset()
+        queryset = Product.objects.filter(display_product = True, is_deleted = False)
         result = ProductListQuery.query(self.request.query_params, queryset)
         if result.status_code == status.HTTP_200_OK:
             return result.data
