@@ -1,9 +1,9 @@
-# apps/common/email_utils.py
 
 import textwrap
 from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
-
+from django.template.loader import render_to_string
 
 def send_custom_email(
     subject: str,
@@ -42,12 +42,25 @@ def send_custom_email(
         The Aso Oke & Aso Ofi Marketplace Team
         """)
 
-    send_mail(
+    html_message = render_to_string('email_template.html', {
+        'greeting_name': greeting_name,
+        'message': message,
+        'support_footer': support_footer
+    })
+    html_message = html_message.replace("var(--primary-color)", "#8a4b38") \
+                           .replace("var(--secondary-color)", "#e8d0b3") \
+                           .replace("var(--accent-color)", "#d4a373") \
+                           .replace("var(--dark-color)", "#4a2c2a") \
+                           .replace("var(--light-color)", "#f9f5f0")
+
+    # Send email with both plain text and HTML versions
+    email = EmailMultiAlternatives(
         subject=subject,
-        message=body,
+        body=body,
         from_email=settings.EMAIL_HOST_USER,
-        recipient_list=[recipient_email],
-        fail_silently=fail_silently,
+        to=[recipient_email],
     )
+    email.attach_alternative(html_message, "text/html")
+    email.send(fail_silently=fail_silently)
 
     return True

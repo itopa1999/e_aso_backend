@@ -1,10 +1,7 @@
-import textwrap
 from http import HTTPStatus
 from django.utils import timezone
-from django.core.mail import send_mail
-from django.conf import settings
 from apps.aso.models import Order, OrderFeedBack, OrderTracking
-from utils.base_result import BaseResult, BaseResultWithData
+from utils.base_result import BaseResultWithData
 from utils.email_sender import send_custom_email
 from utils.log_helpers import OperationLogger
 

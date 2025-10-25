@@ -1,14 +1,10 @@
 from http import HTTPStatus
-from django.conf import settings
-from django.core.mail import send_mail
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from apps.users.models import User, UserVerification
 from apps.users.serializers import RegUserSerializer
 from utils.base_result import BaseResultWithData
-import textwrap
-
 from utils.email_sender import send_custom_email
 from utils.magic_link import generate_magic_token
 

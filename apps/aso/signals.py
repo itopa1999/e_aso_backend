@@ -1,43 +1,32 @@
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-from django.core.mail import send_mail
-from django.conf import settings
 from django.forms import ValidationError
-
 from utils.cache_manager import GlobalCache
+from utils.email_sender import send_custom_email
 from utils.enum import CacheKeys
 from .models import Cart, CartItem, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, ShippingAddress, WatchList
-import textwrap
 
 @receiver(post_save, sender=OrderTracking)
 def send_tracking_update_email(sender, instance, created, **kwargs):
     if created:
         order = instance.order
         user = order.user
-
-        subject = f"Your Order {order.order_number} Status Update"
-        message = textwrap.dedent(f"""
-            Dear {user.first_name or "Valued Customer"},
-
+        
+        send_custom_email(
+            subject = f"Your Order {order.order_number} Status Update",
+            recipient_email=user.email,
+            message=f"""
             Your order **{order.order_number}** status has been updated to:  
             **{instance.status}**
 
             Details: {instance.description}  
             Date: {instance.date.strftime('%Y-%m-%d %H:%M')}
 
-            Thank you for shopping with us!  
-
-            Need help? Contact us:  
-            📞 +234 1 700 0000  
-            ✉️ support@aso-okemarketplace.ng  
-
-            Preserving Nigeria’s textile heritage,  
-            **The Aso Oke & Aso Ofi Marketplace Team**
-        """)
-        recipient_list = [user.email]
-
-        send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
-
+            Thank you for shopping with us!
+            
+            """,
+            greeting_name=user.first_name or "Valued Customer"
+        )
 
 @receiver(pre_save, sender=OrderTracking)
 def enforce_order_tracking_rules(sender, instance, **kwargs):

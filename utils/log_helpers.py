@@ -3,7 +3,8 @@ import time
 import traceback
 from datetime import datetime
 
-logger = logging.getLogger("project")
+# logger = logging.getLogger("project")
+logger = logging.getLogger(__name__)
 
 
 class OperationLogger:
