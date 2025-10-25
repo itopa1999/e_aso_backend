@@ -273,6 +273,8 @@ class CartAndWatchlistCountView(generics.GenericAPIView):
     
 class LookUpView(APIView):
     serializer_class = LookUpsSerializer
+    allow_any = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication]
 
     # @swagger_auto_schema(tags=["Categories"])
     # swagger_schema = TaggedAutoSchema

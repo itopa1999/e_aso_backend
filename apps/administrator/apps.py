@@ -6,4 +6,4 @@ class AdministratorConfig(AppConfig):
     name = 'apps.administrator'
 
     def ready(self):
-        import apps.users.signals
+        import apps.administrator.signals

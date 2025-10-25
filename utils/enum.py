@@ -26,6 +26,21 @@ class FeatureNames(Enum):
     
     
     
+class BannerCategoryNames(Enum):
+    PROMO = "Promo"
+    INDEX = "index"
+    ADS = "ads"
+    SUPPORT = "support"
+    BLACK_FRIDAY = "black friday"
+    HERO = "hero"
+
+    @classmethod
+    def choices(cls):
+        """Return choices tuple for Django model fields"""
+        return [(banner.value, banner.value) for banner in cls]
+    
+    
+    
 class CacheKeys(Enum):
     """
     Centralized cache key names for consistency across the project.
@@ -51,7 +66,7 @@ class CacheKeys(Enum):
     # Misc / site-wide
     LOOKUP = "lookup"
     # FEATURE_FLAGS = "feature_flags"
-    # HOME_PAGE_DATA = "home_page_data"
+    BANNER = "banner_{category}"
 
     @classmethod
     def format(cls, key, **kwargs):

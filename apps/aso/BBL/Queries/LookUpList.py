@@ -12,7 +12,6 @@ class LookUpListQuery:
 
         cached_data = GlobalCache.get(cache_key)
         if cached_data:
-            print("from cache1")
             return BaseResultWithData(
                 data=cached_data["data"],
                 status_code=HTTPStatus.OK,

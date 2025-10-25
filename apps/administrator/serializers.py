@@ -1,11 +1,27 @@
 from rest_framework import serializers
-from rest_framework.exceptions import ParseError
 
-from apps.aso.models import Category, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
+from apps.administrator.models import Banner
+from apps.aso.models import LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
 from apps.users.models import User
 from utils.enum import LookUpsCategories
 
 
+class BannerSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Banner
+        fields = ['id', 'title', 'category', 'image', 'link']
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        
+        print(request)
+        if obj.image and request:
+            return request.build_absolute_uri(obj.image.url)
+        elif obj.image:
+            return obj.image.url
+        return None
 
         
 class ResendOtpSerializer(serializers.Serializer):
@@ -49,7 +65,7 @@ class DashboardSerializer(serializers.Serializer):
 
 class AdminCategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
+        model = LookUp
         fields = ['id', 'name', 'description']
         
         

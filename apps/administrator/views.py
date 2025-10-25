@@ -1,27 +1,47 @@
 from django.db.models import Q
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status, generics
 from rest_framework.views import APIView
+from apps.administrator.BLL.Queries.ListBanners import BannerListQuery
 from apps.aso.models import OrderTracking, Product
 from utils.permissions import IsAdminPermission
 from .serializers import *
 # Create your views here. 
 
-
-
-
-
-# ADMIN VIEWS
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.utils import timezone
 from django.db.models import Count
 from datetime import timedelta
-from calendar import monthrange
 from django.db.models import Sum
 from rest_framework.filters import OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
+from apps.administrator.serializers import BannerSerializer
+from rest_framework.exceptions import AuthenticationFailed
+
+class OptionalJWTAuthentication(JWTAuthentication):
+    def authenticate(self, request):
+        header = self.get_header(request)
+        if header is None:
+            return None  # No token → AnonymousUser
+
+        try:
+            return super().authenticate(request)
+        except AuthenticationFailed:
+            # Invalid/expired token → Ignore, treat as anonymous
+            return None
+        
+        
+class BannerListView(generics.GenericAPIView):
+    allow_any = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication]    
+    serializer_class = BannerSerializer
+
+    def get(self, request, category, *args, **kwargs):
+        result = BannerListQuery.query(request, category)
+        return Response(result.to_dict(), status=result.status_code)
+
 
 class DashboardAPIView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsAdminPermission]

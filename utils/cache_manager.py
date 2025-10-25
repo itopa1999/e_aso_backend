@@ -25,3 +25,27 @@ class GlobalCache:
         """Clear all cache data (GLOBAL CLEAR)"""
         cache.clear()
         return True
+
+    @staticmethod
+    def delete_prefix(prefix: str):
+        """
+        Delete all cache keys starting with a given prefix.
+        Works with Redis and LocMemCache (if keys() supported).
+        """
+        pattern = f"{prefix}*"
+        try:
+            # For RedisCache (supports delete_pattern)
+            if hasattr(cache, "delete_pattern"):
+                cache.delete_pattern(pattern)
+            # For caches that expose .keys() (like LocMemCache)
+            elif hasattr(cache, "keys"):
+                for key in cache.keys(pattern):
+                    cache.delete(key)
+            else:
+                # fallback: do a full clear if prefix filtering isn't supported
+                cache.clear()
+                print(f"⚠️ Cache backend doesn't support prefix delete — cleared all cache.")
+            return True
+        except Exception as e:
+            print(f"⚠️ Failed to delete prefix '{prefix}' from cache: {e}")
+            return False
