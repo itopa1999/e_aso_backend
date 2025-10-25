@@ -23,6 +23,14 @@ class OrderTrackingSerializer(serializers.ModelSerializer):
         fields = ['status', 'date', 'description', 'completed']
         
         
+class OrderTrackingDetailsSerializer(serializers.ModelSerializer):
+    tracking = OrderTrackingSerializer(source='tracking_events', many=True, read_only=True)
+    class Meta:
+        model = Order
+        fields = ['id', 'order_number', 'tracking']
+        
+        
+        
 class OrderSerializer(serializers.ModelSerializer):
     order_status = serializers.SerializerMethodField()
     order_items = serializers.SerializerMethodField()

@@ -25,6 +25,8 @@ from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProd
 from apps.aso.BBL.Queries.Order.OrderDetails import OrderDetailQuery
 from apps.aso.BBL.Queries.Order.UserOrderList import UserOrderListQuery
 from apps.aso.BBL.Queries.Product.ProductList import ProductListQuery
+from utils.cache_manager import GlobalCache
+from utils.enum import CacheKeys
 from utils.permissions import IsCustomerPermission
 from .models import *
 from .serializers import *
@@ -71,6 +73,24 @@ class OrderDetailView(generics.RetrieveAPIView):
         context = super().get_serializer_context()
         context['request'] = self.request
         return context
+    
+    
+
+class TrackingDetailsView(generics.RetrieveAPIView):
+    serializer_class = OrderTrackingDetailsSerializer
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
+    # swagger_schema = TaggedAutoSchema
+
+    def get(self, request, order_id):
+        try:
+            order = Order.objects.get(user=request.user, id=order_id, is_deleted=False)
+        except Order.DoesNotExist:
+            return Response(
+                {"error": "Order not found"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+        serializer = self.serializer_class(order)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     
 class ReorderItemsView(generics.GenericAPIView):
@@ -233,7 +253,16 @@ class ProductListView(generics.ListAPIView):
     ordering_fields = ['current_price', 'rating', 'created_at']
     
     def get_queryset(self):
-        queryset = Product.objects.filter(display_product = True, is_deleted = False)
+        cache_key = CacheKeys.PRODUCT_LIST
+
+        cached_data = GlobalCache.get(cache_key)
+        if cached_data:
+            print("from cache1")
+            queryset = cached_data
+        else:
+            queryset = Product.objects.filter(display_product = True, is_deleted = False)
+            GlobalCache.set(cache_key, queryset)
+            
         result = ProductListQuery.query(self.request.query_params, queryset)
         if result.status_code == status.HTTP_200_OK:
             return result.data
@@ -263,7 +292,7 @@ class ProductDetailView(generics.RetrieveAPIView):
 
 class CartAndWatchlistCountView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsCustomerPermission]
-    serializer_class = OrderDetailSerializer
+    serializer_class = CartAndWatchlistCountSerializer
     # swagger_schema = TaggedAutoSchema
     
     def get(self, request):

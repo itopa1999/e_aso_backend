@@ -47,13 +47,15 @@ def initiate(request, user, cart_id, data):
         response = req.post(paystack_url, headers=headers, json=paystack_data)
 
         if response.status_code == 200:
-            op.success("Paystack initialization successful", extra={"reference": ref})
+            op.success("Paystack initialization successful")
             return response.json()["data"]["authorization_url"]
 
-        op.fail("Paystack initialization failed", extra={"response": response.text})
+        op.fail("Paystack initialization failed")
+        print(response.text)
         return None
     
     except Exception as e:
+        print(e)
         op.fail("Exception during Paystack initialization", e)
         return None
             
@@ -73,13 +75,13 @@ def validate(reference):
         result = response.json()
         # Step 2: Check if verification is successful
         if response.status_code != 200 or result["data"]["status"] != "success":
-            op.fail("Paystack verification failed", extra={"response": result})
+            op.fail("Paystack verification failed")
             return {"success": False, "error": "Invalid or unsuccessful transaction."}
         
         metadata = result['data'].get('metadata', {})
         cart_id = metadata.get('cart_id')
         data = metadata.get('data', {})
-        
+                
         with transaction.atomic():
             cart = Cart.objects.get(id=cart_id, is_deleted = False)
             user = cart.user
@@ -132,7 +134,7 @@ def validate(reference):
             cart.items.all().delete()
             cart.delete()
             
-        op.success("Transaction validated and order created", extra={"order_id": order.id})
+        op.success("Transaction validated and order created")
         return {
             "success": True,
             "message": "Subscription was successful.",
@@ -144,9 +146,9 @@ def validate(reference):
             }
         }
     except Cart.DoesNotExist as e:
-        op.fail("Cart not found", e)
+        op.fail("Cart not found")
         return {"success": False, "error": "Cart not found or already processed."}
 
     except Exception as e:
-        op.fail("Error validating transaction", e)
+        op.fail("Error validating transaction")
         return {"success": False, "error": f"Failed to process transaction: {str(e)}"}

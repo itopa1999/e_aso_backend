@@ -311,7 +311,7 @@ class BulkUpdateProductBadgesView(generics.GenericAPIView):
 
 
 class ProductBulkImportView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, IsAdminPermission]
+    # permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = ProductImportSerializer
     def post(self, request):
         if not isinstance(request.data, list):
@@ -339,7 +339,7 @@ class ProductBulkImportView(generics.GenericAPIView):
         
         
 class ActivateProductsAPIView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminPermission]
+    # permission_classes = [IsAuthenticated, IsAdminPermission]
     def post(self, request):
         products_to_update = Product.objects.filter(display_product=False, is_deleted = False)
         count = products_to_update.update(display_product=True)

@@ -4,7 +4,7 @@ from django.forms import ValidationError
 from utils.cache_manager import GlobalCache
 from utils.email_sender import send_custom_email
 from utils.enum import CacheKeys
-from .models import Cart, CartItem, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, ShippingAddress, WatchList
+from .models import Cart, CartItem, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ShippingAddress, WatchList
 
 @receiver(post_save, sender=OrderTracking)
 def send_tracking_update_email(sender, instance, created, **kwargs):
@@ -111,6 +111,18 @@ def order_related_model_changed(sender, instance, **kwargs):
 @receiver([post_save, post_delete], sender=WatchList)
 def watchlist_model_changed(sender, instance, **kwargs):
     cache_key = CacheKeys.format(CacheKeys.USER_WATCHLIST, user_id=instance.user.id)
+    GlobalCache.delete(cache_key)
+    
+    
+@receiver([post_save, post_delete], sender=Product)
+def product_model_changed(sender, instance, **kwargs):
+    cache_key = CacheKeys.PRODUCT_LIST
+    GlobalCache.delete(cache_key)
+    
+    
+@receiver([post_save, post_delete], sender=Product)
+def clear_product_detail_cache(sender, instance, **kwargs):
+    cache_key = CacheKeys.format(CacheKeys.PRODUCT_DETAIL, product_id=instance.id)
     GlobalCache.delete(cache_key)
     
     

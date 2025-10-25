@@ -27,6 +27,7 @@ urlpatterns = [
                 path('paystack-confirm-subscription/<str:reference>/', PaystackConfirmSubscriptionView.as_view(), name='paystack-confirm-subscription'),
                 path('delivery-fees/', DeliveryFeeAPIView.as_view(), name='delivery-fees'),
                 path("cart/clear/", ClearCartView.as_view()),
+                path("track-order/<int:order_id>/", TrackingDetailsView.as_view()),
             ]
         )
     ),                

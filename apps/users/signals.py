@@ -1,7 +1,9 @@
-from django.db.models.signals import m2m_changed
+from django.db.models.signals import m2m_changed, post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import Group
 from apps.users.models import User
+from utils.cache_manager import GlobalCache
+from utils.enum import CacheKeys
 
 @receiver(m2m_changed, sender=User.groups.through)
 def assign_rider_number(sender, instance, action, reverse, pk_set, **kwargs):
@@ -36,3 +38,9 @@ def assign_rider_number(sender, instance, action, reverse, pk_set, **kwargs):
             # Format: A0-DR-xxxx
             instance.rider_number = f"A0-DR-{str(new_number).zfill(4)}"
             instance.save()
+
+
+@receiver([post_save, post_delete], sender=User)
+def user_model_changed(sender, instance, **kwargs):
+    cache_key = CacheKeys.format(CacheKeys.USER_PROFILE, user_id=instance.id)
+    GlobalCache.delete(cache_key)

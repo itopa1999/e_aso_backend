@@ -28,8 +28,10 @@ class PaystackConfirmQuery:
 
             return redirect(redirect_url)
         else:
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.BAD_REQUEST,
-                message=result.get("error", "Payment verification failed.")
+            redirect_url = (
+                f"{settings.BASE_URL}/order-failed.html"
+                f"?reference={reference}"
+                f"&error={result.get('error', 'Transaction failed')}"
             )
+            
+            return redirect(redirect_url)

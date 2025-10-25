@@ -48,14 +48,14 @@ class CacheKeys(Enum):
     """
 
     # User-related keys
-    # USER_PROFILE = "user_profile_{user_id}"
+    USER_PROFILE = "user_profile_{user_id}"
     USER_CART = "user_cart_{user_id}"
     USER_WATCHLIST = "user_watchlist_{user_id}"
     USER_WATCHLISTCART = "user_watchlist_cart_{user_id}"
 
     # Product-related keys
     PRODUCT_LIST = "product_list_all"
-    # PRODUCT_DETAIL = "product_detail_{product_id}"
+    PRODUCT_DETAIL = "product_detail_{product_id}"
     # FEATURED_PRODUCTS = "featured_products"
     # PRODUCT_CATEGORY_LIST = "product_category_list"
 
