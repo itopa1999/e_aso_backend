@@ -52,6 +52,12 @@ THIRD_PARTIES_APPS = [
     "rest_framework_simplejwt",
     'drf_yasg',
     'django_filters',
+    'health_check',                             # required
+    'health_check.db',                          # check database
+    'health_check.cache',                       # check cache backend
+    'health_check.storage',                     # check media storage
+    'health_check.contrib.redis',               # optional, if using Redis
+    'health_check.contrib.celery', 
 ]
 
 INSTALLED_APPS = SYSTEM_DEFINE_APPS + APPLICATION_APPS + THIRD_PARTIES_APPS
@@ -231,3 +237,4 @@ CACHES = {
 ADMINS = [
     ('Admin', 'salawulucky08071@gmail.com'),
 ]
+

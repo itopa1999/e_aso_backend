@@ -6,7 +6,7 @@ from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 from .schema import BothHttpAndHttpsSchemaGenerator, swagger_protect
-
+from django.views.generic.base import RedirectView
 
 
 schema_view = get_schema_view(
@@ -25,11 +25,13 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
+    path('', RedirectView.as_view(url='/backdoor/', permanent=False)),
     path('backdoor/', admin.site.urls),
     path('admins/api/', include('apps.administrator.urls')),
     path('aso/api/', include('apps.aso.urls')),
     path('auth/api/', include('apps.users.urls')),
     path('rider/api/', include('apps.rider.urls')),
+    path("health/", include("health_check.urls")),
     
         path(
         "doc/",

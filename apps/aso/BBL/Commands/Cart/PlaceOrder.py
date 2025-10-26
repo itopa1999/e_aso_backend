@@ -39,6 +39,13 @@ class PlaceOrderCommand:
                     status_code=HTTPStatus.BAD_REQUEST,
                     message=f"Total mismatch. Expected ₦{expected_total}, got ₦{user_total}"
                 )
+                
+            # if request.user.referral_used_purchase:
+            #     return BaseResultWithData(
+            #         data=None,
+            #         status_code=HTTPStatus.BAD_REQUEST,
+            #         message="Referral discount has already been used for a purchase."
+            #     )
 
             # Initialize payment
             checkout_link = initiate(request, user=request.user, cart_id=cart.id, data=shipping_data)

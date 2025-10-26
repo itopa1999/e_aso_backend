@@ -127,6 +127,9 @@ def validate(reference):
                 date = timezone.now(),
                 description = "Order has been placed and ready for processing."
             )
+            
+            user.referral_used_purchase = True
+            user.save(update_fields=["referral_used_purchase"])
 
             # 4. Delete Cart and Items
             cart.items.all().delete()

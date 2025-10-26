@@ -38,6 +38,8 @@ class User(BaseModel, AbstractUser):
     referral_code = models.CharField(max_length=20, unique=True, blank=True, editable=False, null=True)
     is_referral_qualified = models.BooleanField(default=False)
     referral_used = models.BooleanField(default=False)
+    referral_used_purchase = models.BooleanField(default=False)
+    
     def save(self, *args, **kwargs):
         self.first_name = self.first_name.capitalize()
         self.last_name = self.last_name.capitalize()

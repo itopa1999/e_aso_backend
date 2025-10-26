@@ -13,9 +13,10 @@ class RegUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = User.objects.create(
             **validated_data,
+            is_active=False,
         )
         
-        customer_group, created = Group.objects.get_or_create(name="Customer")
+        customer_group, _ = Group.objects.get_or_create(name="Customer")
         user.groups.add(customer_group)
         
         return user

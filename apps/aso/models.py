@@ -177,7 +177,10 @@ class Cart(BaseModel):
         return sum(item.subtotal() for item in self.items.all())
 
     def shipping_cost(self):
-        return Decimal(DELIVERY_FEES.get(self.state, 0))  # static for now
+        from utils.feature_flags import is_feature_enabled
+        if is_feature_enabled(FeatureNames.FREE_DELIVERY.value):
+            return Decimal("0.00")
+        return Decimal(DELIVERY_FEES.get(self.state, 0))
 
     # def tax(self):
     #     return self.subtotal() * Decimal("0.05")  # 5% tax example
@@ -185,6 +188,9 @@ class Cart(BaseModel):
     def discount(self):
         from utils.feature_flags import is_feature_enabled
         if not is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value):
+            return Decimal("0.00")
+        
+        if getattr(self.user, "referral_used_purchase", False):
             return Decimal("0.00")
         
         if getattr(self.user, "is_referral_qualified", False):
