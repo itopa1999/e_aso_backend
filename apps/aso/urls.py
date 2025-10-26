@@ -28,6 +28,7 @@ urlpatterns = [
                 path('delivery-fees/', DeliveryFeeAPIView.as_view(), name='delivery-fees'),
                 path("cart/clear/", ClearCartView.as_view()),
                 path("track-order/<int:order_id>/", TrackingDetailsView.as_view()),
+                path("feature-flag/<str:feature_name>/", CheckFeatureFlagView.as_view()),
             ]
         )
     ),                

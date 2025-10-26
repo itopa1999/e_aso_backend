@@ -10,6 +10,16 @@ from utils.base_model import BaseModel
 
 # Create your models here.
 
+import string, random
+
+from utils.enum import FeatureNames
+
+def generate_referral_code(length=10):
+    while True:
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+        if not User.objects.filter(referral_code=code).exists():
+            return code
+
 
 class User(BaseModel, AbstractUser):
     username = None
@@ -25,10 +35,34 @@ class User(BaseModel, AbstractUser):
         null=True
     )
     rider_number = models.CharField(max_length=40, unique=True, null=True, blank=True)
+    referral_code = models.CharField(max_length=20, unique=True, blank=True, editable=False, null=True)
+    is_referral_qualified = models.BooleanField(default=False)
+    referral_used = models.BooleanField(default=False)
     def save(self, *args, **kwargs):
         self.first_name = self.first_name.capitalize()
         self.last_name = self.last_name.capitalize()
+        
+        if not self.referral_code:
+            self.referral_code = generate_referral_code(10).upper()
+            
         super().save(*args, **kwargs)
+        
+    @property
+    def check_referral_qualification(self):
+        from utils.feature_flags import is_feature_enabled
+        
+        if is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value) is False:
+            return False
+
+        successful_referrals = self.referrals_made.filter(successful=True).count()
+        qualified = successful_referrals >= 5
+
+        if self.is_referral_qualified != qualified:
+            self.is_referral_qualified = qualified
+            self.save(update_fields=["is_referral_qualified"])
+
+        return qualified
+    
 
     objects=UserManager( )
     USERNAME_FIELD ='email'
@@ -63,3 +97,20 @@ class UserVerification(BaseModel):
         return f"Verification for {self.user.email}"
     
     
+
+class Referral(BaseModel):
+    referrer = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="referrals_made"
+    )
+    referee = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="referrals_received"
+    )
+    successful = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("referrer", "referee")
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.referrer.first_name} → {self.referee.first_name} ({'✅' if self.successful else '❌'})"

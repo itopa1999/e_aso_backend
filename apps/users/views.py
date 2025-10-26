@@ -6,6 +6,8 @@ from rest_framework import generics
 from apps.users.BBL.Commands.MagicLogin import MagicLoginCommand
 from apps.users.BBL.Commands.UpdateUser import UpdateUserCommand
 from apps.users.BBL.Commands.VerifyEmail import VerifyEmailCommand
+from apps.users.BBL.Commands.ValidateReferralCode import ValidateReferralCodeCommand
+
 from apps.users.BBL.Commands.ResendVerificationEmail import ResendVerificationEmailCommand
 from apps.users.BBL.Commands.SendMagicLink import SendMagicLinkCommand
 from apps.users.BBL.Queries.GetUserProfile import GetUserProfileSummaryQuery
@@ -79,4 +81,13 @@ class UpdateUserView(generics.GenericAPIView):
 
     def put(self, request):
         result = UpdateUserCommand.Execute(request.user, request.data)
+        return Response(result.to_dict(), status=result.status_code)
+    
+    
+class ValidateReferralCodeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, referral_code, *args, **kwargs):
+                
+        result = ValidateReferralCodeCommand.execute(request.user, referral_code)
         return Response(result.to_dict(), status=result.status_code)

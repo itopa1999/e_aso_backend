@@ -52,5 +52,12 @@ class UserOrderSummarySerializer(serializers.Serializer):
     email = serializers.EmailField()
     phone = serializers.CharField()
     total_orders = serializers.IntegerField()
+    referral_code = serializers.CharField()
+    is_referral_qualified = serializers.BooleanField()
+    total_successful_referrals = serializers.IntegerField()
+    referral_used = serializers.BooleanField()
     recent_orders = RecentOrderSerializer(many=True)
     
+    
+class ReferralCodeValidationSerializer(serializers.Serializer):
+    referral_code = serializers.CharField(required=True, max_length=20)

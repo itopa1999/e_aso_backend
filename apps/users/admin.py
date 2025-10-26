@@ -13,6 +13,7 @@ class UserAdmin(BaseAdmin):
     )
     search_fields = ("email", "first_name", "last_name", "phone", "rider_number")
     list_filter = ("is_active", "is_staff", "is_superuser", "created_at")
+    readonly_fields = ("referral_code", "is_referral_qualified", "created_at", "modified_at")
 
     custom_fieldsets = (
         ("User Information", {
@@ -22,6 +23,9 @@ class UserAdmin(BaseAdmin):
                 "last_name",
                 "phone",
                 "rider_number",
+                "referral_code",
+                "is_referral_qualified",
+                "referral_used",
                 "password",
                 "is_active",
                 "is_staff",
@@ -47,5 +51,14 @@ class UserVerificationAdmin(BaseAdmin):
                 "token",
                 "is_verified",
             ),
+        }),
+    )
+    
+    
+@admin.register(Referral)
+class LookUpAdmin(BaseAdmin):
+    custom_fieldsets  = (
+        ("Lookup Information", {
+            "fields": ("referrer", "referee", "successful", "created_at")
         }),
     )

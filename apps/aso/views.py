@@ -19,6 +19,7 @@ from apps.aso.BBL.Commands.Cart.PlaceOrder import PlaceOrderCommand
 from apps.aso.BBL.Queries.Cart.GetCartDetails import GetCartDetailQuery
 from apps.aso.BBL.Queries.Cart.PaystackConfirm import PaystackConfirmQuery
 from apps.aso.BBL.Queries.CartAndWatchlistCount import CartAndWatchlistCountQuery
+from apps.aso.BBL.Queries.FeatureFlagCheck import FeatureFlagCheck
 from apps.aso.BBL.Queries.LookUpList import LookUpListQuery
 from apps.aso.BBL.Queries.Product.ProductDetails import ProductDetailQuery
 from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProductsQuery
@@ -257,7 +258,6 @@ class ProductListView(generics.ListAPIView):
 
         cached_data = GlobalCache.get(cache_key)
         if cached_data:
-            print("from cache1")
             queryset = cached_data
         else:
             queryset = Product.objects.filter(display_product = True, is_deleted = False)
@@ -321,3 +321,10 @@ class DeliveryFeeAPIView(APIView):
         return Response({"delivery_fees": delivery_fees})
     
     
+class CheckFeatureFlagView(APIView):
+    authentication_classes = [OptionalJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, feature_name):
+        result = FeatureFlagCheck.is_feature_enabled(feature_name)
+        return Response(result.to_dict(), status=result.status_code)

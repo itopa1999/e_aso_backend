@@ -14,7 +14,6 @@ class GetUserProfileSummaryQuery:
 
         cached_data = GlobalCache.get(cache_key)
         if cached_data:
-            print("from cache")
             return BaseResultWithData(
                 data=cached_data["data"],
                 status_code=HTTPStatus.OK,
@@ -29,7 +28,11 @@ class GetUserProfileSummaryQuery:
                 "email": user.email,
                 "phone": user.phone or "Not set",
                 "total_orders": orders.count(),
-                "recent_orders": orders[:5]
+                "recent_orders": orders[:5],
+                "referral_code": user.referral_code or "Not set",
+                "is_referral_qualified": user.check_referral_qualification,
+                "total_successful_referrals": user.referrals_made.filter(successful=True).count(),
+                "referral_used": user.referral_used,
             }
             
             serializer = UserOrderSummarySerializer(data)

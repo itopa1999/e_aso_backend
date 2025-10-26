@@ -11,7 +11,8 @@ urlpatterns = [
                 path("resend-link/", ResendVerificationEmailView.as_view()),
                 path("profile/", UserProfileSummaryView.as_view()),
                 path("update/profile/", UpdateUserView.as_view()),
-                path('verify/email/<uidb64>/<token>/<url_email>/', VerifyEmailView.as_view(), name='verify-email')
+                path('verify/email/<uidb64>/<token>/<url_email>/', VerifyEmailView.as_view(), name='verify-email'),
+                path("referral/validate/<str:referral_code>/", ValidateReferralCodeView.as_view()),
             ]
         )
     ),

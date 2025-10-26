@@ -65,7 +65,7 @@ class CacheKeys(Enum):
 
     # Misc / site-wide
     LOOKUP = "lookup"
-    # FEATURE_FLAGS = "feature_flags"
+    FEATURE_FLAGS = "feature_flag_{feature_name}"
     BANNER = "banner_{category}"
 
     @classmethod

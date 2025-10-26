@@ -51,11 +51,9 @@ def initiate(request, user, cart_id, data):
             return response.json()["data"]["authorization_url"]
 
         op.fail("Paystack initialization failed")
-        print(response.text)
         return None
     
     except Exception as e:
-        print(e)
         op.fail("Exception during Paystack initialization", e)
         return None
             

@@ -10,6 +10,8 @@ from apps.aso.deliveryFee import DELIVERY_FEES
 from utils.base_model import BaseModel
 from utils.enum import FeatureNames
 from django.contrib.postgres.indexes import Index
+
+
 # Create your models here.
 
 
@@ -181,10 +183,17 @@ class Cart(BaseModel):
     #     return self.subtotal() * Decimal("0.05")  # 5% tax example
 
     def discount(self):
-        return Decimal("0.00")  # set by logic/rules
+        from utils.feature_flags import is_feature_enabled
+        if not is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value):
+            return Decimal("0.00")
+        
+        if getattr(self.user, "is_referral_qualified", False):
+            return self.subtotal() * Decimal("0.20")
+        
+        return Decimal("0.00") 
 
     def total(self):
-        return self.subtotal() + self.shipping_cost() - self.discount()
+        return self.subtotal() - self.discount() + self.shipping_cost()
 
     def __str__(self):
         return f"{self.user.first_name}'s Cart"

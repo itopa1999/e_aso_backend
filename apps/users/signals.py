@@ -1,7 +1,7 @@
 from django.db.models.signals import m2m_changed, post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import Group
-from apps.users.models import User
+from apps.users.models import Referral, User
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 
@@ -41,6 +41,17 @@ def assign_rider_number(sender, instance, action, reverse, pk_set, **kwargs):
 
 
 @receiver([post_save, post_delete], sender=User)
+@receiver([post_save, post_delete], sender=Referral)
 def user_model_changed(sender, instance, **kwargs):
-    cache_key = CacheKeys.format(CacheKeys.USER_PROFILE, user_id=instance.id)
-    GlobalCache.delete(cache_key)
+    # If it's a user instance
+    if isinstance(instance, User):
+        cache_key = CacheKeys.format(CacheKeys.USER_PROFILE, user_id=instance.id)
+        GlobalCache.delete(cache_key)
+
+    # If it's a referral instance
+    elif isinstance(instance, Referral):
+        # Clear both referrer and referee caches — both profiles may be affected
+        referrer_key = CacheKeys.format(CacheKeys.USER_PROFILE, user_id=instance.referrer.id)
+        referee_key = CacheKeys.format(CacheKeys.USER_PROFILE, user_id=instance.referee.id)
+        GlobalCache.delete(referrer_key)
+        GlobalCache.delete(referee_key)
