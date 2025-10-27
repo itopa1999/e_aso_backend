@@ -13,6 +13,7 @@ class FeatureNames(Enum):
     FREE_DELIVERY = "Free Delivery"
     CART_DISCOUNT = "Cart Discount"
     BLACK_FRIDAY = "Black Friday"
+    PRODUCT_LIMITATION = "Product Limitation"
 
     @classmethod
     def values(cls):
