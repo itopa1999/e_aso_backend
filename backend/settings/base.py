@@ -205,7 +205,6 @@ DRF_STANDARDIZED_ERRORS = {
 
 BASE_URL =os.getenv('BASE_URL')
 
-
 # Common cookie settings
 COOKIE_SETTINGS = {
     'path': '/',
@@ -320,3 +319,4 @@ LOGGING = {
         },
     }
 }
+
