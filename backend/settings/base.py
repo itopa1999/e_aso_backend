@@ -57,7 +57,7 @@ THIRD_PARTIES_APPS = [
     'health_check.cache',                       # check cache backend
     'health_check.storage',                     # check media storage
     'health_check.contrib.redis',               # optional, if using Redis
-    'health_check.contrib.celery', 
+    # 'health_check.contrib.celery', 
 ]
 
 INSTALLED_APPS = SYSTEM_DEFINE_APPS + APPLICATION_APPS + THIRD_PARTIES_APPS
