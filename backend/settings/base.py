@@ -238,3 +238,85 @@ ADMINS = [
     ('Admin', 'salawulucky08071@gmail.com'),
 ]
 
+# Log directory
+LOG_DIR = 'logs'
+os.makedirs(LOG_DIR, exist_ok=True)
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    # ===== FORMATTERS =====
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'structured': {
+            'format': '[{asctime}] [{levelname}] {name}: {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname}: {message}',
+            'style': '{',
+        },
+    },
+
+    # ===== FILTERS =====
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+        'require_debug_false': {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+    },
+
+    # ===== HANDLERS =====
+    'handlers': {
+        # 1️⃣ Console (Always show INFO and ERROR)
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'structured',
+        },
+
+        # 2️⃣ File handler (log WARNING, ERROR, CRITICAL)
+        'file': {
+            'level': 'WARNING',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOG_DIR, 'app.log'),
+            'formatter': 'verbose',
+        },
+
+        # 3️⃣ Email admins (only ERROR and CRITICAL)
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+            'formatter': 'verbose',
+            'filters': ['require_debug_false'],  # Only send emails when DEBUG=False
+        },
+    },
+
+    # ===== ROOT LOGGER =====
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+
+    # ===== DJANGO LOGGER =====
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file', 'mail_admins'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        # You can add your app-specific logger if needed:
+        'project': {
+            'handlers': ['console', 'file', 'mail_admins'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    }
+}

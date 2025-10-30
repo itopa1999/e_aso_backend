@@ -26,6 +26,19 @@ class FeatureNames(Enum):
         return [(flag.value, flag.value) for flag in cls]
     
     
+
+class GroupNames(Enum):
+    ADMIN = "Admin"
+    CUSTOMER = "Customer"
+    RIDER = "Rider"
+    
+    @classmethod
+    def values(cls):
+        """Return all enum values as a list"""
+        return [group.value for group in cls]
+    
+    
+    
     
 class BannerCategoryNames(Enum):
     PROMO = "Promo"

@@ -3,14 +3,14 @@ from django.dispatch import receiver
 from django.contrib.auth.models import Group
 from apps.users.models import Referral, User
 from utils.cache_manager import GlobalCache
-from utils.enum import CacheKeys
+from utils.enum import CacheKeys, GroupNames
 
 @receiver(m2m_changed, sender=User.groups.through)
 def assign_rider_number(sender, instance, action, reverse, pk_set, **kwargs):
     if action == "post_add" and not reverse:
         # Get the "Rider" group
         try:
-            rider_group, created = Group.objects.get_or_create(name="Rider")
+            rider_group, created = Group.objects.get_or_create(name=GroupNames.RIDER.value)
         except Group.DoesNotExist:
             return
         

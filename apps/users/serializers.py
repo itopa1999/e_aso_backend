@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import Group
 from apps.aso.models import Order
 from apps.users.models import User
+from utils.enum import GroupNames
 
 
 
@@ -16,7 +17,7 @@ class RegUserSerializer(serializers.ModelSerializer):
             is_active=False,
         )
         
-        customer_group, _ = Group.objects.get_or_create(name="Customer")
+        customer_group, _ = Group.objects.get_or_create(name=GroupNames.CUSTOMER.value)
         user.groups.add(customer_group)
         
         return user

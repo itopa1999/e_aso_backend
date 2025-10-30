@@ -29,7 +29,8 @@ class RiderDashboardQuery:
                     Q(user__first_name__icontains=search) |
                     Q(user__last_name__icontains=search) |
                     Q(order_number__icontains=search) |
-                    Q(total__icontains=search)
+                    Q(total__icontains=search) |
+                    Q(delivery_date__icontains=search)
                 )
 
             recent_orders = recent_orders.order_by('-delivery_date')

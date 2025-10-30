@@ -267,7 +267,7 @@ class Order(BaseModel):
 
 
     def __str__(self):
-        return f"Order #{self.order_number} by {self.user.username}"
+        return f"Order #{self.order_number} by {self.user.first_name}"
 
     class Meta:
         ordering = ['-created_at']

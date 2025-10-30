@@ -1,6 +1,8 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.contrib.auth.models import Group
 
+from utils.enum import GroupNames
+
 class UserManager(BaseUserManager):
     use_in_migrations =True
     
@@ -13,7 +15,7 @@ class UserManager(BaseUserManager):
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         
-        customer_group, created = Group.objects.get_or_create(name="Admin")
+        customer_group, created = Group.objects.get_or_create(name=GroupNames.ADMIN.value)
         user.save(using=self.db)
         user.groups.add(customer_group)
         return user

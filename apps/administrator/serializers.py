@@ -117,7 +117,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'main_image',
             'display_product',
             'created_at',
-            'updated_at',
+            'modified_at',
             'categories',
             'colors',
             'sizes',
