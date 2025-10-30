@@ -1,6 +1,5 @@
 from datetime import timedelta
 from http import HTTPStatus
-from click import group
 from django.utils import timezone
 from django.db.models import Sum, Count
 
