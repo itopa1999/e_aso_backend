@@ -7,8 +7,14 @@ from pathlib import Path
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TEMPLATE_DIR = 'templates'
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# If settings.py is nested deeper (e.g. backend/settings.py), go one level up again
+if (BASE_DIR / "manage.py").exists() is False:
+    BASE_DIR = BASE_DIR.parent
+
+
+TEMPLATE_DIR = BASE_DIR / 'templates'
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
