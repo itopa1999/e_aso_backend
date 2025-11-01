@@ -16,6 +16,9 @@ urlpatterns = [
                 path('import-products/', ProductBulkImportView.as_view(), name='import-products'),
                 path('activate-products/', ActivateProductsAPIView.as_view()),
                 path('banners/<str:category>/', BannerListView.as_view()),
+                path('feedbacks/', ListCustomerFeedbackView.as_view()),
+                path('create/feedback/', CreateCustomerFeedbackView.as_view()),
+                path('feedbacks/<int:pk>/mark_done/', MarkCustomerFeedbackDoneView.as_view()),
                 
             ]
         )

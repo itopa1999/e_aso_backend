@@ -148,8 +148,10 @@ def watchlist_model_changed(sender, instance, **kwargs):
         user_id = instance.cart.user.id
     else:
         return
+    cache_key1 = CacheKeys.format(CacheKeys.USER_WATCHLIST, user_id=user_id)
     cache_key = CacheKeys.format(CacheKeys.USER_CART, user_id=user_id)
     GlobalCache.delete(cache_key)
+    GlobalCache.delete(cache_key1)
     
     
     

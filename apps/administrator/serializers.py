@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.administrator.models import Banner
+from apps.administrator.models import Banner, CustomerFeedback
 from apps.aso.models import LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
 from apps.users.models import User
 from utils.enum import LookUpsCategories
@@ -462,3 +462,8 @@ class ProductImportSerializer(serializers.Serializer):
 
         return product
 
+class CustomerFeedbackSerializer(serializers.ModelSerializer):
+    is_done = serializers.BooleanField(read_only=True)
+    class Meta:
+        model = CustomerFeedback
+        fields = ['id', 'user', 'feedback', 'rating', 'is_done', 'created_at']

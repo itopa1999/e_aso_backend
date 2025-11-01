@@ -1,7 +1,7 @@
 from django.db.models.signals import pre_save, post_save, post_delete
 from django.dispatch import receiver
 from django.utils import timezone
-from apps.administrator.models import Banner
+from apps.administrator.models import Banner, CustomerFeedback
 from utils.Middlewares.threadlocals import get_current_user
 from utils.base_model import BaseModel
 from utils.cache_manager import GlobalCache
@@ -31,3 +31,9 @@ def auto_fill_audit_fields(sender, instance, **kwargs):
 @receiver([post_save, post_delete], sender=Banner)
 def banner_model_changed(sender, instance, **kwargs):
     GlobalCache.delete_prefix("banner_")
+    
+    
+@receiver([post_save, post_delete], sender=CustomerFeedback)
+def customer_feedback_model_changed(sender, instance, **kwargs):
+    cache_key = CacheKeys.CUSTOMER_FEEDBACK_LIST
+    GlobalCache.delete(cache_key)

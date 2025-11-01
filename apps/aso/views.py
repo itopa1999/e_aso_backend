@@ -52,7 +52,7 @@ class UserOrderListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated, IsCustomerPermission]
 
     def get(self, request):
-        result = UserOrderListQuery.query(self.request.user)
+        result = UserOrderListQuery.query(self.request)
         return Response(result.to_dict(), status=result.status_code)
     
     def get_serializer_context(self):
@@ -165,7 +165,7 @@ class CartDetailAPIView(generics.GenericAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def get(self, request, *args, **kwargs):
-        result = GetCartDetailQuery.query(request.user)
+        result = GetCartDetailQuery.query(request)
         return Response(result.to_dict(), status=result.status_code)
 
         

@@ -3,15 +3,21 @@ from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status, generics
 from rest_framework.views import APIView
+from apps.administrator.BLL.Commands.MarkCustomerFeedbackDone import MarkCustomerFeedbackDoneCommand
 from apps.administrator.BLL.Queries.Dashboard import DashboardQuery
 from apps.administrator.BLL.Queries.ListBanners import BannerListQuery
 from apps.administrator.BLL.Queries.ProductList import ProductListQuery
 from apps.administrator.BLL.Queries.OrderList import OrderListQuery
 from apps.administrator.BLL.Queries.UserOrderList import UserListQuery
+from apps.administrator.BLL.Commands.CreateCustomerFeedback import CreateCustomerFeedbackCommand
+from apps.administrator.BLL.Queries.ListCustomerFeedback import ListCustomerFeedbackQuery
+from apps.administrator.models import CustomerFeedback
 from apps.aso.models import Product, Order
 from apps.users.models import User
+from utils.cache_manager import GlobalCache
+from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
-from .serializers import DashboardSerializer, ProductSerializer, AdminOrderDetailSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
+from .serializers import CustomerFeedbackSerializer, DashboardSerializer, ProductSerializer, AdminOrderDetailSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
 # Create your views here. 
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -152,7 +158,7 @@ class BulkUpdateProductBadgesView(generics.GenericAPIView):
 
 
 class ProductBulkImportView(generics.GenericAPIView):
-    # permission_classes = [IsAuthenticated, IsAdminPermission]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = ProductImportSerializer
     def post(self, request):
         if not isinstance(request.data, list):
@@ -180,13 +186,57 @@ class ProductBulkImportView(generics.GenericAPIView):
         
         
 class ActivateProductsAPIView(APIView):
-    # permission_classes = [IsAuthenticated, IsAdminPermission]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     def post(self, request):
         products_to_update = Product.objects.filter(display_product=False, is_deleted = False)
         count = products_to_update.update(display_product=True)
         return Response({"message": f"{count} products activated."}, status=status.HTTP_200_OK)
     
      
+class CreateCustomerFeedbackView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, IsAdminPermission]
+    """ to create a new customer feedback"""
+    serializer_class = CustomerFeedbackSerializer
+    queryset = CustomerFeedback.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        result = CreateCustomerFeedbackCommand.execute(serializer)
+        return Response(result.to_dict(), status=result.status_code)
+
+class ListCustomerFeedbackView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, IsAdminPermission]
+    """ to list all customer feedback"""
+    serializer_class = CustomerFeedbackSerializer
+    
+    def get_queryset(self):
+        cache_key = CacheKeys.CUSTOMER_FEEDBACK_LIST
+        feedbacks = GlobalCache.get(cache_key)
+        if not feedbacks:
+            feedbacks = CustomerFeedback.objects.all()
+            GlobalCache.set(cache_key, feedbacks)
+        return feedbacks
+
+    def get(self, request, *args, **kwargs):
+        feedbacks = self.get_queryset().order_by("-created_at")
+        result = ListCustomerFeedbackQuery.query(feedbacks, request)
+        serializer = self.get_serializer(result.data, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class MarkCustomerFeedbackDoneView(APIView):
+    """Mark a customer feedback as done"""
+    permission_classes = [IsAuthenticated, IsAdminPermission]
+
+    def patch(self, request, pk):
+        
+        result = MarkCustomerFeedbackDoneCommand.execute(pk)
+        return Response(result.to_dict(), status=result.status_code)
+        
+        
 
 # class ResendOtpView(generics.GenericAPIView):
 #     serializer_class = ResendOtpSerializer

@@ -79,6 +79,7 @@ class CacheKeys(Enum):
 
     # Misc / site-wide
     LOOKUP = "lookup"
+    CUSTOMER_FEEDBACK_LIST = "customer_feedback_list"
     FEATURE_FLAGS = "feature_flag_{feature_name}"
     BANNER = "banner_{category}"
 

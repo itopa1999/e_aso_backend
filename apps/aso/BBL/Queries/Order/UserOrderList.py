@@ -8,7 +8,8 @@ from utils.enum import CacheKeys
 class UserOrderListQuery:
 
     @staticmethod
-    def query(user):
+    def query(request):
+        user = request.user
         cache_key = CacheKeys.format(CacheKeys.USER_ORDERS, user_id=user.id)
 
         # ✅ Try cache first
@@ -22,7 +23,7 @@ class UserOrderListQuery:
             
         try:
             orders = Order.objects.filter(user=user, is_deleted = False).prefetch_related('items', 'tracking_events').order_by('-created_at')
-            serializer = OrderSerializer(orders, many=True)
+            serializer = OrderSerializer(orders, many=True, context={'request': request})
             
             GlobalCache.set(cache_key, {"data": serializer.data})
             

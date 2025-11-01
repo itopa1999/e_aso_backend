@@ -20,3 +20,19 @@ class Banner(BaseModel):
 
     def __str__(self):
         return self.title
+    
+
+class CustomerFeedback(BaseModel):
+    user = models.CharField(max_length=100)
+    feedback = models.TextField()
+    rating = models.PositiveIntegerField()
+    is_done = models.BooleanField(default=False)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["user"]),
+            models.Index(fields=["created_at"]),
+        ]
+
+    def __str__(self):
+        return f"Feedback from {self.user} - Rating: {self.rating}"

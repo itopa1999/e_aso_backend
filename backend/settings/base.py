@@ -71,6 +71,7 @@ INSTALLED_APPS = SYSTEM_DEFINE_APPS + APPLICATION_APPS + THIRD_PARTIES_APPS
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'utils.Middlewares.log_exceptions.ExceptionLoggingMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -242,11 +243,9 @@ CACHES = {
 ADMINS = [
     ('Admin', 'salawulucky08071@gmail.com'),
 ]
-
 # Log directory
 LOG_DIR = 'logs'
 os.makedirs(LOG_DIR, exist_ok=True)
-
 
 LOGGING = {
     'version': 1,
@@ -255,7 +254,7 @@ LOGGING = {
     # ===== FORMATTERS =====
     'formatters': {
         'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d}\n{message}',
             'style': '{',
         },
         'structured': {
@@ -280,49 +279,52 @@ LOGGING = {
 
     # ===== HANDLERS =====
     'handlers': {
-        # 1️⃣ Console (Always show INFO and ERROR)
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',  # Show everything in console
             'class': 'logging.StreamHandler',
-            'formatter': 'structured',
+            'formatter': 'verbose',
         },
-
-        # 2️⃣ File handler (log WARNING, ERROR, CRITICAL)
         'file': {
-            'level': 'WARNING',
+            'level': 'ERROR',  # Only write errors and tracebacks to file
             'class': 'logging.FileHandler',
             'filename': os.path.join(LOG_DIR, 'app.log'),
             'formatter': 'verbose',
         },
-
-        # 3️⃣ Email admins (only ERROR and CRITICAL)
         'mail_admins': {
             'level': 'ERROR',
             'class': 'django.utils.log.AdminEmailHandler',
             'formatter': 'verbose',
-            'filters': ['require_debug_false'],  # Only send emails when DEBUG=False
+            'filters': ['require_debug_false'],
         },
     },
 
     # ===== ROOT LOGGER =====
     'root': {
         'handlers': ['console', 'file'],
-        'level': 'INFO',
+        'level': 'DEBUG',
     },
 
     # ===== DJANGO LOGGER =====
     'loggers': {
+        # General Django logs
         'django': {
-            'handlers': ['console', 'file', 'mail_admins'],
+            'handlers': ['console', 'file'],
             'level': 'INFO',
             'propagate': True,
         },
-        # You can add your app-specific logger if needed:
+
+        # 🔥 Request logger: captures 500s with traceback
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+
+        # Optional: your project logger
         'project': {
-            'handlers': ['console', 'file', 'mail_admins'],
+            'handlers': ['console', 'file'],
             'level': 'DEBUG',
             'propagate': False,
         },
-    }
+    },
 }
-

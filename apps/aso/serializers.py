@@ -144,7 +144,7 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_id = serializers.IntegerField(source="product.id")
     product_title = serializers.CharField(source="product.title")
     product_price = serializers.DecimalField(source="product.current_price", max_digits=10, decimal_places=2)
-    product_image = serializers.ImageField(source="product.main_image")
+    product_image = serializers.SerializerMethodField()
     product_colors = serializers.SerializerMethodField()
     product_sizes = serializers.SerializerMethodField()
     subtotal = serializers.SerializerMethodField()
@@ -179,6 +179,13 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     def get_subtotal(self, obj):
         return obj.subtotal()
+    
+    def get_product_image(self, obj):
+        request = self.context.get('request')
+        
+        if obj.product.main_image and hasattr(obj.product.main_image, 'url'):
+            return request.build_absolute_uri(obj.product.main_image.url)
+        return None
 
 
 class CartDetailSerializer(serializers.ModelSerializer):
@@ -215,6 +222,7 @@ class CartDetailSerializer(serializers.ModelSerializer):
 
     def get_total(self, obj):
         return obj.total()
+
     
     
 class LookUpsSerializer(serializers.ModelSerializer):
