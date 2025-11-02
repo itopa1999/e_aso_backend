@@ -37,9 +37,3 @@ class OrderDetailQuery:
                 status_code=HTTPStatus.NOT_FOUND,
                 message="Order not found"
             )
-        except Exception as e:
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to fetch order details: {str(e)}"
-            )

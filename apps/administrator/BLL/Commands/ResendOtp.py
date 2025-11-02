@@ -55,9 +55,3 @@ class ResendOtpCommand:
                 status_code=HTTPStatus.OK,
                 message="New OTP generated and sent successfully"
             )
-
-        except Exception as e:
-            return BaseResult(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to resend OTP: {str(e)}"
-            )

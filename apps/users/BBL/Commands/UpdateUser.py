@@ -7,23 +7,16 @@ class UpdateUserCommand:
 
     @staticmethod
     def Execute(user, update_data):
-        try:
-            serializer = UserUpdateSerializer(user, data=update_data, partial=True)
+        serializer = UserUpdateSerializer(user, data=update_data, partial=True)
 
-            if serializer.is_valid():
-                serializer.save()
-                return BaseResult(
-                    status_code=HTTPStatus.OK,
-                    message="User updated successfully"
-                )
-
+        if serializer.is_valid():
+            serializer.save()
             return BaseResult(
-                status_code=HTTPStatus.BAD_REQUEST,
-                message=serializer.errors
+                status_code=HTTPStatus.OK,
+                message="User updated successfully"
             )
 
-        except Exception as e:
-            return BaseResult(
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"User update failed: {str(e)}"
-            )
+        return BaseResult(
+            status_code=HTTPStatus.BAD_REQUEST,
+            message=serializer.errors
+        )

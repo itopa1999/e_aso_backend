@@ -44,10 +44,3 @@ class UpdateCartQuantityCommand:
                 status_code=HTTPStatus.NOT_FOUND,
                 message="Cart item not found"
             )
-        except Exception as e:
-            op.fail(str(e))
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to update cart item quantity: {str(e)}"
-            )

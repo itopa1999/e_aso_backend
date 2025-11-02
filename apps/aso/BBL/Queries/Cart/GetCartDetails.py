@@ -20,22 +20,16 @@ class GetCartDetailQuery:
                 message="Watchlist fetched successfully"
             )
             
-        try:
-            cart, created = Cart.objects.get_or_create(user=user, is_deleted=False)
+        cart, created = Cart.objects.get_or_create(user=user, is_deleted=False)
 
-            serializer = CartDetailSerializer(cart, context={'request': request})
-            
-            GlobalCache.set(cache_key, {"data": serializer.data})
-            
-            return BaseResultWithData(
-                data=serializer.data,
-                status_code=HTTPStatus.OK,
-                message="Cart detail retrieved successfully"
-            )
+        serializer = CartDetailSerializer(cart, context={'request': request})
+        
+        GlobalCache.set(cache_key, {"data": serializer.data})
+        
+        return BaseResultWithData(
+            data=serializer.data,
+            status_code=HTTPStatus.OK,
+            message="Cart detail retrieved successfully"
+        )
 
-        except Exception as e:
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to fetch cart details: {str(e)}"
-            )
+

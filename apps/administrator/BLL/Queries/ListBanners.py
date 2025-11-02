@@ -22,23 +22,16 @@ class BannerListQuery:
                 message="banner details fetched successfully"
             )
             
-        try:
-            if categories:
-                banners = Banner.objects.filter(category__in=categories, is_deleted=False)
-            else:
-                banners = Banner.objects.filter(is_deleted=False)
-            
-            serializer = BannerSerializer(banners, many=True, context={'request': request})
-            
-            GlobalCache.set(cache_key, {"data": serializer.data})
-            return BaseResultWithData(
-                data=serializer.data,
-                status_code=HTTPStatus.OK,
-                message="banners retrieved successfully."
-            )
-        except Exception as e:
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to banners lookups: {str(e)}"
-            )
+        if categories:
+            banners = Banner.objects.filter(category__in=categories, is_deleted=False)
+        else:
+            banners = Banner.objects.filter(is_deleted=False)
+        
+        serializer = BannerSerializer(banners, many=True, context={'request': request})
+        
+        GlobalCache.set(cache_key, {"data": serializer.data})
+        return BaseResultWithData(
+            data=serializer.data,
+            status_code=HTTPStatus.OK,
+            message="banners retrieved successfully."
+        )

@@ -18,8 +18,7 @@ def initiate(request, user, cart_id, data):
     )
     op.start()
     
-    try:
-    
+    with transaction.atomic():    
         ref = secrets.token_urlsafe(15)
         amount = int(float(data["total"])) * 100
         
@@ -51,10 +50,6 @@ def initiate(request, user, cart_id, data):
             return response.json()["data"]["authorization_url"]
 
         op.fail("Paystack initialization failed")
-        return None
-    
-    except Exception as e:
-        op.fail("Exception during Paystack initialization", e)
         return None
             
 
@@ -149,7 +144,3 @@ def validate(reference):
     except Cart.DoesNotExist as e:
         op.fail("Cart not found")
         return {"success": False, "error": "Cart not found or already processed."}
-
-    except Exception as e:
-        op.fail("Error validating transaction")
-        return {"success": False, "error": f"Failed to process transaction: {str(e)}"}

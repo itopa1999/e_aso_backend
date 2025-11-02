@@ -21,20 +21,13 @@ class UserOrderListQuery:
                 message="User orders fetched successfully"
             )
             
-        try:
-            orders = Order.objects.filter(user=user, is_deleted = False).prefetch_related('items', 'tracking_events').order_by('-created_at')
-            serializer = OrderSerializer(orders, many=True, context={'request': request})
-            
-            GlobalCache.set(cache_key, {"data": serializer.data})
-            
-            return BaseResultWithData(
-                data=serializer.data,
-                status_code=HTTPStatus.OK,
-                message="User orders fetched successfully"
-            )
-        except Exception as e:
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to fetch user orders: {str(e)}"
-            )
+        orders = Order.objects.filter(user=user, is_deleted = False).prefetch_related('items', 'tracking_events').order_by('-created_at')
+        serializer = OrderSerializer(orders, many=True, context={'request': request})
+        
+        GlobalCache.set(cache_key, {"data": serializer.data})
+        
+        return BaseResultWithData(
+            data=serializer.data,
+            status_code=HTTPStatus.OK,
+            message="User orders fetched successfully"
+        )

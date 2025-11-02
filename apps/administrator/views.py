@@ -125,37 +125,30 @@ class BulkUpdateProductBadgesView(generics.GenericAPIView):
         badge = validated_data['badge']
         product_ids = validated_data.get('product_ids', [])
         product_titles = validated_data.get('product_titles', [])
+        
+        with transaction.atomic():
+            updated_count = 0
+            
+            # Update by IDs
+            if product_ids:
+                count_by_id = Product.objects.filter(
+                    id__in=product_ids, is_deleted = False
+                ).update(badge=badge)
+                updated_count += count_by_id
+            
+            # Update by titles
+            if product_titles:
+                count_by_title = Product.objects.filter(
+                    title__in=product_titles, is_deleted = False
+                ).update(badge=badge)
+                updated_count += count_by_title
+            
+            return Response({
+                "message": f"Successfully updated badges for {updated_count} products",
+                "badge": badge,
+                "updated_count": updated_count
+            }, status=status.HTTP_200_OK)
                 
-        try:
-            with transaction.atomic():
-                updated_count = 0
-                
-                # Update by IDs
-                if product_ids:
-                    count_by_id = Product.objects.filter(
-                        id__in=product_ids, is_deleted = False
-                    ).update(badge=badge)
-                    updated_count += count_by_id
-                
-                # Update by titles
-                if product_titles:
-                    count_by_title = Product.objects.filter(
-                        title__in=product_titles, is_deleted = False
-                    ).update(badge=badge)
-                    updated_count += count_by_title
-                
-                return Response({
-                    "message": f"Successfully updated badges for {updated_count} products",
-                    "badge": badge,
-                    "updated_count": updated_count
-                }, status=status.HTTP_200_OK)
-                
-        except Exception as e:
-            return Response(
-                {"error": f"An error occurred during update: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
 
 class ProductBulkImportView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsAdminPermission]

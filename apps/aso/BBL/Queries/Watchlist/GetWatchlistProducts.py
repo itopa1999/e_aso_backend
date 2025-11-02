@@ -21,24 +21,17 @@ class GetWatchlistProductsQuery:
             )
             
             
-        try:
-            queryset = Product.objects.filter(
-                watchlist_product__user=user,
-                is_deleted=False
-            )
+        queryset = Product.objects.filter(
+            watchlist_product__user=user,
+            is_deleted=False
+        )
 
-            serializer = WatchlistProductSerializer(queryset, many=True, context={"request": request})
-            
-            GlobalCache.set(cache_key, {"data": serializer.data})
-            
-            return BaseResultWithData(
-                data=serializer.data,
-                status_code=HTTPStatus.OK,
-                message="Watchlist fetched successfully"
-            )
-        except Exception as e:
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to get watchlist: {str(e)}"
-            )
+        serializer = WatchlistProductSerializer(queryset, many=True, context={"request": request})
+        
+        GlobalCache.set(cache_key, {"data": serializer.data})
+        
+        return BaseResultWithData(
+            data=serializer.data,
+            status_code=HTTPStatus.OK,
+            message="Watchlist fetched successfully"
+        )

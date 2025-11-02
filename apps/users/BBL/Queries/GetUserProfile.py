@@ -19,35 +19,27 @@ class GetUserProfileSummaryQuery:
                 status_code=HTTPStatus.OK,
                 message="User profile fetched successfully"
             )
-        try:
-            orders = Order.objects.filter(user=user, is_deleted = False).order_by('-created_at')
+        orders = Order.objects.filter(user=user, is_deleted = False).order_by('-created_at')
 
-            data = {
-                "first_name": user.first_name or "Not set",
-                "last_name": user.last_name or "Not set",
-                "email": user.email,
-                "phone": user.phone or "Not set",
-                "total_orders": orders.count(),
-                "recent_orders": orders[:5],
-                "referral_code": user.referral_code or "Not set",
-                "is_referral_qualified": user.check_referral_qualification,
-                "total_successful_referrals": user.referrals_made.filter(successful=True).count(),
-                "referral_used": user.referral_used,
-            }
-            
-            serializer = UserOrderSummarySerializer(data)
-            
-            GlobalCache.set(cache_key, {"data": serializer.data})
-            
-            return BaseResultWithData(
-                data=serializer.data,
-                status_code=HTTPStatus.OK,
-                message="User profile summary fetched successfully"
-            )
-
-        except Exception as e:
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.INTERNAL_SERVER_ERROR,
-                message=f"Failed to retrieve profile summary: {str(e)}"
-            )
+        data = {
+            "first_name": user.first_name or "Not set",
+            "last_name": user.last_name or "Not set",
+            "email": user.email,
+            "phone": user.phone or "Not set",
+            "total_orders": orders.count(),
+            "recent_orders": orders[:5],
+            "referral_code": user.referral_code or "Not set",
+            "is_referral_qualified": user.check_referral_qualification,
+            "total_successful_referrals": user.referrals_made.filter(successful=True).count(),
+            "referral_used": user.referral_used,
+        }
+        
+        serializer = UserOrderSummarySerializer(data)
+        
+        GlobalCache.set(cache_key, {"data": serializer.data})
+        
+        return BaseResultWithData(
+            data=serializer.data,
+            status_code=HTTPStatus.OK,
+            message="User profile summary fetched successfully"
+        )
