@@ -1,0 +1,53 @@
+from django.conf import settings
+from django.contrib.auth import get_user_model
+from utils.email_sender import send_custom_email
+from utils.enum import FeatureNames, GroupNames
+from utils.feature_flags import is_feature_enabled
+
+User = get_user_model()
+
+def send_referral_program_announcement():
+    """
+    Send an email to all customers announcing that the referral program is live.
+    Encourage them to share their referral code and earn a discount once their friend completes a purchase.
+    """
+    if not is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value):
+        return "Referral system feature is disabled."
+
+    users = (
+        User.objects.filter(
+            is_active=True,
+            is_deleted=False,
+            groups__name=GroupNames.CUSTOMER.value
+        )
+        .exclude(email__isnull=True)
+        .exclude(email="")
+        .distinct()
+    )
+
+    count = 0
+    for user in users:
+        send_custom_email(
+            subject="Refer & Earn: Get Discounts When Your Friends Shop!",
+            recipient_email=user.email,
+            message=f"""
+            Great news! Our **Referral Program** is now live on Aso Oke & Aso Ofi Marketplace.  
+
+            You can now **earn exclusive shopping discounts** when your friends use your referral code and **complete their purchase**.
+
+            Here’s how it works:
+            - 💬 Share your unique referral code with friends and family.  
+            - 🛍️ When they buy using your code, you’ll automatically receive a **discount** for your next order.  
+            - 🎁 The more completed purchases from your referrals, the more rewards you earn!
+
+            It’s that simple — invite, shop, and save.  
+
+            👉 View and share your referral code here: \n{settings.BASE_URL}/profile.html
+
+            Don’t miss out — start inviting friends today and enjoy amazing discounts once their orders are completed!
+            """,
+            greeting_name=user.first_name or "Valued Customer",
+        )
+        count += 1
+
+    return f"✅ Referral program announcement sent to {count} user(s)."

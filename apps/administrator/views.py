@@ -14,6 +14,9 @@ from apps.administrator.BLL.Queries.ListCustomerFeedback import ListCustomerFeed
 from apps.administrator.models import CustomerFeedback
 from apps.aso.models import Product, Order
 from apps.users.models import User
+from utils.Tasks.Emails.EmailForBlackFriday import send_discount_day_announcement
+from utils.Tasks.Emails.EmailForProductAds import send_new_product_announcement
+from utils.Tasks.Emails.EmailForRefferralDiscount import send_referral_program_announcement
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
@@ -229,7 +232,13 @@ class MarkCustomerFeedbackDoneView(APIView):
         result = MarkCustomerFeedbackDoneCommand.execute(pk)
         return Response(result.to_dict(), status=result.status_code)
         
-        
+
+class DefTestingView(APIView):
+    # permission_classes = [IsAuthenticated, IsAdminPermission]
+    def get(self, request):
+        result = send_new_product_announcement()
+        return Response({"message": result}, status=status.HTTP_200_OK)
+
 
 # class ResendOtpView(generics.GenericAPIView):
 #     serializer_class = ResendOtpSerializer

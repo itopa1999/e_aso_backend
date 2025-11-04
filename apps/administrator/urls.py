@@ -19,6 +19,7 @@ urlpatterns = [
                 path('feedbacks/', ListCustomerFeedbackView.as_view()),
                 path('create/feedback/', CreateCustomerFeedbackView.as_view()),
                 path('feedbacks/<int:pk>/mark_done/', MarkCustomerFeedbackDoneView.as_view()),
+                path('def-testing/', DefTestingView.as_view()),
                 
             ]
         )
