@@ -185,6 +185,16 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/hour',     
+        'anon': '20/hour',
+        "magic_link": "3/minute",
+    },
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 
 }

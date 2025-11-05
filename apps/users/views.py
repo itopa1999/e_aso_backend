@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics
+from rest_framework.throttling import ScopedRateThrottle
 from apps.users.BBL.Commands.MagicLogin import MagicLoginCommand
 from apps.users.BBL.Commands.UpdateUser import UpdateUserCommand
 from apps.users.BBL.Commands.VerifyEmail import VerifyEmailCommand
@@ -52,6 +53,8 @@ class SendMagicLinkView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "magic_link"
     
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
