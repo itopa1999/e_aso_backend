@@ -1,3 +1,4 @@
+from warnings import filters
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.db import transaction
 from rest_framework.response import Response
@@ -6,6 +7,7 @@ from rest_framework.views import APIView
 from apps.administrator.BLL.Commands.MarkCustomerFeedbackDone import MarkCustomerFeedbackDoneCommand
 from apps.administrator.BLL.Queries.Dashboard import DashboardQuery
 from apps.administrator.BLL.Queries.ListBanners import BannerListQuery
+from apps.administrator.BLL.Queries.ListTransactions import TransactionListQuery
 from apps.administrator.BLL.Queries.ProductList import ProductListQuery
 from apps.administrator.BLL.Queries.OrderList import OrderListQuery
 from apps.administrator.BLL.Queries.UserOrderList import UserListQuery
@@ -13,18 +15,18 @@ from apps.administrator.BLL.Commands.CreateCustomerFeedback import CreateCustome
 from apps.administrator.BLL.Queries.ListCustomerFeedback import ListCustomerFeedbackQuery
 from apps.administrator.models import CustomerFeedback
 from apps.aso.models import Product, Order
-from apps.users.models import User
+from apps.users.models import Transaction, User
 from utils.Tasks.Emails.EmailForBlackFriday import send_discount_day_announcement
 from utils.Tasks.Emails.EmailForProductAds import send_new_product_announcement
 from utils.Tasks.Emails.EmailForRefferralDiscount import send_referral_program_announcement
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
-from .serializers import CustomerFeedbackSerializer, DashboardSerializer, ProductSerializer, AdminOrderDetailSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
+from .serializers import CustomerFeedbackSerializer, DashboardSerializer, ProductSerializer, AdminOrderDetailSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
 # Create your views here. 
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.filters import OrderingFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from apps.administrator.serializers import BannerSerializer
 from rest_framework.exceptions import AuthenticationFailed
@@ -238,6 +240,34 @@ class DefTestingView(APIView):
     def get(self, request):
         result = send_new_product_announcement()
         return Response({"message": result}, status=status.HTTP_200_OK)
+    
+    
+class TransactionListView(generics.ListAPIView):
+    serializer_class = TransactionSerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    search_fields = ["reference", "channel", "transaction_type", "status"]
+    ordering_fields = ["created_at", "amount"]
+    ordering = ["-created_at"]  # newest first by default
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        base_qs = Transaction.objects.all()
+
+        result = TransactionListQuery.query(request, base_qs)
+
+        queryset = result.data
+        queryset = self.filter_queryset(queryset)
+
+        page = self.paginate_queryset(queryset)
+        serializer = self.get_serializer(page or queryset, many=True)
+        result.data = serializer.data
+
+        if page is not None:
+            return self.get_paginated_response(result.to_dict())
+
+        return Response(result.to_dict(), status=result.status_code)
+
 
 
 # class ResendOtpView(generics.GenericAPIView):

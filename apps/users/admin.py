@@ -62,3 +62,11 @@ class LookUpAdmin(BaseAdmin):
             "fields": ("referrer", "referee", "successful", "created_at")
         }),
     )
+    
+@admin.register(Transaction)
+class TransactionAdmin(BaseAdmin):
+    custom_fieldsets  = (
+        ("Transaction Information", {
+            "fields": ("user", "amount", "transaction_type", "reference", "channel", "status", "order_id")
+        }),
+    )

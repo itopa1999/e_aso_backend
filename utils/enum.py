@@ -53,7 +53,7 @@ class BannerCategoryNames(Enum):
         """Return choices tuple for Django model fields"""
         return [(banner.value, banner.value) for banner in cls]
     
-    
+
     
 class CacheKeys(Enum):
     """
@@ -91,3 +91,35 @@ class CacheKeys(Enum):
             CacheKeys.format(CacheKeys.USER_PROFILE, user_id=5)
         """
         return key.value.format(**kwargs)
+    
+    
+
+class TransactionType(Enum):
+    PURCHASE = "Purchase"
+    REFUND = "Refund"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.value) for key in cls]
+
+
+class TransactionChannel(Enum):
+    FLUTTERWAVE = "Flutterwave"
+    PAYSTACK = "Paystack"
+    BANK_TRANSFER = "Bank Transfer"
+    WALLET = "Wallet"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.value) for key in cls]
+
+
+class TransactionStatus(Enum):
+    PENDING = "Pending"
+    SUCCESS = "Success"
+    FAILED = "Failed"
+    CANCELLED = "Cancelled"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.value) for key in cls]

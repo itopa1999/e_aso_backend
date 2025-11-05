@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import Group
 from apps.aso.models import Order
-from apps.users.models import User
+from apps.users.models import Transaction, User
 from utils.enum import GroupNames
 
 
@@ -47,6 +47,11 @@ class RecentOrderSerializer(serializers.ModelSerializer):
         latest_tracking = obj.tracking_events.order_by('-date').first()
         return latest_tracking.status if latest_tracking else None
         
+        
+class TransactionsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['id', 'amount', 'transaction_type', 'reference', 'channel', 'status', 'order_id', 'created_at']
 
 class UserOrderSummarySerializer(serializers.Serializer):
     first_name = serializers.CharField()
@@ -59,6 +64,7 @@ class UserOrderSummarySerializer(serializers.Serializer):
     total_successful_referrals = serializers.IntegerField()
     referral_used = serializers.BooleanField()
     recent_orders = RecentOrderSerializer(many=True)
+    transactions = TransactionsSerializer(many=True)
     
     
 class ReferralCodeValidationSerializer(serializers.Serializer):

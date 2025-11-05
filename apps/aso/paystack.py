@@ -7,6 +7,8 @@ import requests as req
 from django.db import transaction
 
 from apps.aso.models import Cart, Order, OrderItem, OrderTracking, PaymentDetail, ShippingAddress
+from apps.users.models import Transaction
+from utils.enum import TransactionChannel, TransactionStatus, TransactionType
 from utils.log_helpers import OperationLogger
 
 def initiate(request, user, cart_id, data):
@@ -122,7 +124,16 @@ def validate(reference):
                 date = timezone.now(),
                 description = "Order has been placed and ready for processing."
             )
-            
+
+            Transaction.objects.create(
+                user=user,
+                amount=cart.total(),
+                transaction_type=TransactionType.PURCHASE.value,
+                reference=reference,
+                channel=TransactionChannel.PAYSTACK.value,
+                status=TransactionStatus.SUCCESS.value
+            )
+
             user.referral_used_purchase = True
             user.save(update_fields=["referral_used_purchase"])
 

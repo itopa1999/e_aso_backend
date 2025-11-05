@@ -12,7 +12,7 @@ from utils.base_model import BaseModel
 
 import string, random
 
-from utils.enum import FeatureNames
+from utils.enum import FeatureNames, TransactionChannel, TransactionStatus, TransactionType
 
 def generate_referral_code(length=10):
     while True:
@@ -116,3 +116,22 @@ class Referral(BaseModel):
 
     def __str__(self):
         return f"{self.referrer.first_name} → {self.referee.first_name} ({'✅' if self.successful else '❌'})"
+    
+    
+class Transaction(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="transactions")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_type = models.CharField(max_length=50, choices=TransactionType.choices())
+    reference = models.CharField(max_length=100, unique=True)
+    channel = models.CharField(max_length=50, choices=TransactionChannel.choices())
+    status = models.CharField(max_length=20, choices=TransactionStatus.choices())
+    order_id = models.CharField(max_length=100, null=True, blank=True)
+    
+    class Meta:
+        ordering = ['-id']
+        indexes = [
+            models.Index(fields=['-id']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.email} - {self.transaction_type} - {self.amount}"

@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.administrator.models import Banner, CustomerFeedback
 from apps.aso.models import LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
-from apps.users.models import User
+from apps.users.models import Transaction, User
 from utils.enum import LookUpsCategories
 
 
@@ -467,3 +467,9 @@ class CustomerFeedbackSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomerFeedback
         fields = ['id', 'user', 'feedback', 'rating', 'is_done', 'created_at']
+        
+        
+class TransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Transaction
+        fields = ['id', 'amount', 'transaction_type', 'reference', 'channel', 'status', 'order_id', 'created_at']

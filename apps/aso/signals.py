@@ -75,6 +75,7 @@ def clear_order_cache(user_id, order_id=None):
 
     # Clear user’s order list cache
     GlobalCache.delete(CacheKeys.format(CacheKeys.USER_ORDERS, user_id=user_id))
+    GlobalCache.delete(CacheKeys.format(CacheKeys.USER_PROFILE, user_id=user_id))
 
     # Clear specific order detail cache (if provided)
     if order_id:
