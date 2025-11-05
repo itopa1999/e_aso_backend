@@ -192,7 +192,7 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_THROTTLE_RATES': {
         'user': '100/hour',     
-        'anon': '20/hour',
+        'anon': '100/hour',
         "magic_link": "3/minute",
     },
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",

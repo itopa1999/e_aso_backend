@@ -6,11 +6,13 @@ class ProductListQuery:
     def query(request, queryset):
         
         # Extract query parameters
-        max_price = request.query_params.get('max_price')
-        min_price = request.query_params.get('min_price')
-        rating = request.query_params.get('rating')
-        search = request.query_params.get('search')
-        category = request.query_params.get('category')
+        params = getattr(request, "query_params", request.GET)
+
+        max_price = params.get("max_price")
+        min_price = params.get("min_price")
+        rating = params.get("rating")
+        search = params.get("search")
+        category = params.get("category")
 
         # Apply filters dynamically
         if min_price:

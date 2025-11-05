@@ -10,9 +10,13 @@ from utils.enum import CacheKeys
 
 class BannerListQuery:
     @staticmethod
-    def query(request, category_str):
+    def query(request, category_str=None):
+        category_str = category_str or ""
+
+        # Split categories safely
         categories = [c.strip() for c in category_str.split(",") if c.strip()]
-        cache_key = CacheKeys.format(CacheKeys.BANNER, category="_".join(categories))
+        cache_key = CacheKeys.format(CacheKeys.BANNER, category="_".join(categories) or "all")
+
 
         cached_data = GlobalCache.get(cache_key)
         if cached_data:

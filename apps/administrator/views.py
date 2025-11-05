@@ -49,7 +49,8 @@ class BannerListView(generics.GenericAPIView):
     authentication_classes = [OptionalJWTAuthentication]    
     serializer_class = BannerSerializer
 
-    def get(self, request, category, *args, **kwargs):
+    def get(self, request, category = None, *args, **kwargs):
+        category = category or ""
         result = BannerListQuery.query(request, category)
         return Response(result.to_dict(), status=result.status_code)
 
