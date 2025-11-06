@@ -1,47 +1,52 @@
-name: Prevent Direct Push & Auto Create PR
+name: Auto Create Pull Requests
 
 on:
   push:
     branches:
-      - main
-      - prod
+      - '**'  # Run on all branches
 
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  protect_main:
+  auto-pr:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Check if push is to protected branch
-        id: check_branch
+      - name: Get branch info
+        id: info
         run: |
-          branch_name=${GITHUB_REF#refs/heads/}
-          echo "Branch detected: $branch_name"
-          if [[ "$branch_name" == "main" || "$branch_name" == "prod" ]]; then
-            echo "is_protected=true" >> $GITHUB_OUTPUT
-          else
-            echo "is_protected=false" >> $GITHUB_OUTPUT
-          fi
+          branch_name="${GITHUB_REF#refs/heads/}"
+          commit_message="$(git log -1 --pretty=%B | head -n 1)"
+          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+          echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
+          echo "Detected branch: $branch_name"
+          echo "Commit message: $commit_message"
 
-      - name: Auto-create Pull Request to main
-        if: steps.check_branch.outputs.is_protected == 'true'
+      # 🌱 Auto-PR for NEW BRANCHES
+      - name: Auto-create PR for new branches
+        if: steps.info.outputs.branch_name != 'main' && steps.info.outputs.branch_name != 'prod'
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          title: "🚨 Auto PR: Undo direct push to ${GITHUB_REF_NAME}"
-          body: "A direct push was made to **${GITHUB_REF_NAME}**. This PR restores workflow by merging into main for review."
+          title: "${{ steps.info.outputs.commit_message }}"
+          body: "🔄 Automatically created PR after push to **${{ steps.info.outputs.branch_name }}**."
           base: main
-          branch: ${{ github.ref_name }}
-          draft: true
+          branch: ${{ steps.info.outputs.branch_name }}
+          draft: false
 
-      - name: Fail the workflow (prevent direct push)
-        if: steps.check_branch.outputs.is_protected == 'true'
-        run: |
-          echo "❌ Direct pushes to main or prod are not allowed. A PR has been opened instead."
-          exit 1
+      # 🌀 Auto-PR if push happens on main or prod
+      - name: Auto-create PR for main/prod pushes
+        if: steps.info.outputs.branch_name == 'main' || steps.info.outputs.branch_name == 'prod'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          title: "${{ steps.info.outputs.commit_message }}"
+          body: "⚠️ Direct push detected on **${{ steps.info.outputs.branch_name }}**. This PR mirrors the commit."
+          base: ${{ steps.info.outputs.branch_name }}
+          branch: ${{ steps.info.outputs.branch_name }}
+          draft: false
