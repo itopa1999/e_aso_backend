@@ -6,7 +6,12 @@ class ProductListQuery:
     def query(request, queryset):
         
         # Extract query parameters
-        params = getattr(request, "query_params", request.GET)
+        if hasattr(request, "query_params"):
+            params = request.query_params
+        elif hasattr(request, "GET"):
+            params = request.GET
+        else:
+            params = {}
 
         max_price = params.get("max_price")
         min_price = params.get("min_price")

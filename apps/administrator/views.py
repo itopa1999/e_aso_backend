@@ -13,16 +13,16 @@ from apps.administrator.BLL.Queries.OrderList import OrderListQuery
 from apps.administrator.BLL.Queries.UserOrderList import UserListQuery
 from apps.administrator.BLL.Commands.CreateCustomerFeedback import CreateCustomerFeedbackCommand
 from apps.administrator.BLL.Queries.ListCustomerFeedback import ListCustomerFeedbackQuery
+from apps.administrator.BLL.Commands.ResendOtp import ResendOtpCommand
+from apps.administrator.BLL.Commands.Login import LoginCommand
+from apps.administrator.BLL.Commands.changePassword import ChangePasswordCommand
 from apps.administrator.models import CustomerFeedback
 from apps.aso.models import Product, Order
 from apps.users.models import Transaction, User
-from utils.Tasks.Emails.EmailForBlackFriday import send_discount_day_announcement
-from utils.Tasks.Emails.EmailForProductAds import send_new_product_announcement
-from utils.Tasks.Emails.EmailForRefferralDiscount import send_referral_program_announcement
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
-from .serializers import CustomerFeedbackSerializer, DashboardSerializer, ProductSerializer, AdminOrderDetailSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
+from .serializers import CustomerFeedbackSerializer, DashboardSerializer, LoginSerializer, ProductSerializer, AdminOrderDetailSerializer, ResendOtpSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
 # Create your views here. 
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -271,21 +271,59 @@ class TransactionListView(generics.ListAPIView):
 
 
 
-# class ResendOtpView(generics.GenericAPIView):
-#     serializer_class = ResendOtpSerializer
-#     permission_classes = [IsAuthenticated, IsAdminPermission]
+class ResendOtpView(generics.GenericAPIView):
+    serializer_class = ResendOtpSerializer
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     
-#     def post(self, request):
-#         serializer = self.get_serializer(data=request.data)
-#         serializer.is_valid(raise_exception=True)
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-#         email = serializer.validated_data['email']
-#         result = ResendOtpCommand.execute(email)
-#         return Response(result.to_dict(), status=result.status_code)
+        email = serializer.validated_data['email']
+        result = ResendOtpCommand.execute(email)
+        return Response(result.to_dict(), status=result.status_code)
     
     
+
+class LoginAPIView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+    permission_classes = []
+    authentication_classes = []
     
+    def post(self, request, *args, **kwargs):
+        # Validate incoming data
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data.get("email")
+        password = serializer.validated_data.get("password")
+        token = serializer.validated_data.get("token")
+
+        result = LoginCommand.execute(token, email, password)
+
+        return Response(result.to_dict(), status=result.status_code)
+
+
+
+class ResetPasswordAPIView(generics.GenericAPIView):
+    serializer_class = LoginSerializer
+    permission_classes = []
+    authentication_classes = []
     
+    def post(self, request, *args, **kwargs):
+        # Validate incoming data
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data.get("email")
+        mew_password = serializer.validated_data.get("password")
+        token = serializer.validated_data.get("token")
+
+        result = ChangePasswordCommand.execute(token, email, mew_password)
+
+        return Response(result.to_dict(), status=result.status_code)
+
+
 # class UpdateOrderTrackingAPIView(generics.GenericAPIView):
 #     permission_classes = [IsAuthenticated, IsAdminPermission]
 #     serializer_class = OrderTrackingUpdateSerializer

@@ -29,6 +29,11 @@ class TestBannerListView:
         data = response.json().get("data", response.json())
         assert len(data) == 3
         
+    def test_no_banners_for_invalid_category(self, client, banners):
+        response = client.get("/admins/api/admin/banners/unknown/")
+        assert response.status_code == 200
+        assert response.json()["data"] == []
+        
 
     def test_get_filtered_banners(self, client, banners):
         """Should return only banners matching 'home' category."""
@@ -54,14 +59,11 @@ class TestBannerListView:
         categories = {b["category"] for b in data}
         assert categories == {"home", "sports"}
 
-    def test_caching_called(self, client, mocker, banners):
-        """Ensure caching layer is used."""
-        mock_get = mocker.patch("utils.cache_manager.GlobalCache.get", return_value=None)
-        mock_set = mocker.patch("utils.cache_manager.GlobalCache.set")
+    def test_uses_cached_data(self, client, mocker):
+        cached = {"data": [{"title": "Cached Banner", "category": "home"}]}
+        mocker.patch("utils.cache_manager.GlobalCache.get", return_value=cached)
 
-        url = "/admins/api/admin/banners/home/"
-        response = client.get(url)
-
+        response = client.get("/admins/api/admin/banners/home/")
         assert response.status_code == 200
-        mock_get.assert_called_once()
-        mock_set.assert_called_once()
+        data = response.json()["data"]
+        assert data[0]["title"] == "Cached Banner"

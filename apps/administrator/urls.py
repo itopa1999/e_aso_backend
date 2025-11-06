@@ -6,7 +6,7 @@ urlpatterns = [
         "admin/",
         include(
             [
-                # path("send-token/", ResendOtpView.as_view()),
+                path("send-token/", ResendOtpView.as_view()),
                 path("dashboard/", DashboardAPIView.as_view()),
                 path("products/", ProductAPIView.as_view()),
                 path("orders/", OrderListView.as_view()),
@@ -21,6 +21,8 @@ urlpatterns = [
                 path('feedbacks/<int:pk>/mark_done/', MarkCustomerFeedbackDoneView.as_view()),
                 path('def-testing/', DefTestingView.as_view()),
                 path('transactions/', TransactionListView.as_view()),
+                path("login/", LoginAPIView.as_view(), name="login"),
+                path("change-password/", ResetPasswordAPIView.as_view())
                 
             ]
         )

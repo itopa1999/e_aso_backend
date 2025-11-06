@@ -94,3 +94,6 @@ class ValidateReferralCodeView(APIView):
                 
         result = ValidateReferralCodeCommand.execute(request.user, referral_code)
         return Response(result.to_dict(), status=result.status_code)
+    
+
+

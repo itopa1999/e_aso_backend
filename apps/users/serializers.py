@@ -69,3 +69,4 @@ class UserOrderSummarySerializer(serializers.Serializer):
     
 class ReferralCodeValidationSerializer(serializers.Serializer):
     referral_code = serializers.CharField(required=True, max_length=20)
+    

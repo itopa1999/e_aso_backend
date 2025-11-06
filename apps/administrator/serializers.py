@@ -27,7 +27,11 @@ class BannerSerializer(serializers.ModelSerializer):
 class ResendOtpSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
-        
+
+class LoginSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(write_only=True)
         
 # ADMIN SERIALIZER
 
