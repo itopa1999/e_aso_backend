@@ -22,7 +22,93 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
         ports:
-          - 5432:5432
+          - 5432:5432name: Enforce Branch Rules & Run Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+      - staging
+      - prod
+
+jobs:
+  check-branch-source:
+    name: 🔒 Enforce allowed PR sources
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block PRs from unauthorized branches
+        run: |
+          echo "Checking PR from '${{ github.head_ref }}' → '${{ github.base_ref }}'"
+
+          # Only allow main → staging
+          if [[ "${{ github.base_ref }}" == "staging" && "${{ github.head_ref }}" != "main" ]]; then
+            echo "❌ Only 'main' is allowed to merge into 'staging'"
+            exit 1
+          fi
+
+          # Only allow staging → prod
+          if [[ "${{ github.base_ref }}" == "prod" && "${{ github.head_ref }}" != "staging" ]]; then
+            echo "❌ Only 'staging' is allowed to merge into 'prod'"
+            exit 1
+          fi
+
+  run-tests:
+    name: ✅ Run Django Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Create .env file for testing
+        run: |
+          cat > .env << EOF
+          SECRET_KEY=django-insecure-test-key-for-ci-only
+          DEBUG=True
+          ENV=dev
+          # Use SQLite for local CI testing
+          DATABASE_ENGINE=django.db.backends.sqlite3
+          DATABASE_NAME=:memory:
+          DATABASE_USER=
+          DATABASE_HOST=
+          DATABASE_PORT=
+          DATABASE_PASSWORD=
+          EOF
+
+      - name: Verify Test Database Configuration
+        run: |
+          export DJANGO_SETTINGS_MODULE=backend.test_settings
+          python -c "
+          import os
+          os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.test_settings')
+          import django
+          django.setup()
+          from django.conf import settings
+          print(f'DEBUG = {settings.DEBUG}')
+          print(f'Database ENGINE = {settings.DATABASES[\"default\"][\"ENGINE\"]}')
+          print(f'Database NAME = {settings.DATABASES[\"default\"][\"NAME\"]}')
+          "
+
+      - name: Run Django System Check
+        run: |
+          export DJANGO_SETTINGS_MODULE=backend.test_settings
+          python manage.py check
+
+      - name: Run Tests
+        run: |
+          export DJANGO_SETTINGS_MODULE=backend.test_settings
+          pytest --tb=short --maxfail=3
+
         options: >-
           --health-cmd="pg_isready -U postgres"
           --health-interval=10s
@@ -47,11 +133,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-django
 
-      - name: Run migrations
-        run: |
-          python manage.py migrate --noinput
 
       - name: Run tests
         run: |

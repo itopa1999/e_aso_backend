@@ -1,0 +1,36 @@
+# name: Prevent Direct Push & Auto Create PR
+
+# on:
+#   push:
+#     branches:
+#       - main
+#       - prod
+
+# permissions:
+#   contents: write
+#   pull-requests: write
+
+# jobs:
+#   protect_main:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Detect direct push to protected branch
+#         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prod'
+#         run: |
+#           echo "⚠️ Direct push detected on $GITHUB_REF"
+      
+#       - name: Create pull request back to main
+#         if: github.ref != 'refs/heads/main' && github.ref != 'refs/heads/prod'
+#         uses: peter-evans/create-pull-request@v6
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           title: "Auto PR - Merge ${GITHUB_REF#refs/heads/} into main"
+#           body: "This pull request was automatically created after a direct push to a protected branch."
+#           base: main
+#           branch: ${{ github.ref_name }}
+
+#       - name: Fail the workflow to block direct push
+#         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/prod'
+#         run: |
+#           echo "❌ Direct pushes to main or prod are not allowed."
+#           exit 1
