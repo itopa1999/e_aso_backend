@@ -1,3 +1,4 @@
+from re import search
 from utils.base_result import BaseResultWithData
 from django.db.models import Q
 class UserListQuery:
@@ -14,8 +15,8 @@ class UserListQuery:
                 Q(groups__name__icontains=search)
             )
 
-        if queryset is None:
-            queryset = queryset.filter(id=search)
+        if search and search.isdigit():
+            queryset = queryset | queryset.filter(id=int(search))
             
         return BaseResultWithData(
             data=queryset.distinct(),

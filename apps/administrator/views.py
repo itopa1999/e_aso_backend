@@ -1,10 +1,10 @@
-from warnings import filters
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status, generics
 from rest_framework.views import APIView
+from apps.administrator.BLL.Commands.BulkUpdateProductBadges import BulkUpdateProductBadgesCommand
 from apps.administrator.BLL.Commands.MarkCustomerFeedbackDone import MarkCustomerFeedbackDoneCommand
+from apps.administrator.BLL.Commands.ProductBulkImport import ProductBulkImportCommand
 from apps.administrator.BLL.Queries.Dashboard import DashboardQuery
 from apps.administrator.BLL.Queries.ListBanners import BannerListQuery
 from apps.administrator.BLL.Queries.ListTransactions import TransactionListQuery
@@ -124,64 +124,18 @@ class BulkUpdateProductBadgesView(generics.GenericAPIView):
             "product_titles": ["Product A", "Product B"]
         }
         """
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
         
-        validated_data = serializer.validated_data
-        badge = validated_data['badge']
-        product_ids = validated_data.get('product_ids', [])
-        product_titles = validated_data.get('product_titles', [])
+        result = BulkUpdateProductBadgesCommand.execute(self, request)
+        return Response(result.to_dict(), status=result.status_code)
         
-        with transaction.atomic():
-            updated_count = 0
-            
-            # Update by IDs
-            if product_ids:
-                count_by_id = Product.objects.filter(
-                    id__in=product_ids, is_deleted = False
-                ).update(badge=badge)
-                updated_count += count_by_id
-            
-            # Update by titles
-            if product_titles:
-                count_by_title = Product.objects.filter(
-                    title__in=product_titles, is_deleted = False
-                ).update(badge=badge)
-                updated_count += count_by_title
-            
-            return Response({
-                "message": f"Successfully updated badges for {updated_count} products",
-                "badge": badge,
-                "updated_count": updated_count
-            }, status=status.HTTP_200_OK)
                 
 
 class ProductBulkImportView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = ProductImportSerializer
     def post(self, request):
-        if not isinstance(request.data, list):
-            return Response({'error': 'Data must be a list of products'}, status=status.HTTP_400_BAD_REQUEST)
-
-        created_count = 0
-        errors = []
-
-        for idx, item in enumerate(request.data):
-            serializer = ProductImportSerializer(data=item)
-            if serializer.is_valid():
-                serializer.save()
-                created_count += 1
-            else:
-                errors.append({
-                    "index": idx,
-                    "errors": serializer.errors
-                })
-
-        return Response({
-            "message": "Import finished",
-            "products_created": created_count,
-            "errors": errors
-        }, status=status.HTTP_200_OK)
+        result = ProductBulkImportCommand.execute(request)
+        return Response(result.to_dict(), status=result.status_code)
         
         
 class ActivateProductsAPIView(APIView):

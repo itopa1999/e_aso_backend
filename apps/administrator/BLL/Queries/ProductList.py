@@ -21,9 +21,9 @@ class ProductListQuery:
 
         # Apply filters dynamically
         if min_price:
-            queryset = queryset.filter(current_price__gte=min_price)
+            queryset = queryset.filter(current_price__gte=float(min_price))
         if max_price:
-            queryset = queryset.filter(current_price__lte=max_price)
+            queryset = queryset.filter(current_price__lte=float(max_price))
         if rating:
             queryset = queryset.filter(rating__gte=rating)
         if category:

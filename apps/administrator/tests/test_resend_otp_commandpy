@@ -1,0 +1,79 @@
+
+import pytest
+from http import HTTPStatus
+from unittest.mock import patch
+from django.utils import timezone
+from datetime import timedelta
+
+from apps.administrator.BLL.Commands.ResendOtp import ResendOtpCommand
+from apps.users.models import User, UserVerification
+from utils.enum import GroupNames
+
+@pytest.mark.django_db
+class TestResendOtpCommand:
+    """Unit tests for ResendOtpCommand."""
+
+    @pytest.fixture
+    def admin_user(self):
+        user = User.objects.create_user(
+            email="admin@example.com",
+            password="password123",
+            first_name="Admin",
+        )
+        # Assign user to admin group
+        user.groups.create(name=GroupNames.ADMIN.value)
+        return user
+
+    @pytest.fixture
+    def expired_verification(self, admin_user):
+        """Creates an expired OTP for the admin user"""
+        verification = UserVerification.objects.create(
+            user=admin_user,
+            token="123456",
+            created_at=timezone.now() - timedelta(minutes=15)
+        )
+        return verification
+
+    @pytest.fixture
+    def valid_verification(self, admin_user):
+        """Creates a valid OTP for the admin user"""
+        verification = UserVerification.objects.create(
+            user=admin_user,
+            token="654321",
+            created_at=timezone.now() - timedelta(minutes=5)
+        )
+        return verification
+
+    def test_generate_new_otp_when_expired(self, admin_user, expired_verification):
+        """Should generate a new OTP if the previous one is expired."""
+        with patch("apps.administrator.BLL.Commands.ResendOtpCommand.send_custom_email") as mock_email:
+            result = ResendOtpCommand.execute(admin_user.email)
+
+        # Verify response
+        assert result.status_code == HTTPStatus.OK
+        assert "New OTP generated" in result.message
+
+        # Verify email was sent
+        mock_email.assert_called_once()
+
+        # Verify token was updated
+        expired_verification.refresh_from_db()
+        assert expired_verification.token != "123456"
+
+    def test_do_not_generate_otp_if_still_valid(self, admin_user, valid_verification):
+        """Should not generate a new OTP if the existing one is still valid."""
+        with patch("apps.administrator.BLL.Commands.ResendOtpCommand.send_custom_email") as mock_email:
+            result = ResendOtpCommand.execute(admin_user.email)
+
+        assert result.status_code == HTTPStatus.BAD_REQUEST
+        assert "Otp still valid" in result.message
+        mock_email.assert_not_called()
+
+    def test_return_not_found_for_nonexistent_user(self):
+        """Should return 404 if the email does not exist."""
+        with patch("apps.administrator.BLL.Commands.ResendOtpCommand.send_custom_email") as mock_email:
+            result = ResendOtpCommand.execute("nonexistent@example.com")
+
+        assert result.status_code == HTTPStatus.NOT_FOUND
+        assert "does not exist" in result.message
+        mock_email.assert_not_called()
