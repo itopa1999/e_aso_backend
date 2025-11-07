@@ -15,8 +15,8 @@ class OrderListQuery:
                 Q(user__last_name__icontains=search)
             )
         
-        if queryset is None:
-            queryset = queryset.filter(id=search)
+        if search and search.isdigit():
+            queryset = queryset | queryset.filter(id=int(search))
 
         return BaseResultWithData(
             data=queryset,
