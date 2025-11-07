@@ -1,66 +1,66 @@
-name: Auto Create Pull Requests
+# name: Auto Create Pull Requests
 
-on:
-  push:
-    branches:
-      - '**'  # Run on all branches
+# on:
+#   push:
+#     branches:
+#       - '**'  # Run on all branches
 
-permissions:
-  contents: write
-  pull-requests: write
+# permissions:
+#   contents: write
+#   pull-requests: write
 
-jobs:
-  auto-pr:
-    runs-on: ubuntu-latest
+# jobs:
+#   auto-pr:
+#     runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # ensure full history for creating new branch
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0  # ensure full history for creating new branch
 
-      - name: Get branch info
-        id: info
-        run: |
-          branch_name="${GITHUB_REF#refs/heads/}"
-          commit_message="$(git log -1 --pretty=%B | head -n 1)"
-          timestamp=$(date +'%Y%m%d-%H%M%S')
-          temp_branch="auto-pr-${branch_name}-${timestamp}"
+#       - name: Get branch info
+#         id: info
+#         run: |
+#           branch_name="${GITHUB_REF#refs/heads/}"
+#           commit_message="$(git log -1 --pretty=%B | head -n 1)"
+#           timestamp=$(date +'%Y%m%d-%H%M%S')
+#           temp_branch="auto-pr-${branch_name}-${timestamp}"
 
-          echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
-          echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
-          echo "temp_branch=$temp_branch" >> $GITHUB_OUTPUT
-          echo "Detected branch: $branch_name"
-          echo "Commit message: $commit_message"
+#           echo "branch_name=$branch_name" >> $GITHUB_OUTPUT
+#           echo "commit_message=$commit_message" >> $GITHUB_OUTPUT
+#           echo "temp_branch=$temp_branch" >> $GITHUB_OUTPUT
+#           echo "Detected branch: $branch_name"
+#           echo "Commit message: $commit_message"
 
-      # 🌱 Auto-PR for NEW BRANCHES
-      - name: Auto-create PR for feature or dev branches
-        if: steps.info.outputs.branch_name != 'main' && steps.info.outputs.branch_name != 'prod'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "${{ steps.info.outputs.commit_message }}"
-          body: "🔄 Automatically created PR after push to **${{ steps.info.outputs.branch_name }}**."
-          base: main
-          branch: ${{ steps.info.outputs.branch_name }}
-          draft: false
+#       # 🌱 Auto-PR for NEW BRANCHES
+#       - name: Auto-create PR for feature or dev branches
+#         if: steps.info.outputs.branch_name != 'main' && steps.info.outputs.branch_name != 'prod'
+#         uses: peter-evans/create-pull-request@v6
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           title: "${{ steps.info.outputs.commit_message }}"
+#           body: "🔄 Automatically created PR after push to **${{ steps.info.outputs.branch_name }}**."
+#           base: main
+#           branch: ${{ steps.info.outputs.branch_name }}
+#           draft: false
 
-      # 🌀 Handle pushes to main/prod safely
-      - name: Auto-create PR for main/prod pushes
-        if: steps.info.outputs.branch_name == 'main' || steps.info.outputs.branch_name == 'prod'
-        run: |
-          echo "Creating temporary branch for direct push to ${{ steps.info.outputs.branch_name }}"
-          git checkout -b "${{ steps.info.outputs.temp_branch }}"
-          git push origin "${{ steps.info.outputs.temp_branch }}"
+#       # 🌀 Handle pushes to main/prod safely
+#       - name: Auto-create PR for main/prod pushes
+#         if: steps.info.outputs.branch_name == 'main' || steps.info.outputs.branch_name == 'prod'
+#         run: |
+#           echo "Creating temporary branch for direct push to ${{ steps.info.outputs.branch_name }}"
+#           git checkout -b "${{ steps.info.outputs.temp_branch }}"
+#           git push origin "${{ steps.info.outputs.temp_branch }}"
 
-      - name: Create Pull Request from temp branch
-        if: steps.info.outputs.branch_name == 'main' || steps.info.outputs.branch_name == 'prod'
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "${{ steps.info.outputs.commit_message }}"
-          body: "⚠️ Direct push detected on **${{ steps.info.outputs.branch_name }}**.  
-          This PR was automatically created from **${{ steps.info.outputs.temp_branch }}** → **${{ steps.info.outputs.branch_name }}**."
-          base: ${{ steps.info.outputs.branch_name }}
-          branch: ${{ steps.info.outputs.temp_branch }}
-          draft: false
+#       - name: Create Pull Request from temp branch
+#         if: steps.info.outputs.branch_name == 'main' || steps.info.outputs.branch_name == 'prod'
+#         uses: peter-evans/create-pull-request@v6
+#         with:
+#           token: ${{ secrets.GITHUB_TOKEN }}
+#           title: "${{ steps.info.outputs.commit_message }}"
+#           body: "⚠️ Direct push detected on **${{ steps.info.outputs.branch_name }}**.  
+#           This PR was automatically created from **${{ steps.info.outputs.temp_branch }}** → **${{ steps.info.outputs.branch_name }}**."
+#           base: ${{ steps.info.outputs.branch_name }}
+#           branch: ${{ steps.info.outputs.temp_branch }}
+#           draft: false
