@@ -8,15 +8,15 @@ class OrderListQuery:
         search = request.query_params.get('search')
         
         # Apply filters dynamically
+        if search and search.isdigit():
+            queryset = queryset | queryset.filter(id=int(search))
+            
         if search:
             queryset = queryset.filter(
                 Q(order_number__icontains=search) |
                 Q(user__first_name__icontains=search) |
                 Q(user__last_name__icontains=search)
             )
-        
-        if search and search.isdigit():
-            queryset = queryset | queryset.filter(id=int(search))
 
         return BaseResultWithData(
             data=queryset,

@@ -6,6 +6,9 @@ class UserListQuery:
     def query(request, queryset):
         
         search = request.query_params.get('search')
+        if search and search.isdigit():
+            queryset = queryset | queryset.filter(id=int(search))
+            
         if search:
             queryset = queryset.filter(
                 Q(phone__icontains=search) |
@@ -14,9 +17,6 @@ class UserListQuery:
                 Q(email__icontains=search) |
                 Q(groups__name__icontains=search)
             )
-
-        if search and search.isdigit():
-            queryset = queryset | queryset.filter(id=int(search))
             
         return BaseResultWithData(
             data=queryset.distinct(),
