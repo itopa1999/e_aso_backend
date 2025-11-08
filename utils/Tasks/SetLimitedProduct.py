@@ -8,7 +8,8 @@ from utils.feature_flags import is_feature_enabled
 
 def set_limited_product():
 
-    if not is_feature_enabled(FeatureNames.PRODUCT_LIMITATION.value):
+    flag, enable = is_feature_enabled(FeatureNames.PRODUCT_LIMITATION.value)
+    if not enable:
         return "⚠️ Limited product feature is disabled."
     
     products = (

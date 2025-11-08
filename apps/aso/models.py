@@ -178,7 +178,8 @@ class Cart(BaseModel):
 
     def shipping_cost(self):
         from utils.feature_flags import is_feature_enabled
-        if is_feature_enabled(FeatureNames.FREE_DELIVERY.value):
+        flag, enabled = is_feature_enabled(FeatureNames.FREE_DELIVERY.value)
+        if enabled:
             return Decimal("0.00")
         return Decimal(DELIVERY_FEES.get(self.state, 0))
 
@@ -187,7 +188,8 @@ class Cart(BaseModel):
 
     def discount(self):
         from utils.feature_flags import is_feature_enabled
-        if not is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value):
+        flag, enabled = is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value)
+        if not enabled:
             return Decimal("0.00")
         
         if getattr(self.user, "referral_used_purchase", False):
@@ -386,6 +388,14 @@ class FeatureFlag(BaseModel):
     )
     description = models.TextField(blank=True, null=True)
     is_enabled = models.BooleanField(default=False)
+    start_date = models.DateTimeField(blank=True, null=True)
+    end_date = models.DateTimeField(blank=True, null=True)
+    discount_percent = models.PositiveIntegerField(
+        null=True, blank=True,
+    )
+    count = models.PositiveIntegerField(
+        null=True, blank=True,
+    )
 
     class Meta:
         ordering = ["name"]

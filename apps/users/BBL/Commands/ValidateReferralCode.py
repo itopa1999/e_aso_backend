@@ -9,7 +9,8 @@ from utils.feature_flags import is_feature_enabled
 class ValidateReferralCodeCommand:
     @staticmethod
     def execute(user, referral_code):
-        if not is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value):
+        flag, enable = is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value)
+        if not enable:
             return BaseResult(
                 message="Referral system is currently disabled.",
                 status_code=400

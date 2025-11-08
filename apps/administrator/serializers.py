@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from apps.administrator.models import Banner, CustomerFeedback
-from apps.aso.models import LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
+from apps.aso.models import FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
 from apps.users.models import Transaction, User
 from utils.enum import LookUpsCategories
 
@@ -477,3 +477,19 @@ class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
         fields = ['id', 'amount', 'transaction_type', 'reference', 'channel', 'status', 'order_id', 'created_at']
+
+
+
+class FeatureFlagSerializer(serializers.ModelSerializer):
+    user_first_names = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FeatureFlag
+        fields = ['id', 'name', 'is_enabled', 'description', 'created_at', 'users', 'user_first_names',
+                  'start_date', 'end_date', 'discount_percent', 'count']
+
+    def get_user_first_names(self, obj):
+        return [
+            user.first_name if user.first_name else user.email
+            for user in obj.users.all()
+        ]

@@ -15,7 +15,8 @@ def send_discount_day_announcement(hours_valid=12):
     Args:
         hours_valid (int): Number of hours the promo lasts (default = 12).
     """
-    if not is_feature_enabled(FeatureNames.BLACK_FRIDAY.value):
+    flag, enable = is_feature_enabled(FeatureNames.BLACK_FRIDAY.value)
+    if not enable:
         return "Discount day feature is disabled."
     
     expiry_time = timezone.now() + timedelta(hours=hours_valid)

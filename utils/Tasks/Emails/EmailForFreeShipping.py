@@ -15,7 +15,8 @@ def send_free_shipping_announcement(hours_valid=6):
     Args:
         hours_valid (int): Number of hours the promo lasts (default = 6).
     """
-    if not is_feature_enabled(FeatureNames.FREE_DELIVERY.value):
+    flag, enable = is_feature_enabled(FeatureNames.FREE_DELIVERY.value)
+    if not enable:
         return "Free shipping feature is disabled."
     expiry_time = timezone.now() + timedelta(hours=hours_valid)
 

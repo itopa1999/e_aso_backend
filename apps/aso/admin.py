@@ -143,6 +143,6 @@ class FeatureFlagAdmin(BaseAdmin):
 
     custom_fieldsets = (
         ("Feature Information", {
-            "fields": ("name", "description", "is_enabled", "users")
+            "fields": ("name", "description", "is_enabled", "users", "start_date", "end_date", "discount_percent", "count")
         }),
     )

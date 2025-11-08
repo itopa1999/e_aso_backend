@@ -11,7 +11,8 @@ def send_referral_program_announcement():
     Send an email to all customers announcing that the referral program is live.
     Encourage them to share their referral code and earn a discount once their friend completes a purchase.
     """
-    if not is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value):
+    flag, enable = is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value)
+    if not enable:
         return "Referral system feature is disabled."
 
     users = (

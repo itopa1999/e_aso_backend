@@ -320,5 +320,5 @@ class CheckFeatureFlagView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, feature_name):
-        result = FeatureFlagCheck.is_feature_enabled(feature_name)
+        result = FeatureFlagCheck.query(feature_name)
         return Response(result.to_dict(), status=result.status_code)

@@ -22,7 +22,8 @@ urlpatterns = [
                 path('def-testing/', DefTestingView.as_view()),
                 path('transactions/', TransactionListView.as_view()),
                 path("login/", LoginAPIView.as_view(), name="login"),
-                path("change-password/", ResetPasswordAPIView.as_view())
+                path("change-password/", ResetPasswordAPIView.as_view()),
+                path("feature-flags/", FeatureFlagListView.as_view()),
                 
             ]
         )

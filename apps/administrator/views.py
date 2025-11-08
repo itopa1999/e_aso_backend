@@ -6,6 +6,7 @@ from apps.administrator.BLL.Commands.BulkUpdateProductBadges import BulkUpdatePr
 from apps.administrator.BLL.Commands.MarkCustomerFeedbackDone import MarkCustomerFeedbackDoneCommand
 from apps.administrator.BLL.Commands.ProductBulkImport import ProductBulkImportCommand
 from apps.administrator.BLL.Queries.Dashboard import DashboardQuery
+from apps.administrator.BLL.Queries.FeatureFlagList import FeatureFlagListQuery
 from apps.administrator.BLL.Queries.ListBanners import BannerListQuery
 from apps.administrator.BLL.Queries.ListTransactions import TransactionListQuery
 from apps.administrator.BLL.Queries.ProductList import ProductListQuery
@@ -22,7 +23,7 @@ from apps.users.models import Transaction, User
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
-from .serializers import CustomerFeedbackSerializer, DashboardSerializer, LoginSerializer, ProductSerializer, AdminOrderDetailSerializer, ResendOtpSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
+from .serializers import CustomerFeedbackSerializer, DashboardSerializer, FeatureFlagSerializer, LoginSerializer, ProductSerializer, AdminOrderDetailSerializer, ResendOtpSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
 # Create your views here. 
 
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -224,6 +225,18 @@ class TransactionListView(generics.ListAPIView):
         return Response(result.to_dict(), status=result.status_code)
 
 
+class FeatureFlagListView(generics.GenericAPIView):
+    permission_classes = [IsAuthenticated, IsAdminPermission]
+    serializer_class = FeatureFlagSerializer
+
+    def get(self, request):
+        search = request.query_params.get('search', None)
+        search_params = search if search else None
+        result = FeatureFlagListQuery.query(search_params=search_params)
+        return Response(result.to_dict(), status=result.status_code)
+        
+
+
 
 class ResendOtpView(generics.GenericAPIView):
     serializer_class = ResendOtpSerializer
@@ -258,7 +271,6 @@ class LoginAPIView(generics.GenericAPIView):
         return Response(result.to_dict(), status=result.status_code)
 
 
-
 class ResetPasswordAPIView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     permission_classes = []
@@ -276,6 +288,9 @@ class ResetPasswordAPIView(generics.GenericAPIView):
         result = ChangePasswordCommand.execute(token, email, mew_password)
 
         return Response(result.to_dict(), status=result.status_code)
+
+
+
 
 
 # class UpdateOrderTrackingAPIView(generics.GenericAPIView):

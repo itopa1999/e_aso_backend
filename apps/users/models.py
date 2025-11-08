@@ -52,8 +52,9 @@ class User(BaseModel, AbstractUser):
     @property
     def check_referral_qualification(self):
         from utils.feature_flags import is_feature_enabled
-        
-        if is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value) is False:
+
+        flag, enable = is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value)
+        if not enable:
             return False
 
         successful_referrals = self.referrals_made.filter(successful=True).count()

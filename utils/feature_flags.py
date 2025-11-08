@@ -1,11 +1,11 @@
 from django.core.exceptions import ImproperlyConfigured
-
+from django.utils import timezone
 
 from apps.aso.models import FeatureFlag
 from utils.enum import FeatureNames
 
 
-def is_feature_enabled(flag_name: str, user=None) -> bool:
+def is_feature_enabled(flag_name: str, user=None):
     """
     Check if a given feature flag is enabled globally or for a specific user.
 
@@ -34,23 +34,33 @@ def is_feature_enabled(flag_name: str, user=None) -> bool:
     try:
         flag = FeatureFlag.objects.prefetch_related("users").get(name=flag_name)
     except FeatureFlag.DoesNotExist:
-        return False
+        return None, False
+    
+    now = timezone.now()
+    
+    # Check start_date and end_date
+    if (flag.start_date and now < flag.start_date) or (flag.end_date and now > flag.end_date):
+        # Automatically disable expired or not yet started flags
+        if flag.is_enabled:  # update only if still enabled
+            flag.is_enabled = False
+            flag.save(update_fields=['is_enabled'])
+        return flag, False
 
     # Feature globally disabled
     if not flag.is_enabled:
-        return False
+        return flag, False
 
     # If no users are assigned → enabled globally
     if flag.users.count() == 0:
-        return True
+        return flag, True
 
     # If user not provided → treat as global check
     if user is None:
-        return True
+        return flag, True
 
     # If user is in assigned users → enabled
     if flag.users.filter(id=user.id).exists():
-        return True
+        return flag, True
 
     # Otherwise, disabled for this user
-    return False
+    return flag, False

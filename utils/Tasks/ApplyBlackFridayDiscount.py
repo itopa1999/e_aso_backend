@@ -7,7 +7,8 @@ from utils.feature_flags import is_feature_enabled
 
 def apply_friday_discount():
 
-    if not is_feature_enabled(FeatureNames.BLACK_FRIDAY.value):
+    flag, enable = is_feature_enabled(FeatureNames.BLACK_FRIDAY.value)
+    if not enable:
         return "Friday discount feature is disabled."
     
     products = Product.objects.filter(is_deleted=False, display_product=True)
