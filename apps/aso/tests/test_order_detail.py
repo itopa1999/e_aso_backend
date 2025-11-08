@@ -10,11 +10,15 @@ from utils.base_result import BaseResultWithData
 class TestOrderDetailQuery:
 
     def setup_method(self):
-        # Create a fake user for testing
+        """Create a test user and fake request object"""
         from django.contrib.auth import get_user_model
         self.user = get_user_model().objects.create_user(
             email="testuser@gmail.com", password="testpass"
         )
+
+        # Fake request object with user
+        self.request = MagicMock()
+        self.request.user = self.user
 
     @patch("apps.aso.BBL.Queries.Order.OrderDetails.GlobalCache")
     def test_query_returns_cached_data(self, mock_cache):
@@ -22,7 +26,7 @@ class TestOrderDetailQuery:
         cached_response = {"data": {"id": 1, "status": "delivered"}}
         mock_cache.get.return_value = cached_response
 
-        result = OrderDetailQuery.query(self.user, order_id=1)
+        result = OrderDetailQuery.query(self.request, order_id=1)
 
         assert isinstance(result, BaseResultWithData)
         assert result.status_code == HTTPStatus.OK
@@ -35,11 +39,25 @@ class TestOrderDetailQuery:
         """✅ Should fetch order from DB, serialize and cache it when not cached"""
         mock_cache.get.return_value = None
 
-        order = Order.objects.create(user=self.user, total=5000, subtotal=4500, shipping_fee=500, is_deleted=False)
-        mock_serializer.return_value.data = {"id": order.id, "total": 5000, "subtotal": 4500, "shipping_fee": 500}
+        order = Order.objects.create(
+            user=self.user,
+            total=5000,
+            subtotal=4500,
+            shipping_fee=500,
+            is_deleted=False
+        )
 
-        result = OrderDetailQuery.query(self.user, order.id)
+        # Mock serializer behavior
+        mock_serializer.return_value.data = {
+            "id": order.id,
+            "total": 5000,
+            "subtotal": 4500,
+            "shipping_fee": 500
+        }
 
+        result = OrderDetailQuery.query(self.request, order.id)
+
+        assert isinstance(result, BaseResultWithData)
         assert result.status_code == HTTPStatus.OK
         assert result.data["id"] == order.id
         mock_cache.set.assert_called_once()
@@ -50,8 +68,9 @@ class TestOrderDetailQuery:
         """❌ Should return NOT_FOUND if order does not exist"""
         mock_cache.get.return_value = None
 
-        result = OrderDetailQuery.query(self.user, order_id=999)
+        result = OrderDetailQuery.query(self.request, order_id=999)
 
+        assert isinstance(result, BaseResultWithData)
         assert result.status_code == HTTPStatus.NOT_FOUND
         assert result.data is None
         assert "not found" in result.message.lower()

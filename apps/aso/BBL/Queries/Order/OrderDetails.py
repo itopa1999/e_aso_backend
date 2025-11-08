@@ -8,7 +8,8 @@ from utils.enum import CacheKeys
 class OrderDetailQuery:
 
     @staticmethod
-    def query(user, order_id):
+    def query(request, order_id):
+        user = request.user
         cache_key = CacheKeys.format(CacheKeys.ORDER_DETAIL, user_id=user.id, order_id=order_id)
 
         cached_data = GlobalCache.get(cache_key)
@@ -22,7 +23,7 @@ class OrderDetailQuery:
         
         try:
             order = Order.objects.get(user=user, id=order_id, is_deleted = False)
-            serializer = OrderDetailSerializer(order)
+            serializer = OrderDetailSerializer(order, context={'request': request})
             
             GlobalCache.set(cache_key, {"data": serializer.data})
             

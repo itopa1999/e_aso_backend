@@ -53,8 +53,8 @@ class SendMagicLinkView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
     permission_classes = [AllowAny]
     authentication_classes = []
-    # throttle_classes = [ScopedRateThrottle]
-    # throttle_scope = "magic_link"
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "magic_link"
     
     def post(self, request):
         serializer = self.get_serializer(data=request.data)

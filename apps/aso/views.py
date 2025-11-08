@@ -68,7 +68,7 @@ class OrderDetailView(generics.RetrieveAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def get(self, request, pk):
-        result = OrderDetailQuery.query(self.request.user, pk)
+        result = OrderDetailQuery.query(self.request, pk)
         return Response(result.to_dict(), status=result.status_code)
 
     def get_serializer_context(self):
