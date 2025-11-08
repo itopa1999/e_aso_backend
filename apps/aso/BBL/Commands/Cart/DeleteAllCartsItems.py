@@ -13,7 +13,7 @@ class DeleteAllCartItemsCommand:
         )
         op.start()
         
-        deleted_count = CartItem.objects.filter(cart__user=user, is_deleted=False).delete()
+        deleted_count, _ = CartItem.objects.filter(cart__user=user, is_deleted=False).delete()
         if deleted_count == 0:
             op.fail("No items to delete")
             return BaseResultWithData(

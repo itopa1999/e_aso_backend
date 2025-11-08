@@ -21,6 +21,7 @@ from apps.aso.BBL.Queries.Cart.PaystackConfirm import PaystackConfirmQuery
 from apps.aso.BBL.Queries.CartAndWatchlistCount import CartAndWatchlistCountQuery
 from apps.aso.BBL.Queries.FeatureFlagCheck import FeatureFlagCheck
 from apps.aso.BBL.Queries.LookUpList import LookUpListQuery
+from apps.aso.BBL.Queries.Order.TrackingDetails import TrackingDetailsQuery
 from apps.aso.BBL.Queries.Product.ProductDetails import ProductDetailQuery
 from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProductsQuery
 from apps.aso.BBL.Queries.Order.OrderDetails import OrderDetailQuery
@@ -83,15 +84,10 @@ class TrackingDetailsView(generics.RetrieveAPIView):
     # swagger_schema = TaggedAutoSchema
 
     def get(self, request, order_id):
-        try:
-            order = Order.objects.get(user=request.user, id=order_id, is_deleted=False)
-        except Order.DoesNotExist:
-            return Response(
-                {"error": "Order not found"}, 
-                status=status.HTTP_404_NOT_FOUND
-            )
-        serializer = self.serializer_class(order)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        result = TrackingDetailsQuery.query(request.user, order_id)
+        return Response(result.to_dict(), status=result.status_code)
+        
     
     
 class ReorderItemsView(generics.GenericAPIView):
@@ -221,8 +217,6 @@ class ClearCartView(APIView):
         
         result = DeleteAllCartItemsCommand.execute(user)
         return Response(result.to_dict(), status=result.status_code)
-        
-        
         
    
 class PlaceOrderView(generics.GenericAPIView):

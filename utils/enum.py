@@ -76,6 +76,7 @@ class CacheKeys(Enum):
     # Order-related keys
     ORDER_DETAIL = "order_detail_{user_id}_{order_id}"
     USER_ORDERS = "user_orders_{user_id}"
+    USER_ORDER_TRACKING = "user_order_tracking_{user_id}_{order_id}"
 
     # Misc / site-wide
     LOOKUP = "lookup"

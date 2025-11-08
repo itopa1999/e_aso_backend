@@ -80,6 +80,7 @@ def clear_order_cache(user_id, order_id=None):
     # Clear specific order detail cache (if provided)
     if order_id:
         GlobalCache.delete(CacheKeys.format(CacheKeys.ORDER_DETAIL, user_id=user_id, order_id=order_id))
+        GlobalCache.delete(CacheKeys.format(CacheKeys.USER_ORDER_TRACKING, user_id=user_id, order_id=order_id))
 
 
 

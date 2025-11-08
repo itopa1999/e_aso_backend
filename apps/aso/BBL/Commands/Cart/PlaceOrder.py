@@ -20,7 +20,7 @@ class PlaceOrderCommand:
         try:
             cart = request.user.cart
         except Cart.DoesNotExist:
-            op.fail("Cart not found", e)
+            op.fail("Cart not found")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,

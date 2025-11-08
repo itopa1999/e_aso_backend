@@ -20,20 +20,20 @@ class TestProductListQuery:
         )
 
         # Create products
-        self.p1 = Product.objects.create(
+        self.prod1 = Product.objects.create(
             title="iPhone 15", current_price=1200, rating=4.5
         )
-        self.p1.category.set([self.cat_electronics])
+        self.prod1.category.set([self.cat_electronics])
 
-        self.p2 = Product.objects.create(
+        self.prod2 = Product.objects.create(
             title="Samsung Galaxy", current_price=900, rating=4.0
         )
-        self.p2.category.set([self.cat_electronics])
+        self.prod2.category.set([self.cat_electronics])
 
-        self.p3 = Product.objects.create(
+        self.prod3 = Product.objects.create(
             title="Nike Sneakers", current_price=200, rating=4.7
         )
-        self.p3.category.set([self.cat_fashion])
+        self.prod3.category.set([self.cat_fashion])
 
     def test_filter_by_min_price(self):
         """Products >= min_price should be returned"""
