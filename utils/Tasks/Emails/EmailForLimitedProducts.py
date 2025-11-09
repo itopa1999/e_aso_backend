@@ -8,22 +8,19 @@ from utils.feature_flags import is_feature_enabled
 
 User = get_user_model()
 
-def send_discount_day_announcement():
+def send_limited_day_announcement():
     """
-    Send discount day email if the BLACK_FRIDAY feature flag is enabled.
+    Send limited day email if the Limited feature flag is enabled.
     Uses the flag's actual end_date (DateTimeField) as the expiry time.
     """
 
-    flag, enabled = is_feature_enabled(FeatureNames.BLACK_FRIDAY.value)
+    flag, enabled = is_feature_enabled(FeatureNames.PRODUCT_LIMITATION.value)
     if not enabled or not flag:
-        return "⚠️ Discount day feature is disabled."
+        return "⚠️ Limited day feature is disabled."
 
     if not flag.end_date:
-        return "⚠️ No end date set for this discount feature."
+        return "⚠️ No end date set for this limited feature."
     
-    if flag.is_active:
-        return "⚠️ Black Friday discount is already active."
-
     now = timezone.now()
 
     # Ensure the datetime is timezone-aware
@@ -33,7 +30,7 @@ def send_discount_day_announcement():
 
     # Check expiration
     if expiry_datetime < now:
-        return f"⚠️ The discount feature expired on {expiry_datetime.strftime('%B %d, %Y at %I:%M %p')}."
+        return f"⚠️ The limited feature expired on {expiry_datetime.strftime('%B %d, %Y at %I:%M %p')}."
 
     # Get active customer users
     users = (
@@ -49,27 +46,27 @@ def send_discount_day_announcement():
     count = 0
     for user in users:
         send_custom_email(
-            subject="Massive Discounts on All Products!",
+            subject="Limited Products Now Available: Shop Today!",
             recipient_email=user.email,
             message=f"""
             Hey {user.first_name or "Valued Customer"},
 
-            We’re thrilled to announce that **today is our Special Discount Day!** 🎊
+            We are excited to inform you that our **Limited Product Collection** is now available.  
+            Take advantage of exclusive discounts for a limited time.
 
-            For a limited time, **every product in our store is discounted** — no coupon needed.  
-            Grab your favorites before time runs out!
+            **Offer Details:**
+            - Discounts applied automatically to selected products  
+            - Offer valid until **{expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}**
 
             🛍️ **What you get:**
             - Exclusive discounts across all categories  
             - Offer valid until **{expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}**
 
-            Don’t miss this chance to save big!  
-            👉 Shop now: {settings.BASE_URL}/index.html
+            Visit our store now to secure your favorite items: {settings.BASE_URL}/limited-products.html
 
-            Hurry! The clock is ticking ⏰
             """,
             greeting_name=user.first_name or "Valued Customer",
         )
         count += 1
 
-    return f"✅ Discount day email sent to {count} user(s). Offer ends {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}."
+    return f"✅ Limited product email sent to {count} user(s). Offer ends {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}."

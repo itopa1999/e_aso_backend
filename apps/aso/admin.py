@@ -39,7 +39,7 @@ class ProductAdmin(BaseAdmin):
                        'category', 'created_at',
                        'description','current_price', 'original_price',
                        'discount_percent','rating','reviews_count', 'main_image',
-                       'display_product')
+                       'display_product', 'is_limited')
         }),
     )
     search_fields = ('title',)
@@ -143,6 +143,6 @@ class FeatureFlagAdmin(BaseAdmin):
 
     custom_fieldsets = (
         ("Feature Information", {
-            "fields": ("name", "description", "is_enabled", "users", "start_date", "end_date", "discount_percent", "count")
+            "fields": ("name", "description", "is_enabled", "users", "start_date", "end_date", "discount_percent", "count", "is_active")
         }),
     )

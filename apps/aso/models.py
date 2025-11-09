@@ -51,6 +51,7 @@ class Product(BaseModel):
     badge = models.CharField(max_length=50, blank=True, default="New")
     main_image = models.ImageField(upload_to='products/main/', null=True, blank=True)
     display_product = models.BooleanField(default=True)
+    is_limited = models.BooleanField(default=False)
     
     def save(self, *args, **kwargs):
         if not self.product_number:
@@ -396,6 +397,7 @@ class FeatureFlag(BaseModel):
     count = models.PositiveIntegerField(
         null=True, blank=True,
     )
+    is_active = models.BooleanField(default=False)
 
     class Meta:
         ordering = ["name"]
@@ -408,12 +410,51 @@ class FeatureFlag(BaseModel):
     
     def clean(self):
         """
-        Validate that 'name' is defined in the FeatureNames Enum before saving.
+        Validations:
+        - name must exist in FeatureNames enum
+        - if enabling the flag:
+            - discount_percent > 0
+            - start_date and end_date must be set
+            - start_date and end_date must not be in the past
+            - end_date must come after start_date
         """
+        # ✅ Validate name
         if self.name not in FeatureNames.values():
             raise ValidationError({
                 "name": f"'{self.name}' is not a valid feature name. Must be one of: {', '.join(FeatureNames.values())}"
             })
+
+        # ✅ Only validate these when enabling the feature
+        if self.is_enabled:
+            now = timezone.now()
+
+            # Check discount percent
+            if not self.discount_percent or self.discount_percent <= 0:
+                raise ValidationError({
+                    "discount_percent": "Discount percent must be greater than 0 when enabling a feature."
+                })
+
+            # Check start and end dates
+            if not self.start_date or not self.end_date:
+                raise ValidationError({
+                    "start_date": "Both start_date and end_date are required when enabling a feature.",
+                    "end_date": "Both start_date and end_date are required when enabling a feature.",
+                })
+
+            # Ensure valid date range
+            if self.start_date < now:
+                raise ValidationError({
+                    "start_date": "Start date cannot be in the past when enabling a feature."
+                })
+
+            if self.end_date <= self.start_date:
+                raise ValidationError({
+                    "end_date": "End date must be after start date."
+                })
+        else:
+            # If disabling, clear dates   
+            self.start_date = None
+            self.end_date = None
 
     def save(self, *args, **kwargs):
         # Ensure validation runs before saving

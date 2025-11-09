@@ -29,6 +29,7 @@ urlpatterns = [
                 path("cart/clear/", ClearCartView.as_view()),
                 path("track-order/<int:order_id>/", TrackingDetailsView.as_view()),
                 path("feature-flag/<str:feature_name>/", CheckFeatureFlagView.as_view()),
+                path("limited-products/", LimitedProductsView.as_view()),
             ]
         )
     ),                

@@ -117,7 +117,7 @@ class WatchlistProductSerializer(serializers.ModelSerializer):
         ]
     
     def get_current_price(self, obj):
-        return float(obj.current_price)
+        return float(obj.current_price or 0)
     
     def get_short_description(self, obj):
         return obj.description[:80] + "..." if len(obj.description) > 80 else obj.description

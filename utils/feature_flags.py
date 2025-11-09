@@ -38,13 +38,13 @@ def is_feature_enabled(flag_name: str, user=None):
     
     now = timezone.now()
     
-    # Check start_date and end_date
-    if (flag.start_date and now < flag.start_date) or (flag.end_date and now > flag.end_date):
-        # Automatically disable expired or not yet started flags
-        if flag.is_enabled:  # update only if still enabled
-            flag.is_enabled = False
-            flag.save(update_fields=['is_enabled'])
-        return flag, False
+    # # Check start_date and end_date
+    # if (flag.start_date and now < flag.start_date) or (flag.end_date and now > flag.end_date):
+    #     # Automatically disable expired or not yet started flags
+    #     if flag.is_enabled:  # update only if still enabled
+    #         flag.is_enabled = False
+    #         flag.save(update_fields=['is_enabled'])
+    #     return flag, False
 
     # Feature globally disabled
     if not flag.is_enabled:

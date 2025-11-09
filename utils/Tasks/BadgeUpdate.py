@@ -2,7 +2,7 @@ from django.db.models import Count
 
 from apps.aso.models import OrderItem, Product
 
-def update_best_selling_products(threshold=1):
+def update_best_selling_products(threshold=4):
     """
     Scan all OrderItems and mark products as 'Best Seller' 
     if they appear in orders at least `threshold` times.

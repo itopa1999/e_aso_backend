@@ -1,9 +1,13 @@
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from django.forms import ValidationError
+from utils.Tasks.ApplyBlackFridayDiscount import apply_friday_discount
+from utils.Tasks.ResetBlackFridayDiscount import reset_friday_discount
+from utils.Tasks.SetLimitedProduct import set_limited_product
+from utils.Tasks.UnsetLimitedProduct import unset_limited_product
 from utils.cache_manager import GlobalCache
 from utils.email_sender import send_custom_email
-from utils.enum import CacheKeys
+from utils.enum import CacheKeys, FeatureNames
 from .models import Cart, CartItem, FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ShippingAddress, WatchList
 
 @receiver(post_save, sender=OrderTracking)
@@ -166,3 +170,47 @@ def clear_cart_watchlist_cache(sender, instance, **kwargs):
     if user_id:
         cache_key = CacheKeys.format(CacheKeys.USER_WATCHLISTCART, user_id=user_id)
         GlobalCache.delete(cache_key)
+        
+        
+
+@receiver(post_save, sender=FeatureFlag)
+def handle_featureflag_update(sender, instance, created, **kwargs):
+    """
+    Automatically trigger feature logic when FeatureFlag is updated.
+    """
+
+    # Skip logic for creation — only handle updates
+    if created:
+        return
+
+    # Check which feature name it is
+    feature_name = instance.name
+    is_enabled = instance.is_enabled
+    
+    print(f"[FeatureFlag] Detected update for {feature_name}, enabled={is_enabled}")
+
+    try:
+        # 🏷️ Match the feature name to your handlers
+        if feature_name == FeatureNames.BLACK_FRIDAY.value:
+            if is_enabled:
+                result = apply_friday_discount()
+            else:
+                result = reset_friday_discount()
+
+        elif feature_name == FeatureNames.PRODUCT_LIMITATION.value:
+            if is_enabled:
+                result = set_limited_product()
+            else:
+                result = unset_limited_product()
+
+        # You can easily extend this with new features later:
+        # elif feature_name == FeatureNames.FREE_DELIVERY.value:
+        #     handle_free_delivery_toggle(is_enabled)
+
+        else:
+            result = f"⚠️ No handler registered for {feature_name}."
+
+        print(f"[FeatureFlag] {feature_name} updated — {result}")
+
+    except Exception as e:
+        print(f"❌ Error while running feature handler for {feature_name}: {e}")

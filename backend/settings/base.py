@@ -185,16 +185,16 @@ REST_FRAMEWORK = {
         'rest_framework.parsers.FormParser',
         'rest_framework.parsers.MultiPartParser',
     ),
-    # 'DEFAULT_THROTTLE_CLASSES': [
-    #     'rest_framework.throttling.UserRateThrottle',
-    #     'rest_framework.throttling.AnonRateThrottle',
-    #     "rest_framework.throttling.ScopedRateThrottle",
-    # ],
-    # 'DEFAULT_THROTTLE_RATES': {
-    #     'user': '200/hour',     
-    #     'anon': '200/hour',
-    #     "magic_link": "5/minute",
-    # },
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.UserRateThrottle',
+        'rest_framework.throttling.AnonRateThrottle',
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '20000/hour',     
+        'anon': '20000/hour',
+        "magic_link": "50/minute",
+    },
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 
 }

@@ -22,6 +22,7 @@ from apps.aso.BBL.Queries.CartAndWatchlistCount import CartAndWatchlistCountQuer
 from apps.aso.BBL.Queries.FeatureFlagCheck import FeatureFlagCheck
 from apps.aso.BBL.Queries.LookUpList import LookUpListQuery
 from apps.aso.BBL.Queries.Order.TrackingDetails import TrackingDetailsQuery
+from apps.aso.BBL.Queries.Product.LimitedProducts import LimitedProductsQuery
 from apps.aso.BBL.Queries.Product.ProductDetails import ProductDetailQuery
 from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProductsQuery
 from apps.aso.BBL.Queries.Order.OrderDetails import OrderDetailQuery
@@ -318,7 +319,17 @@ class DeliveryFeeAPIView(APIView):
 class CheckFeatureFlagView(APIView):
     authentication_classes = [OptionalJWTAuthentication]
     permission_classes = [AllowAny]
+    
+    
 
     def get(self, request, feature_name):
         result = FeatureFlagCheck.query(feature_name)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class LimitedProductsView(APIView):
+    authentication_classes = [OptionalJWTAuthentication]
+    permission_classes = [AllowAny]
+    def get(self, request, *args, **kwargs):
+        result = LimitedProductsQuery.query(request)
         return Response(result.to_dict(), status=result.status_code)
