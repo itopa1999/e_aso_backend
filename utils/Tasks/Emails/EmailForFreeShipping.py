@@ -1,24 +1,43 @@
 from datetime import timedelta
+from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
 
 User = get_user_model()
 
-def send_free_shipping_announcement(hours_valid=6):
+
+@checkBackgroundFeatureFlag()
+@shared_task
+def send_free_shipping_announcement():
     """
     Notify all users that free shipping is available for a limited time.
-    
-    Args:
-        hours_valid (int): Number of hours the promo lasts (default = 6).
     """
+    
     flag, enable = is_feature_enabled(FeatureNames.FREE_DELIVERY.value)
     if not enable:
         return "Free shipping feature is disabled."
-    expiry_time = timezone.now() + timedelta(hours=hours_valid)
+    
+    if not flag.end_date:
+        return "⚠️ No end date set for free shipping feature."
+    
+    if flag.is_active:
+        return "⚠️ Free shipping is already active."
+    
+    now = timezone.now()
+
+    # Ensure the datetime is timezone-aware
+    expiry_datetime = flag.end_date
+    if timezone.is_naive(expiry_datetime):
+        expiry_datetime = timezone.make_aware(expiry_datetime)
+
+    # Check expiration
+    if expiry_datetime < now:
+        return f"⚠️ The free shipping feature expired on {expiry_datetime.strftime('%B %d, %Y at %I:%M %p')}."
 
     users = User.objects.filter(is_active=True, is_deleted=False, groups__name=GroupNames.CUSTOMER.value).exclude(email__isnull=True).exclude(email="")
     count = 0
@@ -28,9 +47,9 @@ def send_free_shipping_announcement(hours_valid=6):
             recipient_email=user.email,
             message=f"""
             Good news! We’re offering **FREE SHIPPING** on all orders placed before  
-            🕓 {expiry_time.strftime('%I:%M %p on %B %d, %Y')}.
+            🕓 {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}.
 
-            Don’t wait — fill your cart and check out now to enjoy this limited-time offer!  
+            Don’t wait fill your cart and check out now to enjoy this limited-time offer!  
 
             👉 Visit your store to start shopping: \n{settings.BASE_URL}/index.html
 
@@ -38,5 +57,8 @@ def send_free_shipping_announcement(hours_valid=6):
             greeting_name=user.first_name or "Valued Customer",
         )
         count += 1
+        
+    flag.is_active = True
+    flag.save(update_fields=['is_active'])
 
     return f"✅ Free shipping email sent to {count} user(s)."

@@ -1,11 +1,16 @@
 
 from decimal import Decimal
+
+from celery import shared_task
 from apps.aso.models import Product
 from utils.Tasks.Emails.EmailForBlackFriday import send_discount_day_announcement
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.enum import FeatureNames
 from utils.feature_flags import is_feature_enabled
 
 
+@checkBackgroundFeatureFlag()
+@shared_task
 def apply_friday_discount():
 
     flag, enable = is_feature_enabled(FeatureNames.BLACK_FRIDAY.value)

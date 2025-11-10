@@ -1,11 +1,16 @@
+from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
 
 User = get_user_model()
 
+
+@checkBackgroundFeatureFlag()
+@shared_task
 def send_referral_program_announcement():
     """
     Send an email to all customers announcing that the referral program is live.
@@ -14,6 +19,9 @@ def send_referral_program_announcement():
     flag, enable = is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value)
     if not enable:
         return "Referral system feature is disabled."
+    
+    if flag.is_active:
+        return "⚠️ Referral program is already active."
 
     users = (
         User.objects.filter(
@@ -41,14 +49,17 @@ def send_referral_program_announcement():
             - 🛍️ When they buy using your code, you’ll automatically receive a **discount** for your next order.  
             - 🎁 The more completed purchases from your referrals, the more rewards you earn!
 
-            It’s that simple — invite, shop, and save.  
+            It’s that simple! Invite, shop, and save.  
 
             👉 View and share your referral code here: \n{settings.BASE_URL}/profile.html
 
-            Don’t miss out — start inviting friends today and enjoy amazing discounts once their orders are completed!
+            Don’t miss out, start inviting friends today and enjoy amazing discounts once their orders are completed!
             """,
             greeting_name=user.first_name or "Valued Customer",
         )
         count += 1
+        
+    flag.is_active = True
+    flag.save(update_fields=['is_active'])
 
     return f"✅ Referral program announcement sent to {count} user(s)."

@@ -2,6 +2,9 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from django.forms import ValidationError
 from utils.Tasks.ApplyBlackFridayDiscount import apply_friday_discount
+from utils.Tasks.Emails.EmailForFreeShipping import send_free_shipping_announcement
+from utils.Tasks.Emails.EmailForProductAds import send_new_product_announcement
+from utils.Tasks.Emails.EmailForRefferralDiscount import send_referral_program_announcement
 from utils.Tasks.ResetBlackFridayDiscount import reset_friday_discount
 from utils.Tasks.SetLimitedProduct import set_limited_product
 from utils.Tasks.UnsetLimitedProduct import unset_limited_product
@@ -202,11 +205,35 @@ def handle_featureflag_update(sender, instance, created, **kwargs):
                 result = set_limited_product()
             else:
                 result = unset_limited_product()
-
-        # You can easily extend this with new features later:
-        # elif feature_name == FeatureNames.FREE_DELIVERY.value:
-        #     handle_free_delivery_toggle(is_enabled)
-
+                
+        elif feature_name == FeatureNames.FREE_DELIVERY.value:
+            if is_enabled:
+                result = send_free_shipping_announcement()
+            else:
+                if instance.is_active:
+                    instance.is_active = False
+                    instance.save(update_fields=['is_active'])
+                    
+        elif feature_name == FeatureNames.REFERRAL_SYSTEM.value:
+            if is_enabled:
+                result = send_referral_program_announcement()
+            else:
+                 if instance.is_active:
+                    instance.is_active = False
+                    instance.save(update_fields=['is_active'])
+                    
+        elif feature_name == FeatureNames.NEW_PRODUCT_ANNOUNCEMENT.value:
+            if is_enabled:
+                # Fetch latest product instance
+                latest_product = Product.objects.filter(is_deleted=False, display_product=True).order_by("-created_at").exists()
+                if latest_product:
+                    result = send_new_product_announcement()
+                else:
+                    result = "⚠️ No new product found to announce."
+            else:
+                if instance.is_active:
+                    instance.is_active = False
+                    instance.save(update_fields=['is_active'])
         else:
             result = f"⚠️ No handler registered for {feature_name}."
 
@@ -214,3 +241,4 @@ def handle_featureflag_update(sender, instance, created, **kwargs):
 
     except Exception as e:
         print(f"❌ Error while running feature handler for {feature_name}: {e}")
+        

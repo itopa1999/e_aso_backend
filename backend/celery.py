@@ -1,16 +1,31 @@
-# # celery.py
-# import os
-# from celery import Celery
+import os
+from celery import Celery
 
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.settings")
+# Set the default Django settings
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 
-# app = Celery("backend")
+# Create Celery app
+app = Celery('aso-backend')
 
-# # Use Redis as the broker and result backend
-# app.conf.broker_url = "redis://127.0.0.1:6780/0"
-# app.conf.result_backend = "redis://127.0.0.1:6780/0"
+# Load settings from Django’s settings.py using a CELERY_ prefix
+app.config_from_object('django.conf:settings', namespace='CELERY')
 
-# # Optional: timezone
-# app.conf.timezone = "UTC"
+# Auto-discover tasks in installed apps
+app.autodiscover_tasks()
 
-# app.autodiscover_tasks()
+app.conf.imports = (
+    'utils.Tasks.tasks',
+    'utils.Tasks.ApplyBlackFridayDiscount',
+    'utils.Tasks.ResetBlackFridayDiscount',
+    'utils.Tasks.SetLimitedProduct',
+    'utils.Tasks.UnsetLimitedProduct',
+    'utils.Tasks.Emails.EmailForBlackFriday',
+    'utils.Tasks.Emails.EmailForLimitedProducts',
+    'utils.Tasks.Emails.EmailForFreeShipping',
+    'utils.Tasks.Emails.EmailForRefferralDiscount',
+    'utils.Tasks.Emails.EmailForProductAds',
+)
+
+# @app.task(bind=True)
+# def debug_task(self):
+#     print(f'Request: {self.request!r}')

@@ -1,13 +1,18 @@
 from datetime import timedelta
+from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
 
 User = get_user_model()
 
+
+@checkBackgroundFeatureFlag()
+@shared_task
 def send_limited_day_announcement():
     """
     Send limited day email if the Limited feature flag is enabled.

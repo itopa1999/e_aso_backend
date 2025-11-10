@@ -423,6 +423,9 @@ class FeatureFlag(BaseModel):
             raise ValidationError({
                 "name": f"'{self.name}' is not a valid feature name. Must be one of: {', '.join(FeatureNames.values())}"
             })
+            
+        if self.name == FeatureNames.BACKGROUND_TASKS.value:
+            return
 
         # ✅ Only validate these when enabling the feature
         if self.is_enabled:

@@ -1,9 +1,14 @@
 from decimal import Decimal
+
+from celery import shared_task
 from apps.aso.models import Product
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.enum import FeatureNames
 from utils.feature_flags import is_feature_enabled
 
 
+@checkBackgroundFeatureFlag()
+@shared_task
 def unset_limited_product():
     """
     Remove or reset discounts applied by the PRODUCT_LIMITATION feature flag.

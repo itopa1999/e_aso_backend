@@ -1,16 +1,28 @@
-from datetime import datetime
+from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
-from utils.enum import GroupNames
+from utils.enum import FeatureNames, GroupNames
 from apps.aso.models import Product
+from utils.feature_flags import is_feature_enabled
 
 User = get_user_model()
 
+@checkBackgroundFeatureFlag()
+@shared_task
 def send_new_product_announcement():
     """
     Notify all active customers that new products have been added.
     """
+    
+    flag, enable = is_feature_enabled(FeatureNames.NEW_PRODUCT_ANNOUNCEMENT.value)
+    if not enable:
+        return "New product announcement feature is disabled."
+    
+    if flag.is_active:
+        return "⚠️ New product announcement is already active."
+    
     users = (
         User.objects.filter(is_active=True, is_deleted=False, groups__name=GroupNames.CUSTOMER.value)
         .exclude(email__isnull=True)
@@ -43,5 +55,8 @@ def send_new_product_announcement():
             greeting_name=user.first_name or "Valued Customer",
         )
         count += 1
+        
+    flag.is_active = True
+    flag.save(update_fields=['is_active'])
 
     return f"✅ New product announcement sent to {count} users."

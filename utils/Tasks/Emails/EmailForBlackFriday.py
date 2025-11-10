@@ -1,13 +1,17 @@
 from datetime import timedelta
+from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
 
 User = get_user_model()
 
+@checkBackgroundFeatureFlag()
+@shared_task
 def send_discount_day_announcement():
     """
     Send discount day email if the BLACK_FRIDAY feature flag is enabled.
@@ -15,15 +19,12 @@ def send_discount_day_announcement():
     """
 
     flag, enabled = is_feature_enabled(FeatureNames.BLACK_FRIDAY.value)
-    if not enabled or not flag:
+    if not enabled:
         return "⚠️ Discount day feature is disabled."
 
     if not flag.end_date:
         return "⚠️ No end date set for this discount feature."
     
-    if flag.is_active:
-        return "⚠️ Black Friday discount is already active."
-
     now = timezone.now()
 
     # Ensure the datetime is timezone-aware
