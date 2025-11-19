@@ -1,3 +1,5 @@
+import os
+import uuid
 from django.db import models
 from django.forms import ValidationError
 from apps.users.models import User
@@ -10,7 +12,7 @@ from apps.aso.deliveryFee import DELIVERY_FEES
 from utils.base_model import BaseModel
 from utils.enum import FeatureNames
 from django.contrib.postgres.indexes import Index
-
+from django.utils.text import slugify
 
 # Create your models here.
 
@@ -55,24 +57,23 @@ class Product(BaseModel):
     
     def save(self, *args, **kwargs):
         if not self.product_number:
-            last_product = Product.objects.filter(is_deleted = False).order_by('-id').first()
+            last_product = Product.objects.filter(is_deleted=False).only('id').order_by('-id').first()
             next_id = 1 if not last_product else last_product.id + 1
             self.product_number = f"#AO-P-{str(next_id).zfill(4)}"
             
-            
+        # Calculate current price based on discount
         if self.discount_percent:
-            if self.discount_percent:
-                # Ensure consistent Decimal types
-                discount = Decimal(self.discount_percent) / Decimal('100')
-                self.current_price = self.original_price - (self.original_price * discount)
-            else:
-                self.current_price = self.original_price
+            discount = Decimal(self.discount_percent) / Decimal('100')
+            self.current_price = self.original_price * (Decimal('1') - discount)
+        elif self.original_price:
+            self.current_price = self.original_price
         else:
-            # No discount: set both prices the same
-            if self.original_price:
-                self.current_price = self.original_price
-            else:
-                self.original_price = self.current_price
+            self.original_price = self.current_price
+                
+        if self.main_image and hasattr(self.main_image, 'name') and not self.main_image.name.startswith('products/main/'):
+            ext = os.path.splitext(self.main_image.name)[1]
+            filename = f"{slugify(self.title)}_{uuid.uuid4().hex[:8]}{ext}"
+            self.main_image.name = f"products/main/{filename}"
 
         super().save(*args, **kwargs)
     
@@ -84,6 +85,11 @@ class Product(BaseModel):
             models.Index(fields=['product_number']),
             Index(fields=["id"], name="product_not_deleted_idx", condition=models.Q(is_deleted=False)),
         ]
+        
+    @classmethod
+    def get_active_products(cls):
+        """Optimized query for active products with related data"""
+        return cls.objects.filter(is_deleted=False).select_related().prefetch_related('category', 'colors', 'sizes')
 
     def __str__(self):
         return self.title
@@ -173,27 +179,31 @@ User = get_user_model()
 class Cart(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
     state = models.CharField(max_length=100, blank=True, null=True)
+    
+    _cached_flags = None
+
+    def _get_feature_flags(self):
+        """Cache feature flags for the cart instance lifecycle"""
+        if self._cached_flags is None:
+            from utils.feature_flags import is_feature_enabled
+            self._cached_flags = {
+                'free_delivery': is_feature_enabled(FeatureNames.FREE_DELIVERY.value),
+                'referral_system': is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value)
+            }
+        return self._cached_flags
 
     def subtotal(self):
         return sum(item.subtotal() for item in self.items.all())
 
     def shipping_cost(self):
-        from utils.feature_flags import is_feature_enabled
-        flag, enabled = is_feature_enabled(FeatureNames.FREE_DELIVERY.value)
+        flag, enabled = self._get_feature_flags()['free_delivery']
         if enabled:
             return Decimal("0.00")
         return Decimal(DELIVERY_FEES.get(self.state, 0))
 
-    # def tax(self):
-    #     return self.subtotal() * Decimal("0.05")  # 5% tax example
-
     def discount(self):
-        from utils.feature_flags import is_feature_enabled
-        flag, enabled = is_feature_enabled(FeatureNames.REFERRAL_SYSTEM.value)
-        if not enabled:
-            return Decimal("0.00")
-        
-        if getattr(self.user, "referral_used_purchase", False):
+        flag, enabled = self._get_feature_flags()['referral_system']
+        if not enabled or getattr(self.user, "referral_used_purchase", False):
             return Decimal("0.00")
         
         if getattr(self.user, "is_referral_qualified", False):
@@ -219,9 +229,13 @@ class CartItem(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     desc = models.JSONField(null=True, blank=True)
+    
+    _cached_subtotal = None
 
     def subtotal(self):
-        return self.product.current_price * self.quantity
+        if self._cached_subtotal is None:
+            self._cached_subtotal = self.product.current_price * self.quantity
+        return self._cached_subtotal
 
     def __str__(self):
         return f"{self.quantity} x {self.product.title}"
@@ -253,15 +267,15 @@ class Order(BaseModel):
 
     
     def save(self, *args, **kwargs):
-        if not self.order_number:
-            last_order = Order.objects.filter(is_deleted = False).order_by('-id').first()
+        if not self.order_number or not self.tracking_number:
+            last_order = Order.objects.filter(is_deleted=False).only('id').order_by('-id').first()
             next_id = 1 if not last_order else last_order.id + 1
-            self.order_number = f"#AO-OD-{str(next_id).zfill(4)}"
-
-        if not self.tracking_number:
-            last_order_tracking = Order.objects.filter(is_deleted = False).order_by('-id').first()
-            next_id = 1 if not last_order_tracking else last_order_tracking.id + 1
-            self.tracking_number = f"#AO-OT-{str(next_id).zfill(4)}"
+            
+            if not self.order_number:
+                self.order_number = f"#AO-OD-{str(next_id).zfill(4)}"
+                
+            if not self.tracking_number:
+                self.tracking_number = f"#AO-OT-{str(next_id).zfill(4)}"
             
         if self.estimated_delivery_date is None:
             self.estimated_delivery_date = (self.created_at or timezone.now()).date() + timedelta(days=7)
@@ -279,6 +293,15 @@ class Order(BaseModel):
             models.Index(fields=['user']),
             models.Index(fields=['created_at']),
         ]
+    
+    @classmethod
+    def get_order_with_details(cls, order_id):
+        """Optimized query for order with all related data"""
+        return cls.objects.select_related(
+            'user', 'dispatcher', 'shipping_address', 'payment_detail'
+        ).prefetch_related(
+            'items__product', 'tracking_events', 'feedback', 'return_product'
+        ).get(id=order_id)
 
 
 class OrderItem(BaseModel):

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import Group
 from apps.aso.models import Order
-from apps.users.models import Transaction, User
+from apps.users.models import ContactFormSubmission, Transaction, User
 from utils.enum import GroupNames
 
 
@@ -70,3 +70,8 @@ class UserOrderSummarySerializer(serializers.Serializer):
 class ReferralCodeValidationSerializer(serializers.Serializer):
     referral_code = serializers.CharField(required=True, max_length=20)
     
+
+class ContactFormSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactFormSubmission
+        fields = ['full_name', 'phone', 'email', 'subject', 'message']

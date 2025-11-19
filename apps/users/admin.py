@@ -70,3 +70,13 @@ class TransactionAdmin(BaseAdmin):
             "fields": ("user", "amount", "transaction_type", "reference", "channel", "status", "order_id")
         }),
     )
+    
+    
+@admin.register(ContactFormSubmission)
+class ContactFormSubmissionAdmin(BaseAdmin):
+    custom_fieldsets  = (
+        ("Contact Form Submission Information", {
+            "fields": ("full_name", "phone", "email", "subject", "message")
+        }),
+    )
+    

@@ -1,7 +1,7 @@
 from django.db.models.signals import m2m_changed, post_save, post_delete
 from django.dispatch import receiver
 from django.contrib.auth.models import Group
-from apps.users.models import Referral, User
+from apps.users.models import ContactFormSubmission, Referral, Transaction, User
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys, GroupNames
 
@@ -55,3 +55,17 @@ def user_model_changed(sender, instance, **kwargs):
         referee_key = CacheKeys.format(CacheKeys.USER_PROFILE, user_id=instance.referee.id)
         GlobalCache.delete(referrer_key)
         GlobalCache.delete(referee_key)
+        
+        
+@receiver([post_save, post_delete], sender=Transaction)
+def transaction_model_changed(sender, instance, **kwargs):
+    # Clear customer transactions cache when a transaction is created or updated
+    cache_key = CacheKeys.CUSTOMER_TRANSACTIONS
+    GlobalCache.delete(cache_key)
+    
+    
+@receiver([post_save, post_delete], sender=ContactFormSubmission)
+def contact_form_submission_changed(sender, instance, **kwargs):
+    # Clear contact form submission cache when a submission is created or updated
+    cache_key = CacheKeys.CONTACT_FORM_SUBMISSION
+    GlobalCache.delete(cache_key)

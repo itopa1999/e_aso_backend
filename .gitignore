@@ -1,46 +1,13 @@
-# Django
-*.log
-*.pot
-*.pyc
+# =========================================
+# Django / Python .gitignore (Full Version)
+# =========================================
+
+# --- Python ---
 __pycache__/
-local_settings.py
-db.sqlite3
-media/
-staticfiles/
-
-# Backup files
-*.bak 
-*.sqlite3.bak
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# IDE & Editors
-.idea/
-.vscode/
-*.swp
-*.swo
-*.sublime-workspace
-*.sublime-project
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Python
 *.py[cod]
-*.so
+*$py.class
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -48,25 +15,153 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
 wheels/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Test coverage
-.coverage
+# PyInstaller
+*.manifest
+*.spec
+
+# Logs / Debug
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+*.cover
+coverage.xml
+*.log
+*.tmp
+*.stderr
+*.stdout
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dll
+*.dylib
+*.pdb
+
+# --- Environments ---
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+*.env
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+.vscode/
+.idea/
+
+# --- Django ---
+*.sqlite3
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+assets/
+local_settings.py
+instance/
+instance/*
+
+# Secret keys
+secret.key
+*.pem
+*.crt
+*.key
+
+# Django Cache
+django_cache/
+cache/
+__debug__/
+
+# Gunicorn
+gunicorn.pid
+
+# --- Celery ---
+celerybeat-schedule
+celerybeat.pid
+
+# --- Redis dump ---
+dump.rdb
+*.rdb
+
+# --- MyPy ---
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# --- Pytest ---
+.pytest_cache/
+cover/
+
+# --- Pip ---
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Jupyter Notebook ---
+.ipynb_checkpoints
+
+# --- Docker ---
+docker-compose.override.yml
+docker-compose.local.yml
+docker-data/
+*.pid
+*.seed
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+*~
+
+# --- Node / Frontend builds ---
+node_modules/
+npm-debug.log
+yarn-error.log
+dist/
+build/
+*.lock
+
+# --- Editor backups ---
+*.swp
+*.swo
+*~
+*.orig
+
+# --- VSCode ---
+.vscode/
+.history/
+
+# --- PyCharm ---
+.idea/
+*.iml
+
+# --- Security ---
+*.p12
+*.pfx
+
+# --- Tests ---
 htmlcov/
-.coverage.*
+.nox/
+.tox/
+.pyre/
 .pytest_cache/
 
-# Database
-*.db
-*.sql
-*.sqlite
-.dump.rdb
-dump.rdb
+# --- Misc ---
+*.tgz
+*.tar.gz
+*.zip
+

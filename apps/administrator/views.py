@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from apps.administrator.BLL.Commands.BulkUpdateProductBadges import BulkUpdateProductBadgesCommand
 from apps.administrator.BLL.Commands.MarkCustomerFeedbackDone import MarkCustomerFeedbackDoneCommand
 from apps.administrator.BLL.Commands.ProductBulkImport import ProductBulkImportCommand
+from apps.administrator.BLL.Queries.ContactFormSubmissionList import ContactFormSubmissionListQuery
 from apps.administrator.BLL.Queries.Dashboard import DashboardQuery
 from apps.administrator.BLL.Queries.FeatureFlagList import FeatureFlagListQuery
 from apps.administrator.BLL.Queries.ListBanners import BannerListQuery
@@ -19,7 +20,7 @@ from apps.administrator.BLL.Commands.Login import LoginCommand
 from apps.administrator.BLL.Commands.changePassword import ChangePasswordCommand
 from apps.administrator.models import CustomerFeedback
 from apps.aso.models import Product, Order
-from apps.users.models import Transaction, User
+from apps.users.models import ContactFormSubmission, Transaction, User
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
@@ -200,7 +201,7 @@ class DefTestingView(APIView):
     
 class TransactionListView(generics.ListAPIView):
     serializer_class = TransactionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     search_fields = ["reference", "channel", "transaction_type", "status"]
     ordering_fields = ["created_at", "amount"]
@@ -208,7 +209,12 @@ class TransactionListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         user = request.user
-        base_qs = Transaction.objects.all()
+        cache_key = CacheKeys.CUSTOMER_TRANSACTIONS
+        transactions = GlobalCache.get(cache_key)
+        if not transactions:
+            base_qs = Transaction.objects.all()
+            GlobalCache.set(cache_key, base_qs)
+        base_qs =  transactions
 
         result = TransactionListQuery.query(request, base_qs)
 
@@ -222,6 +228,19 @@ class TransactionListView(generics.ListAPIView):
         if page is not None:
             return self.get_paginated_response(result.to_dict())
 
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class ContactFormSubmissionListView(APIView):
+    # permission_classes = [IsAuthenticated, IsAdminPermission]
+    
+    def get(self, request):
+        cache_key = CacheKeys.CONTACT_FORM_SUBMISSION
+        submissions = GlobalCache.get(cache_key)
+        if not submissions:
+            submissions = ContactFormSubmission.objects.all().order_by('-created_at')
+            GlobalCache.set(cache_key, submissions)
+        result = ContactFormSubmissionListQuery.query(request, submissions)
         return Response(result.to_dict(), status=result.status_code)
 
 

@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework.throttling import ScopedRateThrottle
+from apps.users.BBL.Commands.ContactFormSubmission import ContactFormSubmissionCommand
 from apps.users.BBL.Commands.MagicLogin import MagicLoginCommand
 from apps.users.BBL.Commands.UpdateUser import UpdateUserCommand
 from apps.users.BBL.Commands.VerifyEmail import VerifyEmailCommand
@@ -97,3 +98,11 @@ class ValidateReferralCodeView(APIView):
     
 
 
+class ContactFormSubmissionView(generics.GenericAPIView):
+    serializer_class = ContactFormSerializer
+    permission_classes = [AllowAny]
+    authentication_classes = []
+    
+    def post(self, request, *args, **kwargs):
+        result = ContactFormSubmissionCommand.execute(request.data)
+        return Response(result.to_dict(), status=result.status_code)

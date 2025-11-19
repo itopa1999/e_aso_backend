@@ -24,7 +24,7 @@ urlpatterns = [
                 path("login/", LoginAPIView.as_view(), name="login"),
                 path("change-password/", ResetPasswordAPIView.as_view()),
                 path("feature-flags/", FeatureFlagListView.as_view()),
-                
+                path("contact-form-submissions/", ContactFormSubmissionListView.as_view()),
             ]
         )
     ),

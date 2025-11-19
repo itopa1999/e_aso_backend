@@ -136,3 +136,20 @@ class Transaction(BaseModel):
 
     def __str__(self):
         return f"{self.user.email} - {self.transaction_type} - {self.amount}"
+    
+    
+class ContactFormSubmission(BaseModel):
+    full_name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField()
+    subject = models.CharField(max_length=5000)
+    message = models.TextField()
+    
+    class Meta:
+        ordering = ['-id']
+        indexes = [
+            models.Index(fields=['-id']),
+        ]
+
+    def __str__(self):
+        return f"Contact Form Submission from {self.full_name} - {self.subject}"

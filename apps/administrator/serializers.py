@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.administrator.models import Banner, CustomerFeedback
 from apps.aso.models import FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
-from apps.users.models import Transaction, User
+from apps.users.models import ContactFormSubmission, Transaction, User
 from utils.enum import LookUpsCategories
 
 
@@ -11,7 +11,11 @@ class BannerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Banner
-        fields = ['id', 'title', 'category', 'image', 'link']
+        fields = ['id', 'title', 'category', 'image', 'link',
+                  'created_at', 'created_by',
+            'modified_at', 'modified_by',
+            'is_deleted', 'deleted_at', 'deleted_by'
+            ]
 
     def get_image(self, obj):
         request = self.context.get('request')
@@ -120,14 +124,15 @@ class ProductSerializer(serializers.ModelSerializer):
             'badge',
             'main_image',
             'display_product',
-            'created_at',
-            'modified_at',
             'categories',
             'colors',
             'sizes',
             'details',
             'images',
-            "related_orders"
+            "related_orders",
+            'created_at', 'created_by',
+            'modified_at', 'modified_by',
+            'is_deleted', 'deleted_at', 'deleted_by'
         ]
         
     def get_related_orders(self, obj):
@@ -204,8 +209,11 @@ class AdminOrderDetailSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id', 'order_number', 'other_info', 'subtotal', 'shipping_fee', 'discount', 'total', 'customer_first_name', 'customer_email',
-            'tracking_number', 'carrier', 'delivery_date', 'estimated_delivery_date', 'created_at', 'customer_last_name', 'customer_phone',
-            'items', 'shipping_address', 'payment_detail', 'timeline', 'feedback', 'return_product', 'latest_tracking_status'
+            'tracking_number', 'carrier', 'delivery_date', 'estimated_delivery_date', 'customer_last_name', 'customer_phone',
+            'items', 'shipping_address', 'payment_detail', 'timeline', 'feedback', 'return_product', 'latest_tracking_status',
+            'created_at', 'created_by',
+            'modified_at', 'modified_by',
+            'is_deleted', 'deleted_at', 'deleted_by'
         ]
         
     def get_customer_first_name(self, obj):
@@ -270,7 +278,10 @@ class UserOrderListSerializer(serializers.ModelSerializer):
     groups = serializers.SerializerMethodField()
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'orders', 'groups', 'date_joined', 'rider_number']
+        fields = ['id', 'first_name', 'last_name', 'email', 'phone', 'orders', 'groups', 'date_joined', 'rider_number',
+                  'created_at', 'created_by',
+            'modified_at', 'modified_by',
+            'is_deleted', 'deleted_at', 'deleted_by']
         
     def get_groups(self, obj):
         return list(obj.groups.values_list('name', flat=True))
@@ -493,3 +504,9 @@ class FeatureFlagSerializer(serializers.ModelSerializer):
             user.first_name if user.first_name else user.email
             for user in obj.users.all()
         ]
+        
+        
+class ContactFormSubmissionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactFormSubmission
+        fields = ['id', 'full_name', 'phone', 'email', 'subject', 'message', 'created_at']

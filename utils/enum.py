@@ -83,6 +83,8 @@ class CacheKeys(Enum):
     # Misc / site-wide
     LOOKUP = "lookup"
     CUSTOMER_FEEDBACK_LIST = "customer_feedback_list"
+    CONTACT_FORM_SUBMISSION = "contact_form_submission"
+    CUSTOMER_TRANSACTIONS = "customer_transactions"
     FEATURE_FLAGS = "feature_flag_{feature_name}"
     BANNER = "banner_{category}"
 
