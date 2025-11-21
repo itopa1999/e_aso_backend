@@ -55,16 +55,16 @@ def send_discount_day_announcement():
             message=f"""
             Hey {user.first_name or "Valued Customer"},
 
-            We’re thrilled to announce that **today is our Special Discount Day!** 🎊
+            We're thrilled to announce that today is our Special Discount Day! 🎊
 
-            For a limited time, **every product in our store is discounted** — no coupon needed.  
+            For a limited time, every product in our store is discounted — no coupon needed.  
             Grab your favorites before time runs out!
 
-            🛍️ **What you get:**
-            - Exclusive discounts across all categories  
-            - Offer valid until **{expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}**
+            🛍️ What you get:
+            • Exclusive discounts across all categories  
+            • Offer valid until {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}
 
-            Don’t miss this chance to save big!  
+            Don't miss this chance to save big!  
             👉 Shop now: {settings.BASE_URL}/index.html
 
             Hurry! The clock is ticking ⏰

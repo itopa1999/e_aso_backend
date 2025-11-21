@@ -46,12 +46,12 @@ def send_free_shipping_announcement():
             subject="Free Shipping Alert: Limited Time Offer!",
             recipient_email=user.email,
             message=f"""
-            Good news! We’re offering **FREE SHIPPING** on all orders placed before  
+            Good news! We're offering FREE SHIPPING on all orders placed before  
             🕓 {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}.
 
-            Don’t wait fill your cart and check out now to enjoy this limited-time offer!  
+            Don't wait — fill your cart and check out now to enjoy this limited-time offer!  
 
-            👉 Visit your store to start shopping: \n{settings.BASE_URL}/index.html
+            👉 Visit our store to start shopping: {settings.BASE_URL}/index.html
 
             """,
             greeting_name=user.first_name or "Valued Customer",

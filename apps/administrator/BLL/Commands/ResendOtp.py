@@ -39,10 +39,10 @@ class ResendOtpCommand:
 
             Verification Code: {verification.token}
 
-                This link expires in 10 minutes.
-                If you didn’t request this login, please ignore this email.
+            This code expires in 10 minutes.
+            If you didn't request this action, please ignore this email and contact support immediately.
             """,
-            greeting_name=user.first_name or "Valued Customer"
+            greeting_name=user.first_name or "Administrator"
         )
         
         return BaseResult(

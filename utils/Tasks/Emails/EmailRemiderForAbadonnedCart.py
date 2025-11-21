@@ -28,11 +28,10 @@ def send_abandoned_cart_reminders():
             recipient_email=user.email,
             message=f"""
             You have {item_count} item(s) waiting in your cart.  
-            Don’t miss out — complete your purchase today!
+            Don't miss out — complete your purchase today!
 
-            👉 Visit your cart to continue shopping: \n{settings.BASE_URL}/cart-item.html
+            👉 Visit your cart to continue shopping: {settings.BASE_URL}/cart-item.html
 
-            
             """,
             greeting_name=user.first_name or "Valued Customer",
         )

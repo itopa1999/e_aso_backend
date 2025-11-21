@@ -56,16 +56,16 @@ def send_limited_day_announcement():
             message=f"""
             Hey {user.first_name or "Valued Customer"},
 
-            We are excited to inform you that our **Limited Product Collection** is now available.  
+            We are excited to inform you that our Limited Product Collection is now available.  
             Take advantage of exclusive discounts for a limited time.
 
-            **Offer Details:**
-            - Discounts applied automatically to selected products  
-            - Offer valid until **{expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}**
+            Offer Details:
+            • Discounts applied automatically to selected products  
+            • Offer valid until {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}
 
-            🛍️ **What you get:**
-            - Exclusive discounts across all categories  
-            - Offer valid until **{expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}**
+            🛍️ What you get:
+            • Exclusive discounts across all categories  
+            • Offer valid until {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}
 
             Visit our store now to secure your favorite items: {settings.BASE_URL}/limited-products.html
 

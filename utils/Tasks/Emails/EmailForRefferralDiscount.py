@@ -40,20 +40,20 @@ def send_referral_program_announcement():
             subject="Refer & Earn: Get Discounts When Your Friends Shop!",
             recipient_email=user.email,
             message=f"""
-            Great news! Our **Referral Program** is now live on Aso Oke & Aso Ofi Marketplace.  
+            Great news! Our Referral Program is now live on Aso Oke & Aso Ofi Marketplace.  
 
-            You can now **earn exclusive shopping discounts** when your friends use your referral code and **complete their purchase**.
+            You can now earn exclusive shopping discounts when your friends use your referral code and complete their purchase.
 
-            Here’s how it works:
-            - 💬 Share your unique referral code with friends and family.  
-            - 🛍️ When they buy using your code, you’ll automatically receive a **discount** for your next order.  
-            - 🎁 The more completed purchases from your referrals, the more rewards you earn!
+            Here's how it works:
+            • 💬 Share your unique referral code with friends and family  
+            • 🛍️ When they buy using your code, you'll automatically receive a discount for your next order  
+            • 🎁 The more completed purchases from your referrals, the more rewards you earn!
 
-            It’s that simple! Invite, shop, and save.  
+            It's that simple! Invite, shop, and save.  
 
-            👉 View and share your referral code here: \n{settings.BASE_URL}/profile.html
+            👉 View and share your referral code here: {settings.BASE_URL}/profile.html
 
-            Don’t miss out, start inviting friends today and enjoy amazing discounts once their orders are completed!
+            Don't miss out — start inviting friends today and enjoy amazing discounts once their orders are completed!
             """,
             greeting_name=user.first_name or "Valued Customer",
         )

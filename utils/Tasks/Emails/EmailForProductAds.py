@@ -36,21 +36,21 @@ def send_new_product_announcement():
     count = 0
     for user in users:
         send_custom_email(
-            subject="New Arrivals: Discover What’s Fresh in Store!",
+            subject="New Arrivals: Discover What's Fresh in Store!",
             recipient_email=user.email,
             message=f"""
-            We’re thrilled to let you know that **new exclusive products** have just been added to our collection!  
+            We're thrilled to let you know that new exclusive products have just been added to our collection!  
             Each piece is carefully selected to bring you the best in quality, style, and craftsmanship.
 
-            ✨ **Here’s a sneak peek:**  
+            ✨ Here's a sneak peek:  
             {product_list}
 
-            🔗 Browse all new arrivals here: \n{settings.BASE_URL}/index.html
+            🔗 Browse all new arrivals here: {settings.BASE_URL}/index.html
 
-            Be among the first to explore and order these items are selling fast!  
+            Be among the first to explore and order — these items are selling fast!  
 
             Thank you for being part of our community.  
-            We can’t wait for you to experience what’s new at **Aso Oke & Aso Ofi**.
+            We can't wait for you to experience what's new at Aso Oke & Aso Ofi.
             """,
             greeting_name=user.first_name or "Valued Customer",
         )
