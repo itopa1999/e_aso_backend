@@ -509,4 +509,4 @@ class FeatureFlagSerializer(serializers.ModelSerializer):
 class ContactFormSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactFormSubmission
-        fields = ['id', 'full_name', 'phone', 'email', 'subject', 'message', 'created_at']
+        fields = ['id', 'full_name', 'phone', 'email', 'subject', 'message', 'status', 'created_at']

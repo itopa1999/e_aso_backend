@@ -348,5 +348,3 @@ LOGGING = {
         },
     },
 }
-
-print(redistribution:=os.getenv('REDIS_PORT'))

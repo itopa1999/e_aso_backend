@@ -232,7 +232,7 @@ class TransactionListView(generics.ListAPIView):
 
 
 class ContactFormSubmissionListView(APIView):
-    # permission_classes = [IsAuthenticated, IsAdminPermission]
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     
     def get(self, request):
         cache_key = CacheKeys.CONTACT_FORM_SUBMISSION
@@ -258,8 +258,9 @@ class FeatureFlagListView(generics.GenericAPIView):
 
 
 class ResendOtpView(generics.GenericAPIView):
+    allow_any = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication]  
     serializer_class = ResendOtpSerializer
-    permission_classes = [IsAuthenticated, IsAdminPermission]
     
     def post(self, request):
         serializer = self.get_serializer(data=request.data)

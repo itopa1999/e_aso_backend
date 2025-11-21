@@ -12,7 +12,7 @@ from utils.base_model import BaseModel
 
 import string, random
 
-from utils.enum import FeatureNames, TransactionChannel, TransactionStatus, TransactionType
+from utils.enum import ContactFormStatus, FeatureNames, TransactionChannel, TransactionStatus, TransactionType
 
 def generate_referral_code(length=10):
     while True:
@@ -144,6 +144,7 @@ class ContactFormSubmission(BaseModel):
     email = models.EmailField()
     subject = models.CharField(max_length=5000)
     message = models.TextField()
+    status = models.CharField(max_length=50, default=ContactFormStatus.NEW.value, choices=ContactFormStatus.choices())
     
     class Meta:
         ordering = ['-id']
@@ -152,4 +153,4 @@ class ContactFormSubmission(BaseModel):
         ]
 
     def __str__(self):
-        return f"Contact Form Submission from {self.full_name} - {self.subject}"
+        return f"Contact Form Submission from {self.full_name} - {self.subject} - status: {self.status}"

@@ -106,6 +106,15 @@ class TransactionType(Enum):
     @classmethod
     def choices(cls):
         return [(key.value, key.value) for key in cls]
+    
+    
+class ContactFormStatus(Enum):
+    NEW = "New"
+    REPLIED = "Replied"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.value) for key in cls]
 
 
 class TransactionChannel(Enum):
