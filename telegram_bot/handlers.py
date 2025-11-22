@@ -14,6 +14,7 @@ from .orders_handler import handle_list_orders, handle_order_details
 from .help_handler import handle_help
 from .item_order_handler import confirm_order_handler, handle_proceed_payment, item_order_handler
 from .contact_handler import handle_contact_request, handle_contact_input, handle_submit_contact, handle_cancel_contact
+from .channel_handler import handle_new_channel_member
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
