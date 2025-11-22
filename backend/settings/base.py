@@ -219,10 +219,6 @@ DRF_STANDARDIZED_ERRORS = {
     "EXCEPTION_FORMATTER_CLASS": "backend.exception_formatter.ExceptionFormatter",
 }
 
-
-BASE_URL =os.getenv('BASE_URL')
-BACKEND_BASE_URL =os.getenv('BACKEND_BASE_URL')
-
 # Common cookie settings
 COOKIE_SETTINGS = {
     'path': '/',

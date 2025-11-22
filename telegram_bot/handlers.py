@@ -13,6 +13,7 @@ from .categories_handler import handle_list_categories, handle_category_products
 from .orders_handler import handle_list_orders, handle_order_details
 from .help_handler import handle_help
 from .item_order_handler import confirm_order_handler, handle_proceed_payment, item_order_handler
+from .contact_handler import handle_contact_request, handle_contact_input, handle_submit_contact, handle_cancel_contact
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -23,6 +24,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🛍️ List Products", callback_data="list_products_1")],
         [InlineKeyboardButton("📂 List Categories", callback_data="list_categories")],
         [InlineKeyboardButton("📦 My Orders", callback_data="list_orders")],
+        [InlineKeyboardButton("📝 Contact / Special Request", callback_data="contact_request")],
         [InlineKeyboardButton("ℹ️ Help", callback_data="help")],
         [InlineKeyboardButton("🔐 Login", callback_data="login")]
     ]
@@ -63,7 +65,12 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_shipping_info(update, context)
         return
 
-    # If not in login flow, show menu
+    # Check contact stage
+    contact_handled = await handle_contact_input(update, user_id, text)
+    if contact_handled:
+        return
+
+    # If not in any flow, show menu
     await start(update, context)
     
     
@@ -86,6 +93,8 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_login_stage, user_id=user_id), None)
     GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_shipping_stage, user_id=user_id), None)
     GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_shipping_info, user_id=user_id), None)
+    GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_contact_stage, user_id=user_id), None)
+    GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_contact_info, user_id=user_id), None)
     
     await start(update, context)
     
@@ -251,6 +260,16 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_state_selection(update, context)
         return
 
+
+    # Contact Handlers
+    elif choice == "contact_request":
+        await handle_contact_request(query, user_id)
+    
+    elif choice == "submit_contact":
+        await handle_submit_contact(query, user_id)
+    
+    elif choice == "cancel_contact":
+        await handle_cancel_contact(query, user_id)
 
     # Help Handler
     elif choice == "help":

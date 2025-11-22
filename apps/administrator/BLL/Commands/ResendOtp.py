@@ -11,7 +11,7 @@ class ResendOtpCommand:
     @staticmethod
     def execute(email):
         try:
-            user = User.objects.get(email=email, is_deleted = False, groups__name=GroupNames.ADMIN.value)
+            user = User.objects.get(email=email, is_deleted = False)
         except User.DoesNotExist:
             return BaseResult(
                 status_code=HTTPStatus.NOT_FOUND,
@@ -30,10 +30,10 @@ class ResendOtpCommand:
         verification.save()
         
         send_custom_email(
-            subject = "Admin Action Verification Code - Aso Oke & Aso Ofi Marketplace",
+            subject = "Action Verification Code - Aso Oke & Aso Ofi Marketplace",
             recipient_email=user.email,
             message=f"""
-            A request was made to perform a sensitive administrative action on your account.
+            A request was made to perform a sensitive action on your account.
 
             To proceed, please use the verification code below:
 
@@ -42,7 +42,7 @@ class ResendOtpCommand:
             This code expires in 10 minutes.
             If you didn't request this action, please ignore this email and contact support immediately.
             """,
-            greeting_name=user.first_name or "Administrator"
+            greeting_name=user.first_name or "User"
         )
         
         return BaseResult(

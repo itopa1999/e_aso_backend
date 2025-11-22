@@ -1,11 +1,13 @@
 from django.contrib import admin
-
-from utils.base_admin import BaseAdmin
+from django.utils.html import format_html
 from .models import (
     Cart, CartItem, FeatureFlag, Order, OrderFeedBack, OrderItem, OrderReturn, 
     OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, 
     ProductDetail, ProductImage, LookUp, ShippingAddress, WatchList
 )
+
+
+# ==================== INLINES ====================
 
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
@@ -31,54 +33,27 @@ class ProductImageInline(admin.TabularInline):
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
-@admin.register(Product)
-class ProductAdmin(BaseAdmin):
-    custom_fieldsets  = (
-        ("Information", {
-            "fields": ('title', 'badge',
-                       'category', 'created_at',
-                       'description','current_price', 'original_price',
-                       'discount_percent','rating','reviews_count', 'main_image',
-                       'display_product', 'is_limited')
-        }),
-    )
-    search_fields = ('title',)
-    list_filter = ('badge', 'created_at', 'category')
-    # prepopulated_fields = {'slug': ('title',)}
-    filter_horizontal = ('category',)
-
-    inlines = [
-        ProductColorInline,
-        ProductSizeInline,
-        ProductDetailInline,
-        ProductImageInline
-    ]
-    
-    
 class CartItemInline(admin.TabularInline):
     model = CartItem
     extra = 1
+    readonly_fields = ("product", "quantity", "desc")
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
-
-@admin.register(Cart)
-class CartAdmin(BaseAdmin):
-    inlines = [CartItemInline]
-    list_display = ['user', 'created_at', 'modified_at']
-    
-    
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
-    extra = 1
+    extra = 0
+    readonly_fields = ("product", "quantity", "price", "desc")
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
+
 
 class TrackingInline(admin.TabularInline):
     model = OrderTracking
     extra = 1
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
-class ShippingAddressItemInline(admin.TabularInline):
+
+class ShippingAddressItemInline(admin.StackedInline):
     model = ShippingAddress
     extra = 0
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
@@ -96,53 +71,232 @@ class OrderFeedBackInline(admin.TabularInline):
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
-class OrderReturnInline(admin.TabularInline):
+class OrderReturnInline(admin.StackedInline):
     model = OrderReturn
     extra = 0
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
-@admin.register(Order)
-class OrderAdmin(BaseAdmin):
-    list_display = ['order_number', 'user', 'total', 'created_at']
-    inlines = [
-        OrderItemInline, 
-        TrackingInline, 
-        ShippingAddressItemInline, 
-        PaymentDetailInline, 
-        OrderFeedBackInline,
-        OrderReturnInline
-        ]
+# ==================== ADMIN CLASSES ====================
 
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    list_display = ("product_number", "title", "badge_display", "price_display", "rating", "reviews_count", "status_display", "created_at")
+    list_display_links = ("product_number", "title")
+    search_fields = ("title", "product_number", "description")
+    list_filter = ("badge", "display_product", "is_limited", "created_at", "category")
+    readonly_fields = ("product_number", "current_price", "created_at", "modified_at")
+    filter_horizontal = ("category",)
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Basic Information", {
+            "fields": ("product_number", "title", "badge", "category", "description")
+        }),
+        ("Pricing", {
+            "fields": ("original_price", "current_price", "discount_percent")
+        }),
+        ("Product Details", {
+            "fields": ("rating", "reviews_count", "main_image", "display_product", "is_limited")
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    inlines = [ProductColorInline, ProductSizeInline, ProductDetailInline, ProductImageInline]
+
+    def badge_display(self, obj):
+        colors = {
+            "New": "blue",
+            "Sale": "red",
+            "Hot": "orange",
+            "Limited": "purple",
+        }
+        color = colors.get(obj.badge, "gray")
+        return format_html(f'<span style="background-color: {color}; color: white; padding: 3px 8px; border-radius: 3px;">{obj.badge}</span>')
+    badge_display.short_description = "Badge"
+
+    def price_display(self, obj):
+        if obj.discount_percent:
+            return format_html(
+                '<span style="color: red; font-weight: bold;">₦{}</span> <span style="text-decoration: line-through; color: gray;">₦{}</span> <span style="color: green;">(-{}%)</span>',
+                obj.current_price, obj.original_price, obj.discount_percent
+            )
+        return format_html('<span style="font-weight: bold;">₦{}</span>', obj.current_price)
+    price_display.short_description = "Price"
+
+    def status_display(self, obj):
+        if obj.display_product:
+            return format_html('<span style="color: green;">●</span> Active')
+        return format_html('<span style="color: red;">●</span> Hidden')
+    status_display.short_description = "Status"
+
+
+@admin.register(Cart)
+class CartAdmin(admin.ModelAdmin):
+    list_display = ("user", "state", "items_count", "subtotal_display", "created_at", "modified_at")
+    list_display_links = ("user",)
+    search_fields = ("user__email", "user__first_name", "user__last_name", "state")
+    list_filter = ("state", "created_at")
+    readonly_fields = ("created_at", "modified_at")
+    ordering = ("-modified_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Cart Information", {
+            "fields": ("user", "state")
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    inlines = [CartItemInline]
+
+    def items_count(self, obj):
+        return obj.items.count()
+    items_count.short_description = "Items"
+
+    def subtotal_display(self, obj):
+        return format_html('<span style="font-weight: bold;">₦{}</span>', obj.subtotal())
+    subtotal_display.short_description = "Subtotal"
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ("order_number", "user", "tracking_number", "total_display", "current_status", "dispatcher", "created_at")
+    list_display_links = ("order_number", "user")
+    search_fields = ("order_number", "tracking_number", "user__email", "user__first_name", "user__last_name")
+    list_filter = ("carrier", "created_at", "estimated_delivery_date")
+    readonly_fields = ("order_number", "tracking_number", "subtotal", "shipping_fee", "discount", "total", "estimated_delivery_date", "created_at", "modified_at")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+    autocomplete_fields = ["user", "dispatcher"]
+
+    fieldsets = (
+        ("Order Information", {
+            "fields": ("order_number", "user", "tracking_number", "carrier", "telegram_user_chat_id")
+        }),
+        ("Financial Summary", {
+            "fields": ("subtotal", "shipping_fee", "discount", "total")
+        }),
+        ("Delivery Information", {
+            "fields": ("dispatcher", "delivery_date", "estimated_delivery_date")
+        }),
+        ("Additional Information", {
+            "fields": ("other_info",)
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    inlines = [OrderItemInline, TrackingInline, ShippingAddressItemInline, PaymentDetailInline, OrderFeedBackInline, OrderReturnInline]
+
+    def total_display(self, obj):
+        return format_html('<span style="font-weight: bold; color: green;">₦{}</span>', obj.total)
+    total_display.short_description = "Total"
+
+    def current_status(self, obj):
+        latest = obj.tracking_events.order_by("-date").first()
+        if latest:
+            colors = {
+                "placed": "blue",
+                "processing": "orange",
+                "shipped": "purple",
+                "in_transit": "teal",
+                "delivered": "green",
+                "cancelled": "red",
+            }
+            color = colors.get(latest.status, "gray")
+            return format_html(f'<span style="color: {color};">●</span> {latest.get_status_display()}')
+        return format_html('<span style="color: gray;">●</span> Unknown')
+    current_status.short_description = "Status"
 
 
 @admin.register(WatchList)
-class WatchListAdmin(BaseAdmin):
-    custom_fieldsets  = (
-        ("Information", {
+class WatchListAdmin(admin.ModelAdmin):
+    list_display = ("user", "product", "created_at")
+    list_display_links = ("user", "product")
+    search_fields = ("user__email", "user__first_name", "product__title")
+    list_filter = ("created_at",)
+    readonly_fields = ("created_at", "modified_at")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Watchlist Information", {
             "fields": ("product", "user")
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
         }),
     )
 
 
 @admin.register(LookUp)
-class LookUpAdmin(BaseAdmin):
-    custom_fieldsets  = (
+class LookUpAdmin(admin.ModelAdmin):
+    list_display = ("name", "category", "description_preview", "created_at")
+    list_display_links = ("name",)
+    search_fields = ("name", "category", "description")
+    list_filter = ("category", "created_at")
+    readonly_fields = ("created_at", "modified_at")
+    ordering = ("name",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
         ("Lookup Information", {
             "fields": ("name", "category", "description")
         }),
-    )
-    
-
-@admin.register(FeatureFlag)
-class FeatureFlagAdmin(BaseAdmin):
-    list_display = ("name", "is_enabled", "created_at", "modified_at")
-    search_fields = ("name", "description")
-    list_filter = ("is_enabled",)
-    filter_horizontal = ("users",)
-
-    custom_fieldsets = (
-        ("Feature Information", {
-            "fields": ("name", "description", "is_enabled", "users", "start_date", "end_date", "discount_percent", "count", "is_active")
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
         }),
     )
+
+    def description_preview(self, obj):
+        return obj.description[:50] + "..." if len(obj.description) > 50 else obj.description
+    description_preview.short_description = "Description"
+
+
+@admin.register(FeatureFlag)
+class FeatureFlagAdmin(admin.ModelAdmin):
+    list_display = ("name", "enabled_status", "is_active", "start_date", "end_date", "discount_percent", "created_at", "modified_at")
+    list_display_links = ("name",)
+    search_fields = ("name", "description")
+    list_filter = ("is_enabled", "is_active", "name", "start_date", "end_date")
+    readonly_fields = ("created_at", "modified_at")
+    filter_horizontal = ("users",)
+    ordering = ("name",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Feature Information", {
+            "fields": ("name", "description", "is_enabled", "is_active")
+        }),
+        ("Configuration", {
+            "fields": ("users", "start_date", "end_date", "discount_percent", "count")
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    def enabled_status(self, obj):
+        if obj.is_enabled:
+            return format_html('<span style="color: green;">✓</span> Enabled')
+        return format_html('<span style="color: red;">✗</span> Disabled')
+    enabled_status.short_description = "Status"

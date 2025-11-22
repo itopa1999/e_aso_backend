@@ -266,6 +266,7 @@ class ShippingInfoSerializer(serializers.Serializer):
     alt_phone = serializers.CharField(allow_blank=True, required=False)
     total = serializers.DecimalField(max_digits=10, decimal_places=2)
     otherInfo = serializers.CharField(required=False)
+    telegram_user_chat_id = serializers.CharField(required=False)
 
 
 

@@ -1,32 +1,44 @@
 from django.contrib import admin
-
-from utils.base_admin import BaseAdmin
+from django.utils.html import format_html
 from .models import *
-# Register your models here.
+
 
 @admin.register(User)
-class UserAdmin(BaseAdmin):
-    """Custom admin for User with BaseAdmin integration."""
+class UserAdmin(admin.ModelAdmin):
+    """Custom admin for User with admin.ModelAdmin integration."""
     list_display = (
-        "email", "first_name", "last_name",
-        "phone", "rider_number", "is_active", "is_staff", "created_at"
+        "email", "full_name_display", "phone", "rider_number", 
+        "status_display", "referral_status_display", "created_at"
     )
-    search_fields = ("email", "first_name", "last_name", "phone", "rider_number")
-    list_filter = ("is_active", "is_staff", "is_superuser", "created_at")
-    readonly_fields = ("referral_code", "is_referral_qualified", "created_at", "modified_at")
+    list_display_links = ("email", "full_name_display")
+    search_fields = ("email", "first_name", "last_name", "phone", "rider_number", "referral_code")
+    list_filter = ("is_active", "is_staff", "is_superuser", "is_referral_qualified", "referral_used", "created_at", "groups")
+    readonly_fields = ("referral_code", "is_referral_qualified", "date_joined", "last_login", "created_at", "modified_at")
+    filter_horizontal = ("groups", "user_permissions")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
 
-    custom_fieldsets = (
-        ("User Information", {
+    fieldsets = (
+        ("Personal Information", {
             "fields": (
                 "email",
                 "first_name",
                 "last_name",
                 "phone",
                 "rider_number",
+            ),
+        }),
+        ("Referral Information", {
+            "fields": (
                 "referral_code",
                 "is_referral_qualified",
                 "referral_used",
-                "password",
+                "referral_used_purchase",
+            ),
+        }),
+        ("Permissions & Access", {
+            "fields": (
                 "is_active",
                 "is_staff",
                 "is_superuser",
@@ -34,17 +46,48 @@ class UserAdmin(BaseAdmin):
                 "user_permissions",
             ),
         }),
+        ("Password", {
+            "fields": ("password",),
+        }),
+        ("Important Dates", {
+            "fields": ("date_joined", "last_login"),
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
     )
+
+    def full_name_display(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+    full_name_display.short_description = "Full Name"
+
+    def status_display(self, obj):
+        if obj.is_active:
+            return format_html('<span style="color: green;">●</span> Active')
+        return format_html('<span style="color: red;">●</span> Inactive')
+    status_display.short_description = "Status"
+
+    def referral_status_display(self, obj):
+        if obj.is_referral_qualified:
+            return format_html('<span style="color: green;">✓</span> Qualified')
+        return format_html('<span style="color: gray;">✗</span> Not Qualified')
+    referral_status_display.short_description = "Referral Status"
 
 
 @admin.register(UserVerification)
-class UserVerificationAdmin(BaseAdmin):
+class UserVerificationAdmin(admin.ModelAdmin):
     """Admin for user verification management."""
-    list_display = ("user", "token", "is_verified", "created_at")
-    search_fields = ("user__email", "token")
+    list_display = ("user", "token", "verification_status", "created_at", "is_expired")
+    list_display_links = ("user", "token")
+    search_fields = ("user__email", "user__first_name", "user__last_name", "token")
     list_filter = ("is_verified", "created_at")
+    readonly_fields = ("created_at", "modified_at")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
 
-    custom_fieldsets = (
+    fieldsets = (
         ("Verification Info", {
             "fields": (
                 "user",
@@ -52,31 +95,124 @@ class UserVerificationAdmin(BaseAdmin):
                 "is_verified",
             ),
         }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
     )
+
+    def verification_status(self, obj):
+        if obj.is_verified:
+            return format_html('<span style="color: green;">✓</span> Verified')
+        return format_html('<span style="color: orange;">⏳</span> Pending')
+    verification_status.short_description = "Status"
+
+    def is_expired(self, obj):
+        if obj.is_token_expired():
+            return format_html('<span style="color: red;">●</span> Expired')
+        return format_html('<span style="color: green;">●</span> Valid')
+    is_expired.short_description = "Token Status"
     
     
 @admin.register(Referral)
-class LookUpAdmin(BaseAdmin):
-    custom_fieldsets  = (
-        ("Lookup Information", {
-            "fields": ("referrer", "referee", "successful", "created_at")
+class ReferralAdmin(admin.ModelAdmin):
+    """Admin for referral management."""
+    list_display = ("referrer", "referee", "successful_display", "created_at")
+    list_display_links = ("referrer", "referee")
+    search_fields = ("referrer__email", "referrer__first_name", "referee__email", "referee__first_name")
+    list_filter = ("successful", "created_at")
+    readonly_fields = ("created_at",)
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Referral Information", {
+            "fields": ("referrer", "referee", "successful")
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
         }),
     )
+
+    def successful_display(self, obj):
+        if obj.successful:
+            return format_html('<span style="color: green;">✓</span> Successful')
+        return format_html('<span style="color: gray;">✗</span> Pending')
+    successful_display.short_description = "Status"
+
     
 @admin.register(Transaction)
-class TransactionAdmin(BaseAdmin):
-    custom_fieldsets  = (
+class TransactionAdmin(admin.ModelAdmin):
+    """Admin for transaction management."""
+    list_display = ("reference", "user", "amount", "transaction_type", "channel", "status_display", "created_at")
+    list_display_links = ("reference", "user")
+    search_fields = ("reference", "user__email", "user__first_name", "user__last_name", "order_id")
+    list_filter = ("transaction_type", "channel", "status", "created_at")
+    readonly_fields = ("reference", "created_at", "modified_at")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
         ("Transaction Information", {
             "fields": ("user", "amount", "transaction_type", "reference", "channel", "status", "order_id")
         }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
     )
+
+    def status_display(self, obj):
+        colors = {
+            "success": "green",
+            "pending": "orange",
+            "failed": "red",
+        }
+        color = colors.get(obj.status.lower(), "gray")
+        return format_html(f'<span style="color: {color};">●</span> {obj.status}')
+    status_display.short_description = "Status"
     
     
 @admin.register(ContactFormSubmission)
-class ContactFormSubmissionAdmin(BaseAdmin):
-    custom_fieldsets  = (
-        ("Contact Form Submission Information", {
-            "fields": ("full_name", "phone", "email", "subject", "message")
+class ContactFormSubmissionAdmin(admin.ModelAdmin):
+    """Admin for contact form submissions."""
+    list_display = ("full_name", "email", "phone", "subject_preview", "status_display", "created_at")
+    list_display_links = ("full_name", "email")
+    search_fields = ("full_name", "email", "phone", "subject", "message")
+    list_filter = ("status", "created_at")
+    readonly_fields = ("created_at", "modified_at")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Contact Information", {
+            "fields": ("full_name", "phone", "email")
+        }),
+        ("Message Details", {
+            "fields": ("subject", "message", "status")
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
         }),
     )
+
+    def subject_preview(self, obj):
+        return obj.subject[:50] + "..." if len(obj.subject) > 50 else obj.subject
+    subject_preview.short_description = "Subject"
+
+    def status_display(self, obj):
+        colors = {
+            "new": "blue",
+            "in_progress": "orange",
+            "resolved": "green",
+            "closed": "gray",
+        }
+        color = colors.get(obj.status.lower(), "gray")
+        return format_html(f'<span style="color: {color};">●</span> {obj.status}')
+    status_display.short_description = "Status"
     

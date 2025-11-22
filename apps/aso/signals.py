@@ -23,38 +23,60 @@ def send_tracking_update_email(sender, instance, created, **kwargs):
         order = instance.order
         user = order.user
         
+        # --- Special message for first status: "Placed" ---
+        if instance.status.lower() == "placed":
+            email_message = textwrap.dedent(f"""
+                We’ve just received your order {order.order_number}! 🎉
+
+                Our team is getting everything ready for you.
+                We’ll keep you updated as your order moves through each stage.
+
+                Thank you for trusting us!
+            """).strip()
+
+            telegram_message = textwrap.dedent(f"""
+                🎉 Order Received!
+
+                We’ve received your order {order.order_number}.
+                Our team is preparing it now, you’ll get updates as it progresses.
+            """).strip()
+
+        else:
+            # --- Default message for all other status updates ---
+            email_message = textwrap.dedent(f"""
+                Your order {order.order_number} has been updated.
+
+                Status: {instance.status}
+                Details: {instance.description}
+                Date: {instance.date.strftime('%Y-%m-%d %H:%M')}
+
+                Thank you for shopping with us!
+            """).strip()
+
+            telegram_message = textwrap.dedent(f"""
+                📦 Order Update
+
+                Order: {order.order_number}
+                Status: {instance.status}
+                Details: {instance.description}
+                Date: {instance.date.strftime('%Y-%m-%d %H:%M')}
+            """).strip()
+
+        # --- Send Email ---
         send_custom_email(
-            subject = f"Your Order {order.order_number} Status Update",
+            subject=f"Order {order.order_number} Update",
             recipient_email=user.email,
-            message=f"""
-            Your order **{order.order_number}** status has been updated to:  
-            **{instance.status}**
-
-            Details: {instance.description}  
-            Date: {instance.date.strftime('%Y-%m-%d %H:%M')}
-
-            Thank you for shopping with us!
-            
-            """,
+            message=email_message,
             greeting_name=user.first_name or "Valued Customer"
         )
-        
-        telegram_message = textwrap.dedent(f"""
-            📦 Order Update
-            Order Number: {order.order_number}
-            Status: {instance.status}
-            Details: {instance.description}
-            Date: {instance.date.strftime('%Y-%m-%d %H:%M')}
 
-            Thank you for shopping with us!
-        """).strip()
-
+        # --- Send Telegram Notification ---
         if order.telegram_user_chat_id:
             send_notification(
                 message=telegram_message,
                 chat_id=order.telegram_user_chat_id
             )
-            
+                
 @receiver(pre_save, sender=OrderTracking)
 def enforce_order_tracking_rules(sender, instance, **kwargs):
     # Define allowed status order
