@@ -9,7 +9,7 @@ django.setup()
 
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, CallbackQueryHandler
 from telegram_bot.config import BOT_TOKEN
-from telegram_bot.handlers import start, echo, button_handler
+from telegram_bot.handlers import handle_state_selection, start, echo, button_handler
 
 
 

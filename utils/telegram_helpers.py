@@ -25,14 +25,16 @@ def send_announcement(message: str) -> bool:
     return response.ok
 
 
-def send_notification(message: str) -> bool:
+@checkBackgroundFeatureFlag()
+@shared_task
+def send_notification(message: str, chat_id: str) -> bool:
     """
     Send a notification (like order updates) to Telegram channel.
     Can be reused for different types of notifications.
     """
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
-        "chat_id": TELEGRAM_CHANNEL_ID,
+        "chat_id": chat_id,
         "text": message,
         "parse_mode": "HTML"
     }

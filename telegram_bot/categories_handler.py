@@ -2,13 +2,13 @@ import requests
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from .config import ASO_URL
 from .utils import send_product_photo
-
+from asgiref.sync import sync_to_async
 
 async def handle_list_categories(query):
     """
     Handle list categories button press.
     """
-    resp = requests.get(f"{ASO_URL}/lookups/")
+    resp = await sync_to_async(requests.get)(f"{ASO_URL}/lookups/")
     data = resp.json()
     
     for c in data:
@@ -22,7 +22,7 @@ async def handle_category_products(query, category_name, page="1"):
     """
     Handle category products view with pagination.
     """
-    resp = requests.get(f"{ASO_URL}/", params={"category": category_name, "page": page})
+    resp = await sync_to_async(requests.get)(f"{ASO_URL}/", params={"category": category_name, "page": page})
     data = resp.json()
     text = f"<b>🛍️ Products in {category_name} - Page {page}:</b>\n\n"
 
@@ -34,7 +34,7 @@ async def handle_category_products(query, category_name, page="1"):
         text += f"• <b>{title}</b>{badge} - <i>₦{price}</i>\n{description}\n\n"
 
         buttons = [
-            [InlineKeyboardButton("🛒 Order Now", callback_data=f"order_{p['id']}"),
+            [InlineKeyboardButton("🛒 Order Now", callback_data=f"place_order_{p['id']}"),
              InlineKeyboardButton("ℹ️ See Details", callback_data=f"details_{p['id']}")]
         ]
         await send_product_photo(query, p, text, buttons)

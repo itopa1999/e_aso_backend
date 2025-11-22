@@ -5,7 +5,7 @@ from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from django.core.cache import cache
 from .config import ADMIN_URL
-
+from asgiref.sync import sync_to_async  
 
 async def handle_login(query, user_id):
     """
@@ -26,7 +26,7 @@ async def handle_email_input(update: Update, user_id: int, email: str):
     email_key = CacheKeys.format(CacheKeys.telegram_user_login_codes, user_id=user_id)
     GlobalCache.set(email_key, email)
     
-    resp = requests.post(f"{ADMIN_URL}/send-token/", json={"email": email})
+    resp = await sync_to_async(requests.post)(f"{ADMIN_URL}/send-token/", json={"email": email})
     print("Send token response:", resp.text)
     
     if resp.status_code == 200:
@@ -49,7 +49,7 @@ async def handle_code_input(update: Update, user_id: int, code: str):
     email_key = CacheKeys.format(CacheKeys.telegram_user_login_codes, user_id=user_id)
     email = GlobalCache.get(email_key)
     
-    resp = requests.post(f"{ADMIN_URL}/telegram-login/", json={"email": email, "token": code})
+    resp = await sync_to_async(requests.post)(f"{ADMIN_URL}/telegram-login/", json={"email": email, "token": code})
     print("Verify code response:", resp.text)
     
     if resp.status_code == 200:
@@ -62,8 +62,7 @@ async def handle_code_input(update: Update, user_id: int, code: str):
 
         # Clear login flow data
         stage_key = CacheKeys.format(CacheKeys.telegram_user_login_stage, user_id=user_id)
-        cache.delete(stage_key)
-        cache.delete(email_key)
+        GlobalCache.delete(stage_key)
         
         await update.message.reply_text("✅ Login successful!")
     else:

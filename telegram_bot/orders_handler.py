@@ -3,7 +3,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from datetime import datetime
 from .config import ASO_URL
 from .utils import check_authentication, handle_auth_error
-
+from asgiref.sync import sync_to_async
 
 async def handle_list_orders(query, user_id):
     """
@@ -14,7 +14,7 @@ async def handle_list_orders(query, user_id):
         return
     
     try:
-        resp = requests.get(f"{ASO_URL}/lists/", headers=headers)
+        resp = await sync_to_async(requests.get)(f"{ASO_URL}/lists/", headers=headers)
     except Exception as e:
         await query.message.reply_text("❌ Server error. Try again later.")
         return
@@ -82,7 +82,7 @@ async def handle_order_details(query, user_id, order_id):
         return
     
     try:
-        resp = requests.get(f"{ASO_URL}/order-details/{order_id}/", headers=headers)
+        resp = await sync_to_async(requests.get)(f"{ASO_URL}/order-details/{order_id}/", headers=headers)
     except Exception as e:
         await query.message.reply_text("❌ Server error. Try again later.")
         return

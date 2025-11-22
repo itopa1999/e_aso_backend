@@ -5,7 +5,7 @@ from telegram import InlineKeyboardMarkup
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from django.core.cache import cache
-
+from asgiref.sync import sync_to_async
 
 async def send_product_photo(query, product, caption, buttons):
     """
@@ -17,7 +17,7 @@ async def send_product_photo(query, product, caption, buttons):
     
     try:
         if image_url:
-            resp = requests.get(image_url)
+            resp = await sync_to_async(requests.get)(image_url)
             resp.raise_for_status()
             image_file = BytesIO(resp.content)
         else:
@@ -91,3 +91,11 @@ async def handle_auth_error(query, user_id):
         "⚠️ Your session expired.\nPlease login again.",
         parse_mode="Markdown"
     )
+
+
+NIGERIAN_STATES = [
+    "Abia","Adamawa","Akwa Ibom","Anambra","Bauchi","Bayelsa","Benue","Borno","Cross River",
+    "Delta","Ebonyi","Edo","Ekiti","Enugu","FCT","Gombe","Imo","Jigawa","Kaduna","Kano",
+    "Katsina","Kebbi","Kogi","Kwara","Lagos","Nasarawa","Niger","Ogun","Ondo","Osun",
+    "Oyo","Plateau","Rivers","Sokoto","Taraba","Yobe","Zamfara"
+]

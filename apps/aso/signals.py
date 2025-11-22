@@ -12,6 +12,10 @@ from utils.cache_manager import GlobalCache
 from utils.email_sender import send_custom_email
 from utils.enum import CacheKeys, FeatureNames
 from .models import Cart, CartItem, FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ShippingAddress, WatchList
+from utils.telegram_helpers import send_notification
+import textwrap
+
+
 
 @receiver(post_save, sender=OrderTracking)
 def send_tracking_update_email(sender, instance, created, **kwargs):
@@ -34,7 +38,23 @@ def send_tracking_update_email(sender, instance, created, **kwargs):
             """,
             greeting_name=user.first_name or "Valued Customer"
         )
+        
+        telegram_message = textwrap.dedent(f"""
+            📦 Order Update
+            Order Number: {order.order_number}
+            Status: {instance.status}
+            Details: {instance.description}
+            Date: {instance.date.strftime('%Y-%m-%d %H:%M')}
 
+            Thank you for shopping with us!
+        """).strip()
+
+        if order.telegram_user_chat_id:
+            send_notification(
+                message=telegram_message,
+                chat_id=order.telegram_user_chat_id
+            )
+            
 @receiver(pre_save, sender=OrderTracking)
 def enforce_order_tracking_rules(sender, instance, **kwargs):
     # Define allowed status order
