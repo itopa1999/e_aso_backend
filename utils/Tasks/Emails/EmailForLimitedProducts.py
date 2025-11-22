@@ -7,6 +7,7 @@ from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
+from utils.telegram_helpers import send_announcement
 
 User = get_user_model()
 
@@ -73,5 +74,23 @@ def send_limited_day_announcement():
             greeting_name=user.first_name or "Valued Customer",
         )
         count += 1
+        
+    message = f"""
+    🎉 <b>LIMITED PRODUCT COLLECTION IS NOW LIVE!</b> 🎉
+
+    Hey shoppers! Our <b>exclusive limited products</b> are available for a <b>short time only</b>.  
+
+    🛍️ <b>What you get:</b>
+    • Discounts applied automatically to selected products  
+    • Exclusive deals across all categories  
+
+    ⏰ <b>Hurry! Offer ends {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}</b>  
+
+    Don't miss out on your favorites!  
+    👉 <b><a href="{settings.BASE_URL}/limited-products.html">Shop Now</a></b>
+
+    💡 Only a few items left in stock. Grab yours before they run out!  
+    """
+    send_announcement(message)
 
     return f"✅ Limited product email sent to {count} user(s). Offer ends {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}."

@@ -1,10 +1,13 @@
+from celery import shared_task
 from rest_framework import serializers
 
 from apps.administrator.models import Banner, CustomerFeedback
 from apps.aso.models import FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
 from apps.users.models import ContactFormSubmission, Transaction, User
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.enum import LookUpsCategories
-
+from utils.telegram_helpers import send_notification, send_product
+from django.conf import settings
 
 class BannerSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
@@ -32,10 +35,15 @@ class ResendOtpSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
 
 
-class LoginSerializer(serializers.Serializer):
+class TelegramLoginSerializer(serializers.Serializer):
     token = serializers.CharField(required=True)
     email = serializers.EmailField(required=True)
-    password = serializers.CharField(write_only=True)
+    
+
+class LoginSerializer(serializers.Serializer):
+    token = serializers.CharField(required=True)
+    password = serializers.CharField(required=True, write_only=True)
+    email = serializers.EmailField(required=True)
         
 # ADMIN SERIALIZER
 
@@ -383,6 +391,7 @@ class ProductImportSerializer(serializers.Serializer):
     original_price = serializers.DecimalField(max_digits=10, decimal_places=2)
     discount_percent = serializers.IntegerField(required=False)
     rating = serializers.FloatField()
+    display_product = serializers.BooleanField(default=False)
     category = serializers.ListField(child=serializers.CharField())
     sizes = serializers.ListField(child=serializers.CharField())
     colors = ImportProductColorSerializer(many=True)
@@ -405,7 +414,7 @@ class ProductImportSerializer(serializers.Serializer):
             original_price=validated_data['original_price'],
             discount_percent=validated_data.get('discount_percent'),
             rating=validated_data['rating'],
-            display_product = False
+            display_product = validated_data['display_product']
         )
         for cat_name in category_names:
             try:
@@ -474,6 +483,9 @@ class ProductImportSerializer(serializers.Serializer):
                 title=detail['tab'].capitalize(),
                 content=detail['content']
             )
+            
+        if product.display_product:
+            send_product(product.id)
 
         return product
 

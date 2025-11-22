@@ -7,6 +7,7 @@ from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
+from utils.telegram_helpers import send_announcement
 
 User = get_user_model()
 
@@ -72,5 +73,24 @@ def send_discount_day_announcement():
             greeting_name=user.first_name or "Valued Customer",
         )
         count += 1
+        
+    message = f"""
+    Hey <b>Valued Customer</b>,  
 
+    🎉 <b>Black Friday Discount Day is LIVE!</b> 🎉  
+
+    For a <b>limited time</b>, every product in our store is discounted — no coupon needed!  
+    Grab your favorites before time runs out.  
+
+    🛍️ <b>What you get:</b>  
+    • <b>Exclusive discounts</b> across all categories  
+    • Offer valid until <b>{expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}</b>  
+
+    Don't miss this chance to <i>save big</i>!  
+    👉 <b><a href="{settings.BASE_URL}/index.html">Shop now</a></b>  
+
+    ⏰ <b>Hurry! The clock is ticking.</b>
+    """
+    send_announcement(message)
+    
     return f"✅ Discount day email sent to {count} user(s). Offer ends {expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}."

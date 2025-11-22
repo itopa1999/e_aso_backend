@@ -87,6 +87,11 @@ class CacheKeys(Enum):
     CUSTOMER_TRANSACTIONS = "customer_transactions"
     FEATURE_FLAGS = "feature_flag_{feature_name}"
     BANNER = "banner_{category}"
+    
+    # telgram bot
+    telegram_user_tokens = "telegram_user_tokens_{user_id}"
+    telegram_user_login_codes = "telegram_user_login_codes_{user_id}"
+    telegram_user_login_stage = "telegram_user_login_stage_{user_id}"
 
     @classmethod
     def format(cls, key, **kwargs):

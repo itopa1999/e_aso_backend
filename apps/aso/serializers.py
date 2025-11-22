@@ -228,7 +228,7 @@ class CartDetailSerializer(serializers.ModelSerializer):
 class LookUpsSerializer(serializers.ModelSerializer):
     class Meta:
         model = LookUp
-        fields = ['name', 'category']
+        fields = ['id', 'name', 'category']
 
 
 

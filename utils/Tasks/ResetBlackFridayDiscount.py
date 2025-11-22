@@ -1,10 +1,12 @@
 from decimal import Decimal
 
 from celery import shared_task
+from django.conf import settings
 from apps.aso.models import Product
 from utils.decorators import checkBackgroundFeatureFlag
 from utils.enum import FeatureNames
 from utils.feature_flags import is_feature_enabled
+from utils.telegram_helpers import send_announcement
 
 
 
@@ -33,6 +35,16 @@ def reset_friday_discount():
         
     flag.is_active = False
     flag.save(update_fields=['is_active'])
+    
+    message = f"""
+    ⏰ <b>Black Friday Discount Day has ended!</b> ⏰
+
+    The special <b>discounts on all products</b> have now expired.  
+    Hope you grabbed your favorites in time!  
+
+    🛒 Visit our store to see current offers: <b><a href="{settings.BASE_URL}/index.html">Shop now</a></b>
+    """
+    send_announcement(message)
     
     return f"✅ Reset Friday discount for {products.count()} products."
 

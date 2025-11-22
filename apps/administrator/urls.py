@@ -7,6 +7,7 @@ urlpatterns = [
         include(
             [
                 path("send-token/", ResendOtpView.as_view()),
+                path("telegram-login/", TelegramLoginVerificationView.as_view()),
                 path("dashboard/", DashboardAPIView.as_view()),
                 path("products/", ProductAPIView.as_view()),
                 path("orders/", OrderListView.as_view()),

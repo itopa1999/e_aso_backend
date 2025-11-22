@@ -20,11 +20,11 @@ class ResendOtpCommand:
 
         verification, created = UserVerification.objects.get_or_create(user=user, is_deleted = False)
 
-        if not verification.is_token_expired():
-            return BaseResult(
-                status_code=HTTPStatus.BAD_REQUEST,
-                message="Otp still valid. Please use the existing code"
-            )
+        # if not verification.is_token_expired():
+        #     return BaseResult(
+        #         status_code=HTTPStatus.BAD_REQUEST,
+        #         message="Otp still valid. Please use the existing code"
+        #     )
 
         verification.generate_token()
         verification.save()

@@ -17,6 +17,7 @@ from apps.administrator.BLL.Commands.CreateCustomerFeedback import CreateCustome
 from apps.administrator.BLL.Queries.ListCustomerFeedback import ListCustomerFeedbackQuery
 from apps.administrator.BLL.Commands.ResendOtp import ResendOtpCommand
 from apps.administrator.BLL.Commands.Login import LoginCommand
+from apps.administrator.BLL.Commands.vierifyToken import AdminVerifyOtpCommand
 from apps.administrator.BLL.Commands.changePassword import ChangePasswordCommand
 from apps.administrator.models import CustomerFeedback
 from apps.aso.models import Product, Order
@@ -24,9 +25,9 @@ from apps.users.models import ContactFormSubmission, Transaction, User
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
-from .serializers import CustomerFeedbackSerializer, DashboardSerializer, FeatureFlagSerializer, LoginSerializer, ProductSerializer, AdminOrderDetailSerializer, ResendOtpSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
-# Create your views here. 
-
+from .serializers import CustomerFeedbackSerializer, DashboardSerializer, FeatureFlagSerializer, LoginSerializer, ProductSerializer, AdminOrderDetailSerializer, ResendOtpSerializer, TelegramLoginSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
+# Create your views here.
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.filters import OrderingFilter, SearchFilter
 from django_filters.rest_framework import DjangoFilterBackend
@@ -271,11 +272,54 @@ class ResendOtpView(generics.GenericAPIView):
         return Response(result.to_dict(), status=result.status_code)
     
     
+class TelegramLoginVerificationView(generics.GenericAPIView):
+    allow_any = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication]  
+    serializer_class = TelegramLoginSerializer
+    
+    def post(self, request, *args, **kwargs):
+        # Validate incoming data
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data.get("email")
+        token = serializer.validated_data.get("token")
+        
+        response = AdminVerifyOtpCommand.execute(token, email)
+        if response.status_code != 200:
+            return Response({
+                "message": response.message
+            }, status=response.status_code)
+        
+        user = response.data
+        if not user.is_active:
+            return Response({
+                "message": "User account is inactive."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        # Generate tokens
+        refresh = RefreshToken.for_user(user)
+        access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
+
+        # Construct response
+        response_data = {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "email": user.email,
+        }
+        
+        return Response({
+            "data": response_data,
+            "message": "Login successful."
+        }, status=status.HTTP_200_OK)
+    
+    
 
 class LoginAPIView(generics.GenericAPIView):
     serializer_class = LoginSerializer
-    permission_classes = []
-    authentication_classes = []
+    allow_any = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication] 
     
     def post(self, request, *args, **kwargs):
         # Validate incoming data

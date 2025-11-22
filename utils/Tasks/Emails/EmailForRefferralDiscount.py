@@ -5,6 +5,7 @@ from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
+from utils.telegram_helpers import send_announcement
 
 User = get_user_model()
 
@@ -61,5 +62,25 @@ def send_referral_program_announcement():
         
     flag.is_active = True
     flag.save(update_fields=['is_active'])
+    
+    
+    message = f"""
+    🎉 <b>Referral Program is LIVE!</b> 🎉
+
+    Hey shoppers! You can now <b>earn exclusive discounts</b> by inviting your friends to shop at Aso Oke & Aso Ofi Marketplace.  
+
+    How it works:  
+    • 💬 Share your unique referral code with friends and family  
+    • 🛍️ When they shop using your code, you get a discount on your next order  
+    • 🎁 The more friends complete purchases, the more rewards you earn!  
+
+    It's that simple! Invite, shop, and save.  
+
+    👉 <b><a href="{settings.BASE_URL}/profile.html">View & Share Your Referral Code</a></b>  
+
+    Don't wait — start referring today and enjoy amazing discounts! 🛒
+    """
+
+    send_announcement(message)
 
     return f"✅ Referral program announcement sent to {count} user(s)."

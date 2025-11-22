@@ -7,6 +7,7 @@ from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 from utils.enum import FeatureNames, GroupNames
 from utils.feature_flags import is_feature_enabled
+from utils.telegram_helpers import send_announcement
 
 User = get_user_model()
 
@@ -60,5 +61,20 @@ def send_free_shipping_announcement():
         
     flag.is_active = True
     flag.save(update_fields=['is_active'])
+    
+    message = f"""
+    🎉 <b>FREE SHIPPING ALERT!</b> 🎉
+
+    Hey shoppers! We're excited to announce that <b>FREE SHIPPING</b> is available on all orders for a limited time.  
+
+    🕓 Offer ends at <b>{expiry_datetime.strftime('%I:%M %p on %B %d, %Y')}</b> — don’t miss out!  
+
+    Fill your cart and enjoy this exclusive benefit today.  
+
+    👉 <b><a href="{settings.BASE_URL}/index.html">Shop Now</a></b>
+
+    Happy shopping! 🛍️
+    """
+    send_announcement(message)
 
     return f"✅ Free shipping email sent to {count} user(s)."

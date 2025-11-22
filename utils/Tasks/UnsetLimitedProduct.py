@@ -5,7 +5,9 @@ from apps.aso.models import Product
 from utils.decorators import checkBackgroundFeatureFlag
 from utils.enum import FeatureNames
 from utils.feature_flags import is_feature_enabled
-
+from utils.telegram_helpers import send_announcement
+from django.conf import settings
+from django.utils import timezone
 
 @checkBackgroundFeatureFlag()
 @shared_task
@@ -40,5 +42,19 @@ def unset_limited_product():
 
     flag.is_active = False
     flag.save(update_fields=['is_active'])
+    
+    message = f"""
+    ⚠️ <b>LIMITED PRODUCT COLLECTION OFFER HAS ENDED!</b> ⚠️
+
+    Hello shoppers! The <b>exclusive limited products promotion</b> has officially ended.
+
+    We hope you had a chance to grab your favorites. Stay tuned for upcoming deals and special promotions!  
+
+    🛍️ Visit our store to explore other products:  
+    👉 <b><a href="{settings.BASE_URL}/index.html">Shop Now</a></b>
+
+    Thank you for shopping with us! 💖
+    """
+    send_announcement(message)
 
     return f"✅ Unset limited product discount for {products.count()} products."
