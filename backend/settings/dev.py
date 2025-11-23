@@ -41,6 +41,5 @@ TELEGRAM_CHANNEL_ID = os.environ.get("TELEGRAM_CHANNEL_ID")
 ASO_URL = os.environ.get("ASO_URL")
 ADMIN_URL = os.environ.get("ADMIN_URL")
 USER_URL = os.environ.get("USER_URL")
-
 BASE_URL =os.getenv('BASE_URL')
 BACKEND_BASE_URL =os.getenv('BACKEND_BASE_URL')

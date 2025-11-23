@@ -30,6 +30,10 @@ urlpatterns = [
                 path("track-order/<int:order_id>/", TrackingDetailsView.as_view()),
                 path("feature-flag/<str:feature_name>/", CheckFeatureFlagView.as_view()),
                 path("limited-products/", LimitedProductsView.as_view()),
+                path(
+                    "smart-search/<str:query>/",
+                    SmartSearchProductsView.as_view()
+                ),
             ]
         )
     ),                

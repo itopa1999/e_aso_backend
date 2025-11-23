@@ -19,7 +19,6 @@ class AdminVerifyOtpCommand:
                 status_code=HTTPStatus.BAD_REQUEST,
                 message="User or verification record not found"
             )
-        print(verification.token, token)
         if verification.token != token:
             return BaseResultWithData(
                 data=None,

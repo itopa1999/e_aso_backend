@@ -24,6 +24,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🛍️ List Products", callback_data="list_products_1")],
         [InlineKeyboardButton("📂 List Categories", callback_data="list_categories")],
+        [InlineKeyboardButton("🔍 Search Products", callback_data="search_products")],
         [InlineKeyboardButton("📦 My Orders", callback_data="list_orders")],
         [InlineKeyboardButton("📝 Contact / Special Request", callback_data="contact_request")],
         [InlineKeyboardButton("ℹ️ Help", callback_data="help")],
@@ -253,6 +254,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     elif choice == "proceed_payment" or choice.startswith("proceed_payment"):
         await handle_proceed_payment(query, user_id)
+    
+    elif choice == "search_products" or choice.startswith("search_products"):
+        await query.message.reply_text(
+            "🔍 Please enter the product name or keyword to search for:"
+        )
         
     # -----------------------
     # State selection

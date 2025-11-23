@@ -333,3 +333,14 @@ class LimitedProductsView(APIView):
     def get(self, request, *args, **kwargs):
         result = LimitedProductsQuery.query(request)
         return Response(result.to_dict(), status=result.status_code)
+    
+    
+class SmartSearchProductsView(APIView):
+    authentication_classes = [OptionalJWTAuthentication]
+    permission_classes = [AllowAny]
+    
+    def get(self, request, query, *args, **kwargs):
+        result = ProductListQuery.smart_search(query)
+        return Response(result.to_dict(), status=result.status_code)
+    
+    

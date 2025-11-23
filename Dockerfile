@@ -6,11 +6,12 @@ ENV PYTHONUNBUFFERED 1
 
 WORKDIR /app
 
-# Install system dependencies for psycopg2 and gunicorn
+# Install system dependencies for psycopg2, gunicorn, and netcat for health checks
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
     gcc \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

@@ -23,7 +23,6 @@ class BannerSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         request = self.context.get('request')
         
-        print(request)
         if obj.image and request:
             return request.build_absolute_uri(obj.image.url)
         elif obj.image:
@@ -434,7 +433,6 @@ class ProductImportSerializer(serializers.Serializer):
                         category=lookup_category
                     )
                     product.category.add(new_lookup)
-                    print(f"✅ Created new lookup '{cat_name}' under category '{lookup_category}'")
 
             except LookUp.DoesNotExist:
                 print(f"⚠️ Skipping category '{cat_name}' — lookup category not found.")
@@ -458,7 +456,6 @@ class ProductImportSerializer(serializers.Serializer):
                         category=lookup_category
                     )
                     product.badge = new_badge.name
-                    print(f"✅ Created new badge '{badge_name}' under category '{lookup_category}'")
 
                 product.save()
 

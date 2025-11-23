@@ -13,18 +13,19 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Auto-discover tasks in installed apps
 app.autodiscover_tasks()
 
-app.conf.imports = (
-    'utils.Tasks.tasks',
-    'utils.Tasks.ApplyBlackFridayDiscount',
-    'utils.Tasks.ResetBlackFridayDiscount',
-    'utils.Tasks.SetLimitedProduct',
-    'utils.Tasks.UnsetLimitedProduct',
-    'utils.Tasks.Emails.EmailForBlackFriday',
-    'utils.Tasks.Emails.EmailForLimitedProducts',
-    'utils.Tasks.Emails.EmailForFreeShipping',
-    'utils.Tasks.Emails.EmailForRefferralDiscount',
-    'utils.Tasks.Emails.EmailForProductAds',
-)
+# app.conf.imports = (
+#     'utils.Tasks.tasks',
+#     'utils.Tasks.ApplyBlackFridayDiscount',
+#     'utils.Tasks.ResetBlackFridayDiscount',
+#     'utils.Tasks.SetLimitedProduct',
+#     'utils.Tasks.UnsetLimitedProduct',
+#     'utils.Tasks.Emails.EmailForBlackFriday',
+#     'utils.Tasks.Emails.EmailForLimitedProducts',
+#     'utils.Tasks.Emails.EmailForFreeShipping',
+#     'utils.Tasks.Emails.EmailForRefferralDiscount',
+#     'utils.Tasks.Emails.EmailForProductAds',
+#     ''
+# )
 
 # @app.task(bind=True)
 # def debug_task(self):

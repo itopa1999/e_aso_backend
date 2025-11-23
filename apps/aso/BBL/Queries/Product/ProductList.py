@@ -1,8 +1,7 @@
 from django.db.models import Q
 from http import HTTPStatus
+from apps.aso.rapidfuzz_serach import smart_fuzzy_search_product_titles
 from utils.base_result import BaseResultWithData
-from utils.cache_manager import GlobalCache
-from utils.enum import CacheKeys
 
 
 class ProductListQuery:
@@ -41,5 +40,19 @@ class ProductListQuery:
         )
 
 
-
-
+    @staticmethod
+    def smart_search(query):
+        if query:
+            products_titles = smart_fuzzy_search_product_titles(query)
+            
+            return BaseResultWithData(
+                data=products_titles,
+                status_code=HTTPStatus.OK,
+                message="Fuzzy search results fetched successfully."
+            )
+        else:
+            return BaseResultWithData(
+                data=[],
+                status_code=HTTPStatus.OK,
+                message="No search parameters provided."
+            )
