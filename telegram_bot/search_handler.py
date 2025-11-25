@@ -24,11 +24,6 @@ async def handle_search_products(query, user_id):
     await query.message.reply_text(
         "🔍 <b>Smart Product Search</b>\n\n"
         "Please enter the product name or keyword to search for:\n\n"
-        "<i>Examples:</i>\n"
-        "• iPhone\n"
-        "• Samsung Galaxy\n"
-        "• Laptop\n"
-        "• Men's shoes\n\n"
         "Type your search term below:",
         parse_mode="HTML"
     )

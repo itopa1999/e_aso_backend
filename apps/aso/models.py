@@ -13,7 +13,7 @@ from utils.base_model import BaseModel
 from utils.enum import FeatureNames
 from django.contrib.postgres.indexes import Index
 from django.utils.text import slugify
-
+from PIL import Image, ImageDraw, ImageFont
 # Create your models here.
 
 
@@ -150,6 +150,50 @@ class ProductImage(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
     image = models.ImageField(upload_to='products/gallery/')
     alt_text = models.CharField(max_length=255, blank=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            image_count = ProductImage.objects.filter(product=self.product, is_deleted=False).count()
+            if image_count >= 4:
+                from django.core.exceptions import ValidationError
+                raise ValidationError("A product can have a maximum of 4 images.")
+            
+        if self.image and hasattr(self.image, "name"):
+            ext = os.path.splitext(self.image.name)[1]
+            filename = f"{slugify(self.product.title)}_{uuid.uuid4().hex[:6]}{ext}"
+            self.image.name = f"products/gallery/{filename}"
+            
+        super().save(*args, **kwargs)
+        
+        self.apply_watermark()
+
+        super().save(update_fields=["image"])
+
+    def apply_watermark(self):
+        """Adds a visible text watermark to the image using default font."""
+        img_path = self.image.path
+        img = Image.open(img_path).convert("RGBA")
+
+        # Create transparent layer for watermark
+        txt_layer = Image.new("RGBA", img.size, (255, 255, 255, 0))
+        draw = ImageDraw.Draw(txt_layer)
+
+        watermark_text = "ASO Market"
+        font = ImageFont.load_default()  # Use default font
+        font_size = 20  # Pillow default font ignores size, but text will appear
+
+        # Bottom-right position
+        margin = 10
+        text_width, text_height = draw.textbbox((0, 0), watermark_text, font=font)[2:]
+        position = (img.width - text_width - margin, img.height - text_height - margin)
+
+        # Draw watermark with semi-transparency
+        draw.text(position, watermark_text, font=font, fill=(255, 255, 255, 150))
+
+        # Combine watermark with image
+        watermarked = Image.alpha_composite(img, txt_layer)
+        watermarked = watermarked.convert("RGB")
+        watermarked.save(img_path)
     
     class Meta:
         indexes = [

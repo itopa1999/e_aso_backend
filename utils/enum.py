@@ -98,6 +98,8 @@ class CacheKeys(Enum):
     
     telegram_user_contact_info = "telegram_user_contact_info_{user_id}"
     telegram_user_contact_stage = "telegram_user_contact_stage_{user_id}"
+    
+    telegram_user_search_stage = "telegram_user_search_stage_{user_id}"
 
     @classmethod
     def format(cls, key, **kwargs):

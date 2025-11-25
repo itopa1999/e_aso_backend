@@ -15,6 +15,7 @@ from .help_handler import handle_help
 from .item_order_handler import confirm_order_handler, handle_proceed_payment, item_order_handler
 from .contact_handler import handle_contact_request, handle_contact_input, handle_submit_contact, handle_cancel_contact
 from .channel_handler import handle_new_channel_member
+from .search_handler import handle_search_products, handle_search_input
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -72,6 +73,11 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if contact_handled:
         return
 
+    # Check search stage
+    search_handled = await handle_search_input(update, user_id, text)
+    if search_handled:
+        return
+
     # If not in any flow, show menu
     await start(update, context)
     
@@ -97,6 +103,7 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_shipping_info, user_id=user_id), None)
     GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_contact_stage, user_id=user_id), None)
     GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_contact_info, user_id=user_id), None)
+    GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_search_stage, user_id=user_id), None)
     
     await start(update, context)
     
@@ -256,9 +263,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await handle_proceed_payment(query, user_id)
     
     elif choice == "search_products" or choice.startswith("search_products"):
-        await query.message.reply_text(
-            "🔍 Please enter the product name or keyword to search for:"
-        )
+        await handle_search_products(query, user_id)
         
     # -----------------------
     # State selection
