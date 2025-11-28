@@ -16,6 +16,8 @@ class FeatureNames(Enum):
     PRODUCT_LIMITATION = "Product Limitation"
     NEW_PRODUCT_ANNOUNCEMENT = "New Product Announcement"
     BACKGROUND_TASKS = "Background Tasks"
+    FEEDBACK = "Feedback"
+    
 
     @classmethod
     def values(cls):

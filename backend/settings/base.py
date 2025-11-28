@@ -336,6 +336,16 @@ LOGGING = {
             'propagate': False,
         },
 
+        # Silence verbose Celery task registration logs
+        'celery.app.utils': {
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'celery.utils.functional': {
+            'level': 'WARNING',
+            'propagate': False,
+        },
+
         # Optional: your project logger
         'project': {
             'handlers': ['console', 'file'],

@@ -47,7 +47,13 @@ class Product(BaseModel):
         validators=[MinValueValidator(0), MaxValueValidator(100)]
     )
 
-    rating = models.FloatField(default=0.0)
+    rating = models.FloatField(
+        default=0.0,
+        validators=[
+            MinValueValidator(0.0, "Rating must be at least 0.0"),
+            MaxValueValidator(5.0, "Rating cannot be greater than 5.0 stars")
+        ]
+    )
     reviews_count = models.PositiveIntegerField(default=0)
 
     badge = models.CharField(max_length=50, blank=True, default="New")
@@ -76,6 +82,12 @@ class Product(BaseModel):
             self.main_image.name = f"products/main/{filename}"
 
         super().save(*args, **kwargs)
+    
+    def clean(self):
+        """Additional validation at model level"""
+        from django.core.exceptions import ValidationError
+        if self.rating < 0.0 or self.rating > 5.0:
+            raise ValidationError({'rating': 'Rating must be between 0.0 and 5.0 stars.'})
     
     class Meta:
         ordering = ['-created_at']

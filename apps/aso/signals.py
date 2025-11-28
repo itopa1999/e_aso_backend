@@ -2,6 +2,7 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from django.forms import ValidationError
 from utils.Tasks.ApplyBlackFridayDiscount import apply_friday_discount
+from utils.Tasks.Emails.EmailForFeedback import send_feedback_email_announcement
 from utils.Tasks.Emails.EmailForFreeShipping import send_free_shipping_announcement
 from utils.Tasks.Emails.EmailForProductAds import send_new_product_announcement
 from utils.Tasks.Emails.EmailForRefferralDiscount import send_referral_program_announcement
@@ -272,6 +273,14 @@ def handle_featureflag_update(sender, instance, created, **kwargs):
                     result = send_new_product_announcement()
                 else:
                     result = "⚠️ No new product found to announce."
+            else:
+                if instance.is_active:
+                    instance.is_active = False
+                    instance.save(update_fields=['is_active'])
+        elif feature_name == FeatureNames.FEEDBACK.value:
+            if is_enabled:
+                # Logic for enabling feedback feature can be added here
+                result = send_feedback_email_announcement()
             else:
                 if instance.is_active:
                     instance.is_active = False

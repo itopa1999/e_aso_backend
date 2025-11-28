@@ -39,18 +39,20 @@ class BannerAdmin(admin.ModelAdmin):
 
 @admin.register(CustomerFeedback)
 class CustomerFeedbackAdmin(admin.ModelAdmin):
-    list_display = ("user", "rating_display", "feedback_preview", "status_display", "created_at")
+    list_display = ("user", "rating_display", "status_display", "created_at")
     list_display_links = ("user",)
-    search_fields = ("user", "feedback")
+    search_fields = ("user",)  # Removed "feedback" - too expensive with large TextField
     list_filter = ("rating", "is_done", "created_at")
-    readonly_fields = ("created_at", "modified_at")
+    readonly_fields = ("created_at", "modified_at", "feedback", "rating_help")
     ordering = ("-created_at",)
-    date_hierarchy = "created_at"
-    list_per_page = 50
+    list_per_page = 25  # Reduced from 50 for better performance
+    
+    # Performance optimizations
+    show_full_result_count = False  # Disable total count query (expensive with many records)
 
     fieldsets = (
         ("Feedback Information", {
-            "fields": ("user", "rating", "feedback", "is_done")
+            "fields": ("user", "rating", "rating_help", "feedback", "is_done")
         }),
         ("Base Model Info", {
             "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
@@ -63,12 +65,18 @@ class CustomerFeedbackAdmin(admin.ModelAdmin):
         return format_html('<span style="color: gold;">{}</span> ({})', stars, obj.rating)
     rating_display.short_description = "Rating"
 
-    def feedback_preview(self, obj):
-        return obj.feedback[:50] + "..." if len(obj.feedback) > 50 else obj.feedback
-    feedback_preview.short_description = "Feedback"
+    def rating_help(self, obj):
+        return format_html(
+            '<div style="background: #f0f0f0; padding: 10px; border-radius: 4px;">'
+            '⚠️ <strong>Rating must be between 1 and 5 stars</strong><br>'
+            '• Current rating: {} stars'
+            '</div>',
+            obj.rating
+        )
+    rating_help.short_description = "Rating Help"
 
     def status_display(self, obj):
         if obj.is_done:
-            return format_html('<span style="color: green;">✓</span> Completed')
-        return format_html('<span style="color: orange;">⏳</span> Pending')
+            return format_html('<span style="color: green;">✓ Done</span>')
+        return format_html('<span style="color: orange;">⏳ Pending</span>')
     status_display.short_description = "Status"
