@@ -75,7 +75,7 @@ def send_discount_day_announcement():
         count += 1
         
     message = f"""
-    Hey <b>Valued Customer</b>,  
+    Hey <b>Valued Customers</b>,  
 
     🎉 <b>Black Friday Discount Day is LIVE!</b> 🎉  
 

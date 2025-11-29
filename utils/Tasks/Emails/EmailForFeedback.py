@@ -80,7 +80,7 @@ The Aso Oke & Aso Ofi Team
     message = f"""
 🌟 <b>We Value Your Feedback!</b> 🌟
 
-Dear Valued Customer,
+Dear Valued Customers,
 
 Your shopping experience matters to us! We'd love to hear your thoughts about your recent purchase at <b>Aso Oke & Aso Ofi Marketplace</b>.
 

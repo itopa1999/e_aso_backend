@@ -249,12 +249,33 @@ CACHES = {
 
 CELERY_BROKER_URL = os.getenv('REDIS_PORT')
 CELERY_RESULT_BACKEND = os.getenv('REDIS_PORT')
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True  # Suppress deprecation warning
+CELERY_DEFAULT_QUEUE = 'celery'  # Default queue name
+CELERY_QUEUES = {
+    'celery': {'exchange': 'celery', 'routing_key': 'celery'},
+    'default': {'exchange': 'default', 'routing_key': 'default'},
+}
 
 # Optional: tune performance
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Africa/Lagos'
+
+# Celery Beat Schedule - Daily Tasks
+from celery.schedules import crontab
+CELERY_BEAT_SCHEDULE = {
+    'send-abandoned-cart-reminders-daily': {
+        'task': 'utils.Tasks.scheduled_tasks.send_abandoned_cart_reminders_daily',
+        'schedule': crontab(hour=10, minute=0),  # Run daily at 10:00 AM Lagos time
+        'options': {'queue': 'celery'}
+    },
+    'deactivate-expired-feature-flags': {
+        'task': 'utils.Tasks.scheduled_tasks.deactivate_expired_feature_flags',
+        'schedule': crontab(hour=0, minute=5),  # Run daily at 12:05 AM Lagos time
+        'options': {'queue': 'celery'}
+    },
+}
 
 ADMINS = [
     ('Admin', 'salawulucky08071@gmail.com'),

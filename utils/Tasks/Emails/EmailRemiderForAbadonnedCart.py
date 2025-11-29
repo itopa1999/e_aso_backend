@@ -1,7 +1,9 @@
 from datetime import timedelta
+from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 from apps.aso.models import Cart
+from utils.decorators import checkBackgroundFeatureFlag
 from utils.email_sender import send_custom_email
 
 

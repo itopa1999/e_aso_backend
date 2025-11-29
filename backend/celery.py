@@ -13,19 +13,24 @@ app.config_from_object('django.conf:settings', namespace='CELERY')
 # Auto-discover tasks in installed apps
 app.autodiscover_tasks()
 
-# app.conf.imports = (
-#     'utils.Tasks.tasks',
-#     'utils.Tasks.ApplyBlackFridayDiscount',
-#     'utils.Tasks.ResetBlackFridayDiscount',
-#     'utils.Tasks.SetLimitedProduct',
-#     'utils.Tasks.UnsetLimitedProduct',
-#     'utils.Tasks.Emails.EmailForBlackFriday',
-#     'utils.Tasks.Emails.EmailForLimitedProducts',
-#     'utils.Tasks.Emails.EmailForFreeShipping',
-#     'utils.Tasks.Emails.EmailForRefferralDiscount',
-#     'utils.Tasks.Emails.EmailForProductAds',
-#     ''
-# )
+app.conf.imports = (
+    'utils.Tasks.tasks',
+    'utils.Tasks.ApplyBlackFridayDiscount',
+    'utils.Tasks.ResetBlackFridayDiscount',
+    'utils.Tasks.SetLimitedProduct',
+    'utils.Tasks.UnsetLimitedProduct',
+    'utils.Tasks.Emails.EmailForBlackFriday',
+    'utils.Tasks.Emails.EmailForLimitedProducts',
+    'utils.Tasks.Emails.EmailForFreeShipping',
+    'utils.Tasks.Emails.EmailForRefferralDiscount',
+    'utils.Tasks.Emails.EmailForProductAds',
+    'utils.Tasks.Emails.EmailForFeedback',
+    'utils.Tasks.Emails.EmailRemiderForAbadonnedCart',
+    'utils.Tasks.process_order',
+    'utils.Tasks.scheduled_tasks',
+    'utils.email_sender',
+    'utils.telegram_helpers',
+)
 
 # @app.task(bind=True)
 # def debug_task(self):
