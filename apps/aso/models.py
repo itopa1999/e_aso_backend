@@ -401,6 +401,7 @@ class ShippingAddress(BaseModel):
 class PaymentDetail(BaseModel):
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment_detail')
     method = models.CharField(max_length=50)  # e.g. 'Mastercard', 'Bank Transfer'
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
     class Meta:
         indexes = [models.Index(fields=['method'])]

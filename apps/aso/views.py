@@ -18,6 +18,7 @@ from apps.aso.BBL.Commands.Watchlist.ToggleWatchlist import ToggleWatchlistComma
 from apps.aso.BBL.Commands.Cart.PlaceOrder import PlaceOrderCommand
 from apps.aso.BBL.Queries.Cart.GetCartDetails import GetCartDetailQuery
 from apps.aso.BBL.Queries.Cart.PaystackConfirm import PaystackConfirmQuery
+from apps.aso.BBL.Queries.Cart.FlutterConfirm import FlutterwaveConfirmQuery
 from apps.aso.BBL.Queries.CartAndWatchlistCount import CartAndWatchlistCountQuery
 from apps.aso.BBL.Queries.FeatureFlagCheck import FeatureFlagCheck
 from apps.aso.BBL.Queries.LookUpList import LookUpListQuery
@@ -33,8 +34,9 @@ from utils.enum import CacheKeys
 from utils.permissions import IsCustomerPermission
 from .models import *
 from .serializers import *
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from .deliveryFee import delivery_fees
-from rest_framework.exceptions import AuthenticationFailed
+from apps.aso.flutterwave import validate as flutterwave_validate
 # Create your views here.
 
 class OptionalJWTAuthentication(JWTAuthentication):
@@ -227,15 +229,37 @@ class PlaceOrderView(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data.get("shipping_info"))
         serializer.is_valid(raise_exception=True)
-        shipping_data = serializer.validated_data
-
+        shipping_data = serializer.validated_data        
+        
         result = PlaceOrderCommand.execute(request, shipping_data)
+
         return Response(result.to_dict(), status=result.status_code)
         
         
 class PaystackConfirmSubscriptionView(APIView):
     def get(self, request, reference, *args, **kwargs):
         return PaystackConfirmQuery.execute(reference)
+
+
+class MonnifyConfirmView(APIView):
+    """Handle Monnify payment confirmation"""
+    def get(self, request, reference, *args, **kwargs):
+        # TODO: Implement Monnify validation
+        return Response(
+            {
+                "status": "pending",
+                "message": "Monnify payment confirmation - Implementation in progress",
+                "reference": reference,
+                "gateway": "monnify"
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class FlutterwaveConfirmView(APIView):
+    """Handle Flutterwave payment confirmation"""
+    def get(self, request, reference, *args, **kwargs):
+        return FlutterwaveConfirmQuery.execute(reference)
 
 
 class ProductListView(generics.ListAPIView):

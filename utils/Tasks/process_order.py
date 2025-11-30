@@ -3,6 +3,9 @@ from celery import shared_task
 from utils.decorators import checkBackgroundFeatureFlag
 from utils.enum import TransactionChannel, TransactionStatus, TransactionType
 from django.utils import timezone
+from django.conf import settings
+from django.core.mail import send_mail
+
 
 @checkBackgroundFeatureFlag()
 @shared_task
@@ -43,7 +46,8 @@ def process_paystack_order(order_id, reference, data):
     
     PaymentDetail.objects.create(
         order=order,
-        method = "Paystack"
+        method = data.get("payment_type", "Paystack"),
+        amount = cart.total(),
     )
     
     OrderTracking.objects.create(
@@ -67,6 +71,13 @@ def process_paystack_order(order_id, reference, data):
     # 4. Delete Cart and Items
     cart.items.all().delete()
     cart.delete()
+    
+    send_mail(
+        subject="New Order Confirmation",
+        message=f"A new order has been placed.\n\nOrder ID: {order.id}\nOrder Number: {order.order_number}\nAmount: {order.total}\nCreated At: {order.created_at}\nLink: {settings.BASE_URL}/admin/orders.html",
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[settings.EMAIL_HOST_USER],
+    )
     
     
     return True

@@ -25,6 +25,8 @@ urlpatterns = [
                 path("cart/update-state/", UpdateCartStateView.as_view(), name="update-cart-state"),
                 path('place-orders/', PlaceOrderView.as_view(), name='place-order'),
                 path('paystack-confirm-subscription/<str:reference>/', PaystackConfirmSubscriptionView.as_view(), name='paystack-confirm-subscription'),
+                path('monnify-confirm/<str:reference>/', MonnifyConfirmView.as_view(), name='monnify-confirm'),
+                path('flutterwave-confirm/<str:reference>/', FlutterwaveConfirmView.as_view(), name='flutterwave-confirm'),
                 path('delivery-fees/', DeliveryFeeAPIView.as_view(), name='delivery-fees'),
                 path("cart/clear/", ClearCartView.as_view()),
                 path("track-order/<int:order_id>/", TrackingDetailsView.as_view()),
