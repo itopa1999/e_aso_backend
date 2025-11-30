@@ -1,11 +1,19 @@
 from apps.users.serializers import ContactFormSerializer
 from utils.base_result import BaseResult
 from utils.email_sender import send_custom_email
+from utils.log_helpers import OperationLogger
 
 
 class ContactFormSubmissionCommand:
     @staticmethod
     def execute(data):
+        op = OperationLogger(
+            "ContactFormSubmissionCommand",
+            email=data.get("email"),
+            subject=data.get("subject")
+        )
+        op.start()
+        
         serializer = ContactFormSerializer(data=data)
         if serializer.is_valid():
             contact_submission = serializer.save()
@@ -31,12 +39,14 @@ class ContactFormSubmissionCommand:
                 """,
                 greeting_name=contact_submission.full_name or "Valued Customer",
             )
+            op.success(f"Contact form submitted by {contact_submission.email}")
             
             return BaseResult (
                 message="Contact form submitted successfully.",
                 status_code=201,
             )
         else:
+            op.fail(f"Contact form validation failed: {serializer.errors}")
             return BaseResult (
                 message="Invalid data.",
                 status_code=400,

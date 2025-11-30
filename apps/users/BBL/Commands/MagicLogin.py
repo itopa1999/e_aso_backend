@@ -6,6 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from utils.base_result import BaseResultWithData
 from apps.users.models import User
 from http import HTTPStatus
+from utils.log_helpers import OperationLogger
 
 from utils.magic_link import validate_magic_token
 
@@ -13,6 +14,11 @@ from utils.magic_link import validate_magic_token
 class MagicLoginCommand:
     @staticmethod
     def Execute(uidb64, token, url_email):
+        op = OperationLogger(
+            "MagicLoginCommand",
+            email=url_email
+        )
+        op.start()
         
         uid = urlsafe_base64_decode(uidb64).decode()
         user = get_object_or_404(User, id=uid)
@@ -20,8 +26,10 @@ class MagicLoginCommand:
         # Validate magic token
         email = validate_magic_token(token)
         if not email or email != user.email:
+            op.fail(f"Invalid magic token for {url_email}")
             return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=true")
 
+        op.success(f"Magic login successful for user {user.id}")
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
         refresh_token = str(refresh)

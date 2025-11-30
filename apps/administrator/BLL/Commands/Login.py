@@ -5,16 +5,24 @@ from apps.administrator.BLL.Commands.vierifyToken import AdminVerifyOtpCommand
 from utils.base_result import BaseResultWithData
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from utils.log_helpers import OperationLogger
 
 class LoginCommand:
     """Handles user login process"""
 
     @staticmethod
     def execute(token, email, password):
+        op = OperationLogger(
+            "AdminLoginCommand",
+            email=email
+        )
+        op.start()
+        
         # Logic to verify the user credentials and OTP token
         
         response = AdminVerifyOtpCommand.execute(token, email)
         if response.status_code != 200:
+            op.fail(f"OTP verification failed for {email}")
             return BaseResultWithData(
                 data=None,
                 status_code=response.status_code,
@@ -25,6 +33,7 @@ class LoginCommand:
         user = authenticate(email=email, password=password)
 
         if user is None:
+            op.fail(f"Invalid credentials for {email}")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.UNAUTHORIZED,
@@ -33,6 +42,7 @@ class LoginCommand:
 
         # Optional: check if user is active
         if not user.is_active:
+            op.fail(f"User {email} account is inactive")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.FORBIDDEN,
@@ -52,6 +62,7 @@ class LoginCommand:
             "first_name": user.first_name or "",
         }
         
+        op.success(f"Admin {email} logged in successfully")
         return BaseResultWithData(
             data=response_data,
             status_code=HTTPStatus.OK,

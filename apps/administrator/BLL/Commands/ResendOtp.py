@@ -3,6 +3,7 @@ from apps.users.models import User, UserVerification
 from utils.base_result import BaseResult
 from utils.email_sender import send_custom_email
 from utils.enum import GroupNames
+from utils.log_helpers import OperationLogger
 
 
 class ResendOtpCommand:
@@ -10,9 +11,16 @@ class ResendOtpCommand:
 
     @staticmethod
     def execute(email):
+        op = OperationLogger(
+            "ResendOtpCommand",
+            email=email
+        )
+        op.start()
+        
         try:
             user = User.objects.get(email=email, is_deleted = False)
         except User.DoesNotExist:
+            op.fail(f"User {email} not found")
             return BaseResult(
                 status_code=HTTPStatus.NOT_FOUND,
                 message="User with this email does not exist"
@@ -44,6 +52,7 @@ class ResendOtpCommand:
             """,
             greeting_name=user.first_name or "User"
         )
+        op.success(f"OTP sent to {email}")
         
         return BaseResult(
             status_code=HTTPStatus.OK,

@@ -7,12 +7,19 @@ from apps.users.serializers import RegUserSerializer
 from utils.base_result import BaseResultWithData
 from utils.email_sender import send_custom_email
 from utils.magic_link import generate_magic_token
+from utils.log_helpers import OperationLogger
 
 
 class SendMagicLinkCommand:
     @staticmethod
     def Execute(request, validatedData):
         email = validatedData.get("email")
+        op = OperationLogger(
+            "SendMagicLinkCommand",
+            email=email
+        )
+        op.start()
+        
         try:
             user = User.objects.get(email=email, is_deleted = False)
             is_new_user = False
@@ -68,6 +75,7 @@ class SendMagicLinkCommand:
                 greeting_name=user.first_name or "Valued Customer"
             )
             
+            op.success(f"New user {user.id} created and verification email sent")
             return BaseResultWithData(
                 data={"email": user.email},
                 status_code=HTTPStatus.CREATED,
@@ -75,6 +83,7 @@ class SendMagicLinkCommand:
             )
 
         if not user.is_active:
+            op.fail(f"User {user.id} account is inactive")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,
@@ -102,6 +111,7 @@ class SendMagicLinkCommand:
             greeting_name=user.first_name or "Valued Customer"
         )
 
+        op.success(f"Magic login link sent to {email}")
         return BaseResultWithData(
             data={"email": email},
             status_code=HTTPStatus.OK,

@@ -7,6 +7,7 @@ from apps.users.models import User, UserVerification
 from utils.base_result import BaseResult
 from utils.email_sender import send_custom_email
 from utils.magic_link import generate_magic_token
+from utils.log_helpers import OperationLogger
 
 
 class ResendVerificationEmailCommand:
@@ -15,6 +16,13 @@ class ResendVerificationEmailCommand:
     def Execute(validatedData, request=None):
         email = validatedData["email"]
         isLogin = validatedData["is_login"]
+        
+        op = OperationLogger(
+            "ResendVerificationEmailCommand",
+            email=email,
+            is_login=isLogin
+        )
+        op.start()
 
         try:
             user = User.objects.get(email=email, is_deleted = False)
@@ -22,6 +30,7 @@ class ResendVerificationEmailCommand:
             # 🔹 Magic login flow
             if isLogin:
                 if not user.is_active:
+                    op.fail(f"User {user.id} account is inactive")
                     return BaseResult(
                         message="Account inactive",
                         status_code=HTTPStatus.BAD_REQUEST
@@ -52,6 +61,7 @@ class ResendVerificationEmailCommand:
                     greeting_name=user.first_name or "Valued Customer"
                 )
 
+                op.success(f"Magic login link resent to {email}")
                 return BaseResult(
                     message="A new magic login link sent to email",
                     status_code=HTTPStatus.OK
@@ -59,6 +69,7 @@ class ResendVerificationEmailCommand:
 
             # 🔹 Email verification flow
             if user.is_active:
+                op.fail(f"Email {email} is already verified")
                 return BaseResult(
                     message="Email is already verified.",
                     status_code=HTTPStatus.BAD_REQUEST
@@ -93,12 +104,14 @@ class ResendVerificationEmailCommand:
                 greeting_name=user.first_name or "Valued Customer"
             )
 
+            op.success(f"Verification email resent to {email}")
             return BaseResult(
                 message="A new verification email has been sent.",
                 status_code=HTTPStatus.OK
             )
 
         except User.DoesNotExist:
+            op.fail(f"User with email {email} does not exist")
             return BaseResult(
                 message="User with this email does not exist.",
                 status_code=HTTPStatus.NOT_FOUND
