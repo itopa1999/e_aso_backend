@@ -91,6 +91,9 @@ gunicorn.pid
 
 # --- Celery ---
 celerybeat-schedule
+celerybeat-schedule.bak
+celerybeat-schedule.dat
+celerybeat-schedule.dir
 celerybeat.pid
 
 # --- Redis dump ---
@@ -164,4 +167,5 @@ htmlcov/
 *.tgz
 *.tar.gz
 *.zip
+
 
