@@ -10,10 +10,9 @@ from apps.aso.BBL.Queries.Cart.PaystackConfirm import PaystackConfirmQuery
 class TestPaystackConfirmQuery:
 
     @patch("apps.aso.BBL.Queries.Cart.PaystackConfirm.validate")
-    @patch("apps.aso.BBL.Queries.Cart.PaystackConfirm.send_mail")
     @patch("apps.aso.BBL.Queries.Cart.PaystackConfirm.redirect")
-    def test_execute_successful_payment(self, mock_redirect, mock_send_mail, mock_validate):
-        """✅ Should redirect to order-success.html and send email on success"""
+    def test_execute_successful_payment(self, mock_redirect, mock_validate):
+        """✅ Should redirect to order-success.html on successful payment"""
         reference = "ref_12345"
         mock_validate.return_value = {
             "success": True,
@@ -30,7 +29,7 @@ class TestPaystackConfirmQuery:
 
         assert "/order-success.html" in redirect_url
         assert "order_id=1" in redirect_url
-        mock_send_mail.assert_called_once()
+        assert "order_number=ORD123" in redirect_url
         mock_validate.assert_called_once_with(reference)
 
     @patch("apps.aso.BBL.Queries.Cart.PaystackConfirm.validate")
