@@ -262,6 +262,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif choice == "proceed_payment" or choice.startswith("proceed_payment"):
         await handle_proceed_payment(query, user_id)
     
+    # Payment Gateway Selection Handlers
+    elif choice.startswith("select_payment_"):
+        await handle_proceed_payment(query, user_id)
+    
     elif choice == "search_products" or choice.startswith("search_products"):
         await handle_search_products(query, user_id)
         

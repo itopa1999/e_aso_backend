@@ -98,7 +98,7 @@ async def confirm_order_handler(query, user_id):
         html_text += f"• <b>Quantity:</b> {quantity}\n\n"
         html_text += "<i>Shipping info has been collected and applied.</i>"
 
-        # Confirm button
+        # Proceed to Payment button
         buttons = [[InlineKeyboardButton("✅ Proceed to Payment", callback_data="proceed_payment")]]
         reply_markup = InlineKeyboardMarkup(buttons)
 
@@ -118,45 +118,72 @@ async def handle_proceed_payment(query, user_id):
         await query.message.reply_text("❌ Shipping info not found. Please start again.")
         return
     
-    try:
-        resp = await sync_to_async(requests.post)(
-            f"{ASO_URL}/place-orders/",
-            headers=headers,
-            json={"shipping_info": shipping_info}
+    # If user clicked a payment gateway button, process it
+    callback_data = query.data
+    if callback_data.startswith("select_payment_"):
+        payment_gateway = callback_data.replace("select_payment_", "")
+        shipping_info["payment_type"] = payment_gateway
+        GlobalCache.set(shipping_key, shipping_info)
+        
+        # Send to backend for processing
+        try:
+            resp = await sync_to_async(requests.post)(
+                f"{ASO_URL}/place-orders/",
+                headers=headers,
+                json={"shipping_info": shipping_info}
+            )
+        except Exception:
+            await query.message.reply_text("❌ Server error. Try again later.")
+            return
+
+        # Handle expired token
+        if resp.status_code in [401, 403]:
+            await handle_auth_error(query, user_id)
+            return
+
+        if resp.status_code != 200:
+            await query.message.reply_text("❌ Failed to initialize order. Please try again.")
+            return
+
+        data = resp.json()
+        checkout_url = data.get("data", {}).get("checkout_url")
+
+        if not checkout_url:
+            await query.message.reply_text("❌ Payment initialization failed. Please try again.")
+            return
+
+        # Create payment button
+        keyboard = [
+            [InlineKeyboardButton("💳 Proceed to Payment", url=checkout_url)]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await query.message.reply_text(
+            f"✅ Order initialized successfully with {payment_gateway.upper()}!\n\n"
+            "Click the button below to complete your payment:",
+            reply_markup=reply_markup
         )
-    except Exception:
-        await query.message.reply_text("❌ Server error. Try again later.")
+
+        # Clear Redis keys
+        GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_login_stage, user_id=user_id), None)
+        GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_shipping_stage, user_id=user_id), None)
+        GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_shipping_info, user_id=user_id), None)
         return
-
-    # Handle expired token
-    if resp.status_code in [401, 403]:
-        await handle_auth_error(query, user_id)
-        return
-
-    if resp.status_code != 200:
-        await query.message.reply_text("❌ Failed to initialize order. Please try again.")
-        return
-
-    data = resp.json()
-    checkout_url = data.get("data", {}).get("checkout_url")
-
-    if not checkout_url:
-        await query.message.reply_text("❌ Payment initialization failed. Please try again.")
-        return
-
-    # Create payment button
-    keyboard = [
-        [InlineKeyboardButton("💳 Proceed to Payment", url=checkout_url)]
+    
+    # If proceed_payment button clicked, show payment gateway options
+    buttons = [
+        [InlineKeyboardButton("💳 Paystack", callback_data="select_payment_paystack")],
+        [InlineKeyboardButton("🌊 Flutterwave", callback_data="select_payment_flutterwave")],
+        [InlineKeyboardButton("💰 Monnify", callback_data="select_payment_monnify")]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup(buttons)
 
     await query.message.reply_text(
-        "✅ Order initialized successfully!\n\n"
-        "Click the button below to complete your payment:",
+        "🎯 <b>Select Payment Gateway:</b>\n\n"
+        "Choose your preferred payment method:\n\n"
+        "• <b>Paystack</b> - Fast & Secure\n"
+        "• <b>Flutterwave</b> - Multiple Options\n"
+        "• <b>Monnify</b> - Easy Payments",
+        parse_mode="HTML",
         reply_markup=reply_markup
     )
-
-    # Clear Redis keys
-    GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_login_stage, user_id=user_id), None)
-    GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_shipping_stage, user_id=user_id), None)
-    GlobalCache.set(CacheKeys.format(CacheKeys.telegram_user_shipping_info, user_id=user_id), None)
