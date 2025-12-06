@@ -43,7 +43,7 @@ def initiate(request, user, cart_id, data):
                 "name": f"{data.get('first_name', '')} {data.get('last_name', '')}"
             },
             "customizations": {
-                "title": "E-Sell Order Payment",
+                "title": "Esther's Fabrics Order Payment",
                 "description": f"Payment for order {ref}",
                 "logo": ""
             },

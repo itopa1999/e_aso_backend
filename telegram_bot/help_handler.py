@@ -56,7 +56,7 @@ async def handle_help(query):
 <b>❓ Need More Help?</b>
 If you have questions or issues, please contact our support team through the contact form on our website or send us an email.
 
-<b>📧 Support:</b> support@asooke.com
+<b>📧 Support:</b> support@esthersfabrics.com
 <b>🌐 Website:</b> www.asooke.com
 
 Type <code>/start</code> to return to the main menu.

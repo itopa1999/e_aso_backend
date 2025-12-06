@@ -42,7 +42,7 @@ def send_custom_email(
 
         Need help? Contact us:  
         📞 +234 1 700 0000  
-        ✉️ support@aso-okemarketplace.ng  
+        ✉️ support@esthersfabrics.com  
 
         Preserving Nigeria’s textile heritage,  
         The Aso Oke & Aso Ofi Marketplace Team

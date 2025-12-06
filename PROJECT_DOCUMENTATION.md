@@ -1,6 +1,6 @@
-# E-Sell Backend - Complete Project Documentation
+# Esther's Fabrics Backend - Complete Project Documentation
 
-**Project:** E-Sell Backend  
+**Project:** Esther's Fabrics Backend  
 **Repository:** e_aso_backend  
 **Owner:** itopa1999  
 **Branch:** main  
@@ -30,7 +30,7 @@
 
 ## 1. Project Overview
 
-E-Sell Backend is a Django-based e-commerce platform that provides a comprehensive API for managing products, orders, users, and administrative functions. The system is designed with scalability in mind, utilizing Celery for background tasks, Redis for caching, and PostgreSQL for data persistence.
+Esther's Fabrics Backend is a Django-based e-commerce platform that provides a comprehensive API for managing fabric products, orders, users, and administrative functions. The system is designed with scalability in mind, utilizing Celery for background tasks, Redis for caching, and PostgreSQL for data persistence.
 
 ### Key Features
 - Product catalog management with categories, colors, sizes
@@ -2137,7 +2137,7 @@ python manage.py collectstatic --noinput
 
 ## Conclusion
 
-This documentation provides a comprehensive overview of the E-Sell Backend project. For specific implementation details, refer to the source code or contact the development team.
+This documentation provides a comprehensive overview of the Esther's Fabrics Backend project. For specific implementation details, refer to the source code or contact the development team.
 
 **Remember to:**
 - Keep this documentation updated as the project evolves

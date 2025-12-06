@@ -50,7 +50,7 @@ def send_new_product_announcement():
             Be among the first to explore and order — these items are selling fast!  
 
             Thank you for being part of our community.  
-            We can't wait for you to experience what's new at Aso Oke & Aso Ofi.
+            We can't wait for you to experience what's new at Esther's Fabrics.
             """,
             greeting_name=user.first_name or "Valued Customer",
         )

@@ -41,7 +41,7 @@ def send_referral_program_announcement():
             subject="Refer & Earn: Get Discounts When Your Friends Shop!",
             recipient_email=user.email,
             message=f"""
-            Great news! Our Referral Program is now live on Aso Oke & Aso Ofi Marketplace.  
+            Great news! Our Referral Program is now live on Esther's Fabrics!  
 
             You can now earn exclusive shopping discounts when your friends use your referral code and complete their purchase.
 
@@ -67,7 +67,7 @@ def send_referral_program_announcement():
     message = f"""
     🎉 <b>Referral Program is LIVE!</b> 🎉
 
-    Hey shoppers! You can now <b>earn exclusive discounts</b> by inviting your friends to shop at Aso Oke & Aso Ofi Marketplace.  
+    Hey shoppers! You can now <b>earn exclusive discounts</b> by inviting your friends to shop at Esther's Fabrics!  
 
     How it works:  
     • 💬 Share your unique referral code with friends and family  

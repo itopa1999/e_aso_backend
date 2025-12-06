@@ -40,10 +40,10 @@ def send_feedback_email_announcement():
     count = 0
     for user in users:
         send_custom_email(
-            subject="Your Feedback Matters: Share Your Experience at Aso Oke & Aso Ofi",
+            subject="Your Feedback Matters: Share Your Experience at Esther's Fabrics",
             recipient_email=user.email,
             message=f"""
-We hope you've had a wonderful shopping experience with Aso Oke & Aso Ofi Marketplace!
+We hope you've had a wonderful shopping experience with Esther's Fabrics!
 
 Your feedback is invaluable in helping us maintain the highest quality of service and products. We'd love to hear about your recent purchase experience, including:
 
@@ -65,10 +65,10 @@ Simply log in to your account and visit our feedback section to share your thoug
 
 👉 Leave Your Feedback: {settings.BASE_URL}/feedback-page.html
 
-Thank you for choosing Aso Oke & Aso Ofi Marketplace. We truly value your business and your feedback!
+Thank you for choosing Esther's Fabrics. We truly value your business and your feedback!
 
 Warm regards,
-The Aso Oke & Aso Ofi Team
+The Esther's Fabrics Team
             """,
             greeting_name=user.first_name or "Valued Customer",
         )
@@ -82,7 +82,7 @@ The Aso Oke & Aso Ofi Team
 
 Dear Valued Customers,
 
-Your shopping experience matters to us! We'd love to hear your thoughts about your recent purchase at <b>Aso Oke & Aso Ofi Marketplace</b>.
+Your shopping experience matters to us! We'd love to hear your thoughts about your recent purchase at <b>Esther's Fabrics</b>.
 
 📝 <b>Share Your Experience:</b>
 • Rate the products you purchased (1-5 stars)
