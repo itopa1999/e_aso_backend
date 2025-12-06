@@ -3,7 +3,7 @@ async def handle_help(query):
     Handle help button press - provides comprehensive bot usage instructions.
     """
     help_text = """
-<b>🤖 Welcome to Aso Oke & Aso Ofi Marketplace Bot!</b>
+<b>🤖 Welcome to Esther's Fabrics Ofi Marketplace Bot!</b>
 
 <b>📖 How to Use This Bot:</b>
 

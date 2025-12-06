@@ -45,7 +45,7 @@ def send_custom_email(
         ✉️ support@esthersfabrics.com  
 
         Preserving Nigeria’s textile heritage,  
-        The Aso Oke & Aso Ofi Marketplace Team
+        The Esther's Fabrics Ofi Marketplace Team
         """)
 
     html_message = render_to_string('email_template.html', {

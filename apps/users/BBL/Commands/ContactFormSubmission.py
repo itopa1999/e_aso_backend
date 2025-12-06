@@ -20,7 +20,7 @@ class ContactFormSubmissionCommand:
             
             # Send confirmation email
             send_custom_email(
-                subject="We've Received Your Message - Aso Oke & Aso Ofi Marketplace",
+                subject="We've Received Your Message - Esther's Fabrics Ofi Marketplace",
                 recipient_email=contact_submission.email,
                 message=f"""
                 Thank you for reaching out to us!
@@ -35,7 +35,7 @@ class ContactFormSubmissionCommand:
 
                 If your matter is urgent, please feel free to reach out to us directly through our support channels.
 
-                We appreciate your interest in Aso Oke & Aso Ofi Marketplace and look forward to assisting you.
+                We appreciate your interest in Esther's Fabrics Ofi Marketplace and look forward to assisting you.
                 """,
                 greeting_name=contact_submission.full_name or "Valued Customer",
             )

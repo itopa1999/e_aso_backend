@@ -46,10 +46,10 @@ class SendMagicLinkCommand:
             )
             
             send_custom_email(
-                subject = "Verify Your Email - Aso Oke & Aso Ofi Marketplace",
+                subject = "Verify Your Email - Esther's Fabrics Ofi Marketplace",
                 recipient_email=user.email,
                 message=f"""
-                Welcome to Aso Oke & Aso Ofi Marketplace!
+                Welcome to Esther's Fabrics Ofi Marketplace!
 
                 Please verify your email by clicking the link below:
                 
@@ -100,7 +100,7 @@ class SendMagicLinkCommand:
             subject="Your Magic Login Link",
             recipient_email=email,
             message=f"""
-            Welcome back to Aso Oke & Aso Ofi Marketplace!
+            Welcome back to Esther's Fabrics Ofi Marketplace!
 
             Click below to log in instantly:
             {verification_link}

@@ -38,7 +38,7 @@ class ResendOtpCommand:
         verification.save()
         
         send_custom_email(
-            subject = "Action Verification Code - Aso Oke & Aso Ofi Marketplace",
+            subject = "Action Verification Code - Esther's Fabrics Ofi Marketplace",
             recipient_email=user.email,
             message=f"""
             A request was made to perform a sensitive action on your account.

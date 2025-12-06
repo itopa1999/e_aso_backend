@@ -91,7 +91,7 @@ class ResendVerificationEmailCommand:
             )
 
             send_custom_email(
-                subject="Verify Your Email - Aso Oke & Aso Ofi Marketplace",
+                subject="Verify Your Email - Esther's Fabrics Ofi Marketplace",
                 recipient_email=user.email,
                 message=f"""
                     Please verify your email address by clicking below:
