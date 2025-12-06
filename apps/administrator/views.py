@@ -19,13 +19,14 @@ from apps.administrator.BLL.Commands.ResendOtp import ResendOtpCommand
 from apps.administrator.BLL.Commands.Login import LoginCommand
 from apps.administrator.BLL.Commands.vierifyToken import AdminVerifyOtpCommand
 from apps.administrator.BLL.Commands.changePassword import ChangePasswordCommand
+from apps.administrator.BLL.Queries.UserAgentAnalysis import UserAgentAnalysisQuery
 from apps.administrator.models import CustomerFeedback
 from apps.aso.models import Product, Order
 from apps.users.models import ContactFormSubmission, Transaction, User
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsAdminPermission
-from .serializers import CustomerFeedbackSerializer, DashboardSerializer, FeatureFlagSerializer, LoginSerializer, ProductSerializer, AdminOrderDetailSerializer, ResendOtpSerializer, TelegramLoginSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer
+from .serializers import CustomerFeedbackSerializer, DashboardSerializer, FeatureFlagSerializer, LoginSerializer, ProductSerializer, AdminOrderDetailSerializer, ResendOtpSerializer, TelegramLoginSerializer, TransactionSerializer, UserOrderListSerializer, BulkUpdateBadgesSerializer, ProductImportSerializer, UserAgentAnalysisSerializer
 # Create your views here.
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -330,7 +331,7 @@ class LoginAPIView(generics.GenericAPIView):
         password = serializer.validated_data.get("password")
         token = serializer.validated_data.get("token")
 
-        result = LoginCommand.execute(token, email, password)
+        result = LoginCommand.execute(token, email, password, request=request)
 
         return Response(result.to_dict(), status=result.status_code)
 
@@ -351,6 +352,22 @@ class ResetPasswordAPIView(generics.GenericAPIView):
 
         result = ChangePasswordCommand.execute(token, email, mew_password)
 
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class UserAgentAnalysisView(generics.GenericAPIView):
+    """Analyze user agents - optionally filter by email"""
+    allow_any = [AllowAny]
+    authentication_classes = [OptionalJWTAuthentication] 
+    serializer_class = UserAgentAnalysisSerializer
+    
+    def get(self, request, *args, **kwargs):
+        """
+        Analyze user agents globally or by email filter
+        Query: ?email=user@example.com (optional)
+        """
+        email = request.query_params.get('email', None)
+        result = UserAgentAnalysisQuery.query(email, request=request)
         return Response(result.to_dict(), status=result.status_code)
 
 

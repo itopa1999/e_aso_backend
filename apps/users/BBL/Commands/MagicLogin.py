@@ -7,13 +7,14 @@ from utils.base_result import BaseResultWithData
 from apps.users.models import User
 from http import HTTPStatus
 from utils.log_helpers import OperationLogger
+from apps.users.user_agent_utils import save_user_agent
 
 from utils.magic_link import validate_magic_token
 
 
 class MagicLoginCommand:
     @staticmethod
-    def Execute(uidb64, token, url_email):
+    def Execute(uidb64, token, url_email, request=None):
         op = OperationLogger(
             "MagicLoginCommand",
             email=url_email
@@ -28,6 +29,15 @@ class MagicLoginCommand:
         if not email or email != user.email:
             op.fail(f"Invalid magic token for {url_email}")
             return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=true")
+
+        # Save user agent information if request is provided
+        if request:
+            try:
+                save_user_agent(user, request)
+                op.success(f"User agent saved for {url_email}")
+            except Exception as e:
+                op.fail(f"Failed to save user agent: {str(e)}")
+                # Don't fail login if user agent saving fails
 
         op.success(f"Magic login successful for user {user.id}")
         refresh = RefreshToken.for_user(user)

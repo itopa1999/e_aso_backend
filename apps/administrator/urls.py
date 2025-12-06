@@ -26,6 +26,7 @@ urlpatterns = [
                 path("change-password/", ResetPasswordAPIView.as_view()),
                 path("feature-flags/", FeatureFlagListView.as_view()),
                 path("contact-form-submissions/", ContactFormSubmissionListView.as_view()),
+                path("user-agent-analysis/", UserAgentAnalysisView.as_view()),
             ]
         )
     ),

@@ -138,6 +138,32 @@ class Transaction(BaseModel):
         return f"{self.user.email} - {self.transaction_type} - {self.amount}"
     
     
+class UserAgent(BaseModel):
+    """Store user agent information for tracking device and browser info"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_agents')
+    user_agent_string = models.TextField()
+    browser = models.CharField(max_length=100, null=True, blank=True)
+    browser_version = models.CharField(max_length=50, null=True, blank=True)
+    os = models.CharField(max_length=100, null=True, blank=True)
+    os_version = models.CharField(max_length=50, null=True, blank=True)
+    device = models.CharField(max_length=100, null=True, blank=True)
+    device_type = models.CharField(max_length=50, null=True, blank=True)  # mobile, tablet, desktop
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    last_seen = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    
+    class Meta:
+        ordering = ['-last_seen']
+        indexes = [
+            models.Index(fields=['user', '-last_seen']),
+            models.Index(fields=['ip_address']),
+        ]
+        unique_together = ('user', 'user_agent_string', 'ip_address')
+    
+    def __str__(self):
+        return f"{self.user.email} - {self.browser} on {self.os} ({self.device_type})"
+
+    
 class ContactFormSubmission(BaseModel):
     full_name = models.CharField(max_length=100)
     phone = models.CharField(max_length=15)

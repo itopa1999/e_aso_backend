@@ -519,3 +519,10 @@ class ContactFormSubmissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactFormSubmission
         fields = ['id', 'full_name', 'phone', 'email', 'subject', 'message', 'status', 'created_at']
+
+
+class UserAgentAnalysisSerializer(serializers.Serializer):
+    email = serializers.EmailField(required=True)
+    
+    class Meta:
+        fields = ['email']

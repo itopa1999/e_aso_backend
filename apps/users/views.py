@@ -67,7 +67,7 @@ class SendMagicLinkView(generics.GenericAPIView):
 class MagicLoginView(APIView):
     
     def get(self, request, uidb64, token, url_email):
-        return MagicLoginCommand.Execute(uidb64, token, url_email)
+        return MagicLoginCommand.Execute(uidb64, token, url_email, request=request)
     
     
 

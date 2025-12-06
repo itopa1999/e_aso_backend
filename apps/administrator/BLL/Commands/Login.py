@@ -6,12 +6,14 @@ from utils.base_result import BaseResultWithData
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from utils.log_helpers import OperationLogger
+from apps.users.user_agent_utils import save_user_agent
+
 
 class LoginCommand:
     """Handles user login process"""
 
     @staticmethod
-    def execute(token, email, password):
+    def execute(token, email, password, request=None):
         op = OperationLogger(
             "AdminLoginCommand",
             email=email
@@ -48,6 +50,15 @@ class LoginCommand:
                 status_code=HTTPStatus.FORBIDDEN,
                 message="User account is inactive."
             )
+
+        # Save user agent information if request is provided
+        if request:
+            try:
+                save_user_agent(user, request)
+                op.success(f"User agent saved for {email}")
+            except Exception as e:
+                op.fail(f"Failed to save user agent: {str(e)}")
+                # Don't fail login if user agent saving fails
 
         # Generate tokens
         refresh = RefreshToken.for_user(user)
