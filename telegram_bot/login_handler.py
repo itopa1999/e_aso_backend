@@ -1,11 +1,15 @@
 import requests
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
+from telegram_bot.back_to_menu import handle_back_to_menu
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from django.core.cache import cache
 from .config import ADMIN_URL
 from asgiref.sync import sync_to_async  
+
+
+
 
 async def handle_login(query, user_id):
     """
@@ -42,7 +46,7 @@ async def handle_email_input(update: Update, user_id: int, email: str):
         )
 
 
-async def handle_code_input(update: Update, user_id: int, code: str):
+async def handle_code_input(update: Update, user_id: int, code: str, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle verification code input during login flow.
     """
@@ -65,5 +69,9 @@ async def handle_code_input(update: Update, user_id: int, code: str):
         GlobalCache.delete(stage_key)
         
         await update.message.reply_text("✅ Login successful!")
+        
+        from .handlers import start
+        await start(update, context)
+        
     else:
         await update.message.reply_text("❌ Invalid code. Please try again.")

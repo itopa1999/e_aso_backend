@@ -16,6 +16,14 @@ from .item_order_handler import confirm_order_handler, handle_proceed_payment, i
 from .contact_handler import handle_contact_request, handle_contact_input, handle_submit_contact, handle_cancel_contact
 from .channel_handler import handle_new_channel_member
 from .search_handler import handle_search_products, handle_search_input
+from .notification_handler import (
+    handle_notification_subscription,
+    handle_warn_subscribe,
+    handle_warn_unsubscribe,
+    handle_confirm_subscribe,
+    handle_confirm_unsubscribe,
+)
+from .back_to_menu import handle_back_to_menu
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -27,6 +35,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📂 List Categories", callback_data="list_categories")],
         [InlineKeyboardButton("🔍 Search Products", callback_data="search_products")],
         [InlineKeyboardButton("📦 My Orders", callback_data="list_orders")],
+        [InlineKeyboardButton("🔔 Notifications", callback_data="notification_subscription")],
         [InlineKeyboardButton("📝 Contact / Special Request", callback_data="contact_request")],
         [InlineKeyboardButton("ℹ️ Help", callback_data="help")],
         [InlineKeyboardButton("🔐 Login", callback_data="login")]
@@ -286,6 +295,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     elif choice == "cancel_contact":
         await handle_cancel_contact(query, user_id)
+
+    # Notification Handlers
+    elif choice == "notification_subscription":
+        await handle_notification_subscription(query, user_id)
+    elif choice == "warn_sub_notification":
+        await handle_warn_subscribe(query, user_id)
+    elif choice == "warn_unsub_notification":
+        await handle_warn_unsubscribe(query, user_id)
+    elif choice == "confirm_sub_notification":
+        await handle_confirm_subscribe(query, user_id)
+    elif choice == "confirm_unsub_notification":
+        await handle_confirm_unsubscribe(query, user_id)
+    elif choice == "notification_subscription_cancel":
+        await start(update, context)
+    
+    # Back to menu handler
+    elif choice == "back_to_menu":
+        await start(update, context)
 
     # Help Handler
     elif choice == "help":
