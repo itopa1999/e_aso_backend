@@ -5,16 +5,16 @@ from .config import ASO_URL
 from .utils import check_authentication, handle_auth_error
 from asgiref.sync import sync_to_async
 
-async def handle_list_orders(query, user_id):
+async def handle_list_orders(query, user_id, page="1"):
     """
-    Handle list orders button press.
+    Handle list orders button press with pagination (20 orders per page).
     """
     token, headers = await check_authentication(query, user_id)
     if not token:
         return
     
     try:
-        resp = await sync_to_async(requests.get)(f"{ASO_URL}/lists/", headers=headers)
+        resp = await sync_to_async(requests.get)(f"{ASO_URL}/lists/", params={"page": page}, headers=headers)
     except Exception as e:
         await query.message.reply_text("❌ Server error. Try again later.")
         return
@@ -29,10 +29,14 @@ async def handle_list_orders(query, user_id):
         return
     
     data = resp.json()
-    orders = data.get("data", [])
-
+    # Handle both paginated response and simple data response
+    orders = data.get("results") or data.get("data", [])
+    
     if not orders:
-        await query.message.reply_text("📭 You have no orders yet.")
+        if page == "1":
+            await query.message.reply_text("📭 You have no orders yet.")
+        else:
+            await query.message.reply_text("📭 No more orders.")
         return
 
     # Send each order separately with a button
@@ -71,6 +75,18 @@ async def handle_list_orders(query, user_id):
         ])
 
         await query.message.reply_text(text, parse_mode="HTML", reply_markup=keyboard)
+    
+    # Pagination buttons
+    pagination_buttons = []
+    if data.get("previous"):
+        prev_page = data["previous"].split("page=")[-1]
+        pagination_buttons.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"list_orders_{prev_page}"))
+    if data.get("next"):
+        next_page = data["next"].split("page=")[-1]
+        pagination_buttons.append(InlineKeyboardButton("➡️ Next", callback_data=f"list_orders_{next_page}"))
+    
+    if pagination_buttons:
+        await query.message.reply_text("Navigate pages:", reply_markup=InlineKeyboardMarkup([pagination_buttons]))
 
 
 async def handle_order_details(query, user_id, order_id):

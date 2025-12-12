@@ -9,12 +9,12 @@ class UserAdmin(admin.ModelAdmin):
     """Custom admin for User with admin.ModelAdmin integration."""
     list_display = (
         "email", "full_name_display", "phone", "rider_number", 
-        "status_display", "referral_status_display", "created_at"
+        "status_display", "referral_status_display", "telegram_notification_status", "created_at"
     )
     list_display_links = ("email", "full_name_display")
-    search_fields = ("email", "first_name", "last_name", "phone", "rider_number", "referral_code")
-    list_filter = ("is_active", "is_staff", "is_superuser", "is_referral_qualified", "referral_used", "created_at", "groups")
-    readonly_fields = ("referral_code", "is_referral_qualified", "date_joined", "last_login", "created_at", "modified_at")
+    search_fields = ("email", "first_name", "last_name", "phone", "rider_number", "referral_code", "telegram_user_id", "telegram_user_chat_id")
+    list_filter = ("is_active", "is_staff", "is_superuser", "is_referral_qualified", "referral_used", "telegram_notifications_enabled", "created_at", "groups")
+    readonly_fields = ("referral_code", "is_referral_qualified", "telegram_user_id", "date_joined", "last_login", "created_at", "modified_at")
     filter_horizontal = ("groups", "user_permissions")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
@@ -36,6 +36,13 @@ class UserAdmin(admin.ModelAdmin):
                 "is_referral_qualified",
                 "referral_used",
                 "referral_used_purchase",
+            ),
+        }),
+        ("Telegram Notifications", {
+            "fields": (
+                "telegram_user_id",
+                "telegram_user_chat_id",
+                "telegram_notifications_enabled",
             ),
         }),
         ("Permissions & Access", {
@@ -74,6 +81,12 @@ class UserAdmin(admin.ModelAdmin):
             return format_html('<span style="color: green;">✓</span> Qualified')
         return format_html('<span style="color: gray;">✗</span> Not Qualified')
     referral_status_display.short_description = "Referral Status"
+
+    def telegram_notification_status(self, obj):
+        if obj.telegram_notifications_enabled:
+            return format_html('<span style="color: green;">✓</span> Enabled')
+        return format_html('<span style="color: gray;">✗</span> Disabled')
+    telegram_notification_status.short_description = "Telegram Notifications"
 
 
 @admin.register(UserVerification)

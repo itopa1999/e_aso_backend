@@ -29,6 +29,7 @@ from .back_to_menu import handle_back_to_menu
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle /start command - shows main menu.
+    Handles both message and callback query contexts.
     """
     keyboard = [
         [InlineKeyboardButton("🛍️ List Products", callback_data="list_products_1")],
@@ -41,11 +42,20 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🔐 Login", callback_data="login")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    await update.message.reply_text(
-        "👋 <b>Welcome!</b>\nPlease select an option:",
-        reply_markup=reply_markup,
-        parse_mode="HTML"
-    )
+    
+    # Handle both message and callback query contexts
+    if update.callback_query:
+        await update.callback_query.message.reply_text(
+            "👋 <b>Welcome!</b>\nPlease select an option:",
+            reply_markup=reply_markup,
+            parse_mode="HTML"
+        )
+    else:
+        await update.message.reply_text(
+            "👋 <b>Welcome!</b>\nPlease select an option:",
+            reply_markup=reply_markup,
+            parse_mode="HTML"
+        )
 
 
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -67,7 +77,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if stage == "awaiting_email":
             await handle_email_input(update, user_id, text)
         else:
-            await handle_code_input(update, user_id, text)
+            await handle_code_input(update, user_id, text, context)
         return
 
     # Check shipping stage
@@ -249,6 +259,10 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Orders Handlers
     elif choice == "list_orders":
         await handle_list_orders(query, user_id)
+    
+    elif choice.startswith("list_orders_"):
+        page = choice.split("_")[2]
+        await handle_list_orders(query, user_id, page)
 
     elif choice.startswith("order_details"):
         order_id = choice.split("_")[2]

@@ -320,7 +320,6 @@ class Order(BaseModel):
     delivery_date = models.DateField(null=True, blank=True)
     
     estimated_delivery_date = models.DateField(null=True, blank=True)
-    telegram_user_chat_id = models.CharField(max_length=100, null=True, blank=True)
 
     
     def save(self, *args, **kwargs):

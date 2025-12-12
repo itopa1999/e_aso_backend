@@ -9,7 +9,7 @@ from apps.users.BBL.Commands.MagicLogin import MagicLoginCommand
 from apps.users.BBL.Commands.UpdateUser import UpdateUserCommand
 from apps.users.BBL.Commands.VerifyEmail import VerifyEmailCommand
 from apps.users.BBL.Commands.ValidateReferralCode import ValidateReferralCodeCommand
-
+from apps.users.BBL.Commands.ManageTelegramNotification import ManageTelegramNotificationCommand
 from apps.users.BBL.Commands.ResendVerificationEmail import ResendVerificationEmailCommand
 from apps.users.BBL.Commands.SendMagicLink import SendMagicLinkCommand
 from apps.users.BBL.Queries.GetUserProfile import GetUserProfileSummaryQuery
@@ -105,4 +105,22 @@ class ContactFormSubmissionView(generics.GenericAPIView):
     
     def post(self, request, *args, **kwargs):
         result = ContactFormSubmissionCommand.execute(request.data)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class TelegramNotificationView(generics.GenericAPIView):
+    """
+    Manage Telegram notifications for authenticated users.
+    
+    POST /user/telegram-notification/
+    {
+        "action": "activate" or "deactivate",
+        "telegram_user_id": 123456789  (optional, for activate)
+    }
+    """
+    serializer_class = TelegramNotificationSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, *args, **kwargs):
+        result = ManageTelegramNotificationCommand.Execute(request.user, request.data)
         return Response(result.to_dict(), status=result.status_code)

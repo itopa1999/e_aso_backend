@@ -72,10 +72,10 @@ def send_tracking_update_email(sender, instance, created, **kwargs):
         )
 
         # --- Send Telegram Notification ---
-        if order.telegram_user_chat_id:
+        if user.telegram_notifications_enabled and user.telegram_user_chat_id:
             send_notification(
                 message=telegram_message,
-                chat_id=order.telegram_user_chat_id
+                chat_id=user.telegram_user_chat_id
             )
                 
 @receiver(pre_save, sender=OrderTracking)

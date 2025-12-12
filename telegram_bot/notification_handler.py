@@ -1,15 +1,16 @@
 """
 Telegram notification subscription handler.
 Manages user subscriptions for notifications via Telegram.
-Uses existing telegram_user_chat_id field in User model.
+Uses telegram_user_chat_id and telegram_notifications_enabled fields in User model.
 """
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 from telegram_bot.utils import check_authentication
-from utils.cache_manager import GlobalCache
-from utils.enum import CacheKeys
 from apps.users.models import User
+from asgiref.sync import sync_to_async
+import requests
+from .config import USER_URL
 
 
 async def handle_notification_subscription(query, user_id: int):
@@ -85,41 +86,65 @@ async def handle_warn_unsubscribe(query, user_id: int):
 async def handle_confirm_subscribe(query, user_id: int):
     """
     Confirm and process subscription to notifications.
+    Calls the telegram notification API endpoint.
     """
     try:
-        # Get or create user
-        user, created = User.objects.get_or_create(
-            telegram_id=user_id,
-            defaults={
-                'email': f'telegram_{user_id}@example.com',
-                'first_name': f'Telegram User',
-                'last_name': f'{user_id}'
-            }
+        # Get token from cache to authenticate the request
+        token, headers = await check_authentication(query, user_id)
+        if not token:
+            await query.answer()
+            await query.message.reply_text(
+                text="❌ <b>Error</b>\n\nYou must be logged in to enable notifications.",
+                parse_mode="HTML"
+            )
+            return
+        
+        # Call the telegram notification endpoint
+        response = await sync_to_async(requests.post)(
+            f"{USER_URL}/telegram-notification/",
+            json={
+                "action": "activate",
+                "telegram_user_id": user_id
+            },
+            headers=headers
         )
         
-        # Store telegram chat ID if not already stored
-        if not user.telegram_user_chat_id:
-            user.telegram_user_chat_id = str(user_id)
-            user.save(update_fields=['telegram_user_chat_id'])
-        
-        # Mark subscription in cache
-        sub_key = CacheKeys.format(CacheKeys.telegram_user_subscription, user_id=user_id, notif_type='all')
-        GlobalCache.set(sub_key, True, timeout=60*60*24*30)  # 30 days
-        
-        keyboard = [
-            [InlineKeyboardButton("🔔 Back to Notifications", callback_data="notification_subscription")],
-            [InlineKeyboardButton("🏠 Back to Menu", callback_data="back_to_menu")]
-        ]
-        
-        await query.answer()
-        await query.message.reply_text(
-            text="<b>✅ Success!</b>\n\n"
-                 "Notifications have been <b>ENABLED</b>.\n\n"
-                 f"<b>Your Chat ID:</b> <code>{user.telegram_user_chat_id}</code>\n\n"
-                 "You will now receive all notifications.",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="HTML"
-        )
+        if response.status_code == 200:
+            try:
+                result = response.json()
+                data = result.get('data', {})
+                
+                keyboard = [
+                    [InlineKeyboardButton("🔔 Back to Notifications", callback_data="notification_subscription")],
+                    [InlineKeyboardButton("🏠 Back to Menu", callback_data="back_to_menu")]
+                ]
+                
+                await query.answer()
+                await query.message.reply_text(
+                    text="<b>✅ Success!</b>\n\n"
+                         "Notifications have been <b>ENABLED</b>.\n\n"
+                         f"<b>Your Chat ID:</b> <code>{data.get('telegram_user_chat_id')}</code>\n\n"
+                         "You will now receive all notifications.",
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="HTML"
+                )
+            except Exception as json_error:
+                await query.answer()
+                await query.message.reply_text(
+                    text=f"❌ <b>Error</b>\n\nFailed to parse response: {str(json_error)}",
+                    parse_mode="HTML"
+                )
+        else:
+            try:
+                error_msg = response.json().get('message', 'Failed to enable notifications')
+            except:
+                error_msg = f"Server error: {response.status_code} - {response.text[:100] if response.text else 'No response'}"
+            
+            await query.answer()
+            await query.message.reply_text(
+                text=f"❌ <b>Error</b>\n\n{error_msg}",
+                parse_mode="HTML"
+            )
         
     except Exception as e:
         await query.answer()
@@ -132,25 +157,61 @@ async def handle_confirm_subscribe(query, user_id: int):
 async def handle_confirm_unsubscribe(query, user_id: int):
     """
     Confirm and process unsubscription from notifications.
+    Calls the telegram notification API endpoint.
     """
     try:
-        # Mark unsubscription in cache
-        sub_key = CacheKeys.format(CacheKeys.telegram_user_subscription, user_id=user_id, notif_type='all')
-        GlobalCache.set(sub_key, False, timeout=60*60*24*30)  # 30 days
+        # Get token from cache to authenticate the request
+        token, headers = await check_authentication(query, user_id)
+        if not token:
+            await query.answer()
+            await query.message.reply_text(
+                text="❌ <b>Error</b>\n\nYou must be logged in to disable notifications.",
+                parse_mode="HTML"
+            )
+            return
         
-        keyboard = [
-            [InlineKeyboardButton("🔔 Back to Notifications", callback_data="notification_subscription")],
-            [InlineKeyboardButton("🏠 Back to Menu", callback_data="back_to_menu")]
-        ]
-        
-        await query.answer()
-        await query.message.reply_text(
-            text="<b>✅ Success!</b>\n\n"
-                 "Notifications have been <b>DISABLED</b>.\n\n"
-                 "You will no longer receive any notifications.",
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            parse_mode="HTML"
+        # Call the telegram notification endpoint
+        response = await sync_to_async(requests.post)(
+            f"{USER_URL}/telegram-notification/",
+            json={
+                "action": "deactivate"
+            },
+            headers=headers,
+            timeout=10
         )
+        
+        if response.status_code == 200:
+            try:
+                keyboard = [
+                    [InlineKeyboardButton("🔔 Back to Notifications", callback_data="notification_subscription")],
+                    [InlineKeyboardButton("🏠 Back to Menu", callback_data="back_to_menu")]
+                ]
+                
+                await query.answer()
+                await query.message.reply_text(
+                    text="<b>✅ Success!</b>\n\n"
+                         "Notifications have been <b>DISABLED</b>.\n\n"
+                         "You will no longer receive any notifications.",
+                    reply_markup=InlineKeyboardMarkup(keyboard),
+                    parse_mode="HTML"
+                )
+            except Exception as json_error:
+                await query.answer()
+                await query.message.reply_text(
+                    text=f"❌ <b>Error</b>\n\nFailed to process response: {str(json_error)}",
+                    parse_mode="HTML"
+                )
+        else:
+            try:
+                error_msg = response.json().get('message', 'Failed to disable notifications')
+            except:
+                error_msg = f"Server error: {response.status_code} - {response.text[:100] if response.text else 'No response'}"
+            
+            await query.answer()
+            await query.message.reply_text(
+                text=f"❌ <b>Error</b>\n\n{error_msg}",
+                parse_mode="HTML"
+            )
         
     except Exception as e:
         await query.answer()

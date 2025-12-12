@@ -14,6 +14,7 @@ urlpatterns = [
                 path('verify/email/<uidb64>/<token>/<url_email>/', VerifyEmailView.as_view(), name='verify-email'),
                 path("referral/validate/<str:referral_code>/", ValidateReferralCodeView.as_view()),
                 path("contact/submit/", ContactFormSubmissionView.as_view()),
+                path("telegram-notification/", TelegramNotificationView.as_view()),
             ]
         )
     ),

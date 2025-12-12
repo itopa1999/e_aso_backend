@@ -75,3 +75,11 @@ class ContactFormSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactFormSubmission
         fields = ['full_name', 'phone', 'email', 'subject', 'message']
+
+
+class TelegramNotificationSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=['activate', 'deactivate'], required=True)
+    telegram_user_id = serializers.IntegerField(required=False, allow_null=True)
+    
+    class Meta:
+        fields = ['action', 'telegram_user_id']

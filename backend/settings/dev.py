@@ -32,7 +32,7 @@ EMAIL_FROM = os.environ.get("EMAIL_FROM")
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5501",
-    "http://192.168.0.198:5501"
+    "http://192.168.0.200:5501"
     ]
 
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN")

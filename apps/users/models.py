@@ -40,6 +40,11 @@ class User(BaseModel, AbstractUser):
     referral_used = models.BooleanField(default=False)
     referral_used_purchase = models.BooleanField(default=False)
     
+    # Telegram notification fields
+    telegram_user_id = models.BigIntegerField(null=True, blank=True, unique=True, db_index=True)
+    telegram_user_chat_id = models.CharField(max_length=100, null=True, blank=True)
+    telegram_notifications_enabled = models.BooleanField(default=False)
+    
     def save(self, *args, **kwargs):
         self.first_name = self.first_name.capitalize()
         self.last_name = self.last_name.capitalize()
