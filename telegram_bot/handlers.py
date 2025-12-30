@@ -11,7 +11,7 @@ from .login_handler import handle_login, handle_email_input, handle_code_input
 from .products_handler import handle_list_products, handle_product_details
 from .categories_handler import handle_list_categories, handle_category_products
 from .orders_handler import handle_list_orders, handle_order_details
-from .help_handler import handle_help
+from .help_handler import handle_help, send_help_section
 from .item_order_handler import confirm_order_handler, handle_proceed_payment, item_order_handler
 from .contact_handler import handle_contact_request, handle_contact_input, handle_submit_contact, handle_cancel_contact
 from .channel_handler import handle_new_channel_member
@@ -34,7 +34,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = [
         [InlineKeyboardButton("🛍️ List Products", callback_data="list_products_1")],
         [InlineKeyboardButton("📂 List Categories", callback_data="list_categories")],
-        [InlineKeyboardButton("🔍 Search Products", callback_data="search_products")],
+        # [InlineKeyboardButton("🔍 Search Products", callback_data="search_products")],
         [InlineKeyboardButton("📦 My Orders", callback_data="list_orders")],
         [InlineKeyboardButton("🔔 Notifications", callback_data="notification_subscription")],
         [InlineKeyboardButton("📝 Contact / Special Request", callback_data="contact_request")],
@@ -331,3 +331,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Help Handler
     elif choice == "help":
         await handle_help(query)
+    
+    elif choice.startswith("help_"):
+        section = choice
+        await send_help_section(query, section)

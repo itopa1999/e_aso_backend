@@ -36,6 +36,10 @@ urlpatterns = [
                     "smart-search/<str:query>/",
                     SmartSearchProductsView.as_view()
                 ),
+                path("recent-searches/", RecentSearchListView.as_view(), name='recent-searches-list'),
+                path("recent-searches/add/", AddRecentSearchView.as_view(), name='add-recent-search'),
+                path("recent-searches/<int:search_id>/", DeleteRecentSearchView.as_view(), name='delete-recent-search'),
+                path("recent-searches/delete-all/", DeleteAllRecentSearchesView.as_view(), name='delete-all-recent-searches'),
             ]
         )
     ),                

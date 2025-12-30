@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from .models import (
     Cart, CartItem, FeatureFlag, Order, OrderFeedBack, OrderItem, OrderReturn, 
     OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, 
-    ProductDetail, ProductImage, LookUp, ShippingAddress, WatchList
+    ProductDetail, ProductImage, LookUp, ShippingAddress, WatchList, RecentSearch
 )
 
 
@@ -12,68 +12,77 @@ from .models import (
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
     extra = 1
+    readonly_fields = ("product",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class ProductSizeInline(admin.TabularInline):
     model = ProductSize
     extra = 1
+    readonly_fields = ("product",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class ProductDetailInline(admin.StackedInline):
     model = ProductDetail
     extra = 1
+    readonly_fields = ("product",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
     extra = 1
+    readonly_fields = ("product",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class CartItemInline(admin.TabularInline):
     model = CartItem
     extra = 1
-    readonly_fields = ("product", "quantity", "desc")
+    readonly_fields = ("cart", "product", "quantity", "desc")
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ("product", "quantity", "price", "desc")
+    readonly_fields = ("order", "product", "quantity", "price", "desc")
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class TrackingInline(admin.TabularInline):
     model = OrderTracking
     extra = 1
+    readonly_fields = ("order",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class ShippingAddressItemInline(admin.StackedInline):
     model = ShippingAddress
     extra = 0
+    readonly_fields = ("order",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class PaymentDetailInline(admin.TabularInline):
     model = PaymentDetail
     extra = 0
+    readonly_fields = ("order",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class OrderFeedBackInline(admin.TabularInline):
     model = OrderFeedBack
     extra = 0
+    readonly_fields = ("order",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
 class OrderReturnInline(admin.StackedInline):
     model = OrderReturn
     extra = 0
+    readonly_fields = ("order",)
     exclude = ("created_at", "created_by", "modified_by", "is_deleted", "deleted_at", "deleted_by")
 
 
@@ -174,15 +183,15 @@ class OrderAdmin(admin.ModelAdmin):
     list_display_links = ("order_number", "user")
     search_fields = ("order_number", "tracking_number", "user__email", "user__first_name", "user__last_name")
     list_filter = ("carrier", "created_at", "estimated_delivery_date")
-    readonly_fields = ("order_number", "tracking_number", "subtotal", "shipping_fee", "discount", "total", "estimated_delivery_date", "created_at", "modified_at")
+    readonly_fields = ("order_number", "tracking_number", "subtotal", "shipping_fee", "discount", "total", "estimated_delivery_date", "user", "created_at", "modified_at")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
     list_per_page = 50
-    autocomplete_fields = ["user", "dispatcher"]
+    autocomplete_fields = ["dispatcher"]
 
     fieldsets = (
         ("Order Information", {
-            "fields": ("order_number", "user", "tracking_number", "carrier", "telegram_user_chat_id")
+            "fields": ("order_number", "tracking_number", "carrier", "user")
         }),
         ("Financial Summary", {
             "fields": ("subtotal", "shipping_fee", "discount", "total")
@@ -242,6 +251,33 @@ class WatchListAdmin(admin.ModelAdmin):
             "classes": ("collapse",)
         }),
     )
+
+
+@admin.register(RecentSearch)
+class RecentSearchAdmin(admin.ModelAdmin):
+    list_display = ("user", "product", "created_at")
+    list_display_links = ("user", "product")
+    search_fields = ("user__email", "user__first_name", "product__title")
+    list_filter = ("created_at",)
+    readonly_fields = ("created_at", "modified_at", "user")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Recent Search Information", {
+            "fields": ("product", "user")
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        if not change:  # Only set user on creation, not on update
+            obj.user = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(LookUp)

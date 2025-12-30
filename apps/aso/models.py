@@ -218,7 +218,7 @@ class ProductImage(BaseModel):
     
 class WatchList(BaseModel):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='watchlist_product')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlist_user')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='watchlist_user', editable=False)
         
     class Meta:
         unique_together = ('user', 'product')
@@ -233,7 +233,7 @@ class WatchList(BaseModel):
 User = get_user_model()
 
 class Cart(BaseModel):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart', editable=False)
     state = models.CharField(max_length=100, blank=True, null=True)
     
     _cached_flags = None
@@ -303,7 +303,7 @@ class CartItem(BaseModel):
         
 
 class Order(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders', editable=False)
     order_number = models.CharField(max_length=20, unique=True, db_index=True, null=True, blank=True, editable=False)
 
     other_info = models.TextField(null=True, blank=True)
@@ -379,7 +379,7 @@ class OrderItem(BaseModel):
 
 
 class ShippingAddress(BaseModel):
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='shipping_address')
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='shipping_address', editable=False)
 
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
@@ -398,7 +398,7 @@ class ShippingAddress(BaseModel):
 
 
 class PaymentDetail(BaseModel):
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment_detail')
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment_detail', editable=False)
     method = models.CharField(max_length=50)  # e.g. 'Mastercard', 'Bank Transfer'
     amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
@@ -418,7 +418,7 @@ class OrderTracking(BaseModel):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
     ]
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='tracking_events')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='tracking_events', editable=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='placed')
     date = models.DateTimeField()
     description = models.TextField()
@@ -435,7 +435,7 @@ class OrderTracking(BaseModel):
     
     
 class OrderFeedBack(BaseModel):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='feedback')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='feedback', editable=False)
     stars = models.PositiveSmallIntegerField()
     comment = models.TextField(blank=True, null=True)
     
@@ -448,7 +448,7 @@ class OrderFeedBack(BaseModel):
     
     
 class OrderReturn(BaseModel):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='return_product')
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='return_product', editable=False)
     reason = models.CharField(max_length=500)
     message = models.TextField(max_length=1000)
     
@@ -457,6 +457,21 @@ class OrderReturn(BaseModel):
 
     def __str__(self):
         return f"return request for Order {self.order.order_number}"
+
+
+class RecentSearch(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='recent_searches', editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='recent_searches')
+    
+    class Meta:
+        ordering = ['-created_at']
+        unique_together = ('user', 'product')
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.user.first_name} - {self.product.title}"
 
 
 class FeatureFlag(BaseModel):

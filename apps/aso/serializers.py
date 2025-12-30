@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Cart, CartItem, LookUp, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress, WatchList
+from .models import Cart, CartItem, LookUp, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress, WatchList, RecentSearch
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title')
@@ -363,4 +363,34 @@ class ProductDetailFullSerializer(serializers.ModelSerializer):
         return False
 
 
+class RecentSearchSerializer(serializers.ModelSerializer):
+    product = WatchlistProductSerializer(read_only=True)
+    product_id = serializers.IntegerField(write_only=True)
     
+    class Meta:
+        model = RecentSearch
+        fields = ['id', 'product', 'product_id', 'created_at']
+        read_only_fields = ['id', 'created_at']
+    
+    def create(self, validated_data):
+        product_id = validated_data.pop('product_id')
+        product = Product.objects.get(id=product_id)
+        return RecentSearch.objects.create(product=product, **validated_data)
+
+
+class SimpleRecentSearchSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(source='product.title', read_only=True)
+    description = serializers.CharField(source='product.short_description', read_only=True)
+    product_id = serializers.IntegerField(source='product.id', read_only=True)
+    image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = RecentSearch
+        fields = ['id', 'title', 'product_id', 'description', 'image', 'created_at']
+        read_only_fields = ['id', 'created_at']
+    
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.product.main_image and hasattr(obj.product.main_image, 'url'):
+            return request.build_absolute_uri(obj.product.main_image.url) if request else obj.product.main_image.url
+        return None

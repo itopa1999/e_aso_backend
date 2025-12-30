@@ -16,6 +16,8 @@ from apps.aso.BBL.Commands.Watchlist.RemoveAllWatchlist import RemoveAllWatchlis
 from apps.aso.BBL.Commands.Cart.ReorderItems import ReorderItemsCommand
 from apps.aso.BBL.Commands.Watchlist.ToggleWatchlist import ToggleWatchlistCommand
 from apps.aso.BBL.Commands.Cart.PlaceOrder import PlaceOrderCommand
+from apps.aso.BBL.Commands.RecentSearch.AddRecentSearch import AddRecentSearchCommand
+from apps.aso.BBL.Commands.RecentSearch.DeleteRecentSearch import DeleteRecentSearchCommand, DeleteAllRecentSearchesCommand
 from apps.aso.BBL.Queries.Cart.GetCartDetails import GetCartDetailQuery
 from apps.aso.BBL.Queries.Cart.PaystackConfirm import PaystackConfirmQuery
 from apps.aso.BBL.Queries.Cart.FlutterConfirm import FlutterwaveConfirmQuery
@@ -29,6 +31,7 @@ from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProd
 from apps.aso.BBL.Queries.Order.OrderDetails import OrderDetailQuery
 from apps.aso.BBL.Queries.Order.UserOrderList import UserOrderListQuery
 from apps.aso.BBL.Queries.Product.ProductList import ProductListQuery
+from apps.aso.BBL.Queries.RecentSearch.GetRecentSearches import GetRecentSearchesQuery
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsCustomerPermission
@@ -279,7 +282,7 @@ class ProductListView(generics.ListAPIView):
         if cached_data:
             queryset = cached_data
         else:
-            queryset = Product.objects.filter(display_product = True, is_deleted = False)
+            queryset = Product.objects.filter(display_product = True, is_deleted = False).distinct()
             GlobalCache.set(cache_key, queryset)
             
         result = ProductListQuery.query(self.request.query_params, queryset)
@@ -366,5 +369,44 @@ class SmartSearchProductsView(APIView):
     def get(self, request, query, *args, **kwargs):
         result = ProductListQuery.smart_search(query)
         return Response(result.to_dict(), status=result.status_code)
+
+
+class AddRecentSearchView(APIView):
+    """Add a new recent search"""
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
+
+    def post(self, request):
+        product_id = request.data.get("product_id")
+        result = AddRecentSearchCommand.execute(request.user, product_id)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class RecentSearchListView(generics.ListAPIView):
+    """Get all recent searches for the authenticated user"""
+    authentication_classes = [OptionalJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        result = GetRecentSearchesQuery.query(request.user, request)
+        return Response(result.data, status=result.status_code)
+
+
+class DeleteRecentSearchView(APIView):
+    """Delete a specific recent search by id"""
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
+
+    def delete(self, request, search_id):
+        result = DeleteRecentSearchCommand.execute(request.user, search_id)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class DeleteAllRecentSearchesView(APIView):
+    """Delete all recent searches for the authenticated user"""
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
+
+    def delete(self, request):
+        result = DeleteAllRecentSearchesCommand.execute(request.user)
+        return Response(result.to_dict(), status=result.status_code)
+
     
     
