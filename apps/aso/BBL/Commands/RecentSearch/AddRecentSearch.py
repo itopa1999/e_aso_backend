@@ -27,10 +27,28 @@ class AddRecentSearchCommand:
             )
         
         try:
-            recent_search, created = RecentSearch.objects.get_or_create(
+            # Check if record exists (including soft-deleted ones)
+            recent_search = RecentSearch.objects.filter(
                 user=user,
                 product=product
-            )
+            ).first()
+            
+            created = False
+            if recent_search is None:
+                # Create new record
+                recent_search = RecentSearch.objects.create(
+                    user=user,
+                    product=product
+                )
+                created = True
+            else:
+                # If soft-deleted, restore it
+                if recent_search.is_deleted:
+                    recent_search.is_deleted = False
+                    recent_search.save(update_fields=['is_deleted', 'modified_at'])
+                else:
+                    # Update timestamp if already active
+                    recent_search.save(update_fields=['modified_at'])
             
             # If new search and user already has MAX_RECENT_SEARCHES, delete the oldest
             if created:
@@ -48,9 +66,6 @@ class AddRecentSearchCommand:
                     if oldest_search:
                         oldest_search.delete()
                         op.info(f"Deleted oldest recent search to maintain limit of {AddRecentSearchCommand.MAX_RECENT_SEARCHES}")
-            else:
-                # Update timestamp if already exists
-                recent_search.save(update_fields=['modified_at'])
             
             op.success("Recent search added successfully")
             return BaseResultWithData(

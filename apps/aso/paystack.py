@@ -89,7 +89,6 @@ def validate(reference):
                 discount=cart.discount(),
                 total=cart.total(),
                 other_info=data.get("otherInfo"),
-                telegram_user_chat_id=data.get("telegram_user_chat_id"),
             )
 
             # Run the task in background

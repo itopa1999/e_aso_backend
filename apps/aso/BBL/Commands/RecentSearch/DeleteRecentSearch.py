@@ -20,7 +20,8 @@ class DeleteRecentSearchCommand:
                 user=user,
                 is_deleted=False
             )
-            recent_search.delete()
+            recent_search.is_deleted = True
+            recent_search.save(update_fields=['is_deleted'])
             
             op.success("Recent search deleted successfully")
             return BaseResultWithData(

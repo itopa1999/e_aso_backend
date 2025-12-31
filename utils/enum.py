@@ -74,6 +74,7 @@ class CacheKeys(Enum):
     # Product-related keys
     PRODUCT_LIST = "product_list_all"
     PRODUCT_DETAIL = "product_detail_{product_id}"
+    HIGHEST_PRICE_PRODUCTS = "highest_price_products"
     # FEATURED_PRODUCTS = "featured_products"
     # PRODUCT_CATEGORY_LIST = "product_category_list"
 

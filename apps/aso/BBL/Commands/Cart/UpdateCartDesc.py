@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from django.db import transaction
 from apps.aso.models import CartItem
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
@@ -21,14 +22,15 @@ class UpdateCartDescCommand:
         desc = serializer.validated_data["desc"]
         
         try:
-            item = CartItem.objects.get(
-                id=item_id,
-                cart__user=user,
-                is_deleted=False
-            )
+            with transaction.atomic():
+                item = CartItem.objects.get(
+                    id=item_id,
+                    cart__user=user,
+                    is_deleted=False
+                )
 
-            item.desc = desc
-            item.save()
+                item.desc = desc
+                item.save()
 
             op.success(f"Updated description for item {item.id}")
             return BaseResultWithData(

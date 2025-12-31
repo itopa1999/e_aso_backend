@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from django.db import transaction
 from apps.aso.models import CartItem
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
@@ -13,7 +14,8 @@ class DeleteAllCartItemsCommand:
         )
         op.start()
         
-        deleted_count, _ = CartItem.objects.filter(cart__user=user, is_deleted=False).delete()
+        with transaction.atomic():
+            deleted_count, _ = CartItem.objects.filter(cart__user=user, is_deleted=False).delete()
         if deleted_count == 0:
             op.fail("No items to delete")
             return BaseResultWithData(

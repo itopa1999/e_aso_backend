@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from django.db import transaction
 from apps.aso.models import WatchList, Cart, CartItem
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
@@ -21,18 +22,19 @@ class MoveAllToCartCommand:
                 message="No items in watchlist to move"
             )
 
-        cart, _ = Cart.objects.get_or_create(user=user, is_deleted=False)
-        items_added = 0
+        with transaction.atomic():
+            cart, _ = Cart.objects.get_or_create(user=user, is_deleted=False)
+            items_added = 0
 
-        for item in watchlist_items:
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                product=item.product,
-                defaults={'quantity': 1},
-                is_deleted=False
-            )
-            if created:
-                items_added += 1
+            for item in watchlist_items:
+                cart_item, created = CartItem.objects.get_or_create(
+                    cart=cart,
+                    product=item.product,
+                    defaults={'quantity': 1},
+                    is_deleted=False
+                )
+                if created:
+                    items_added += 1
                 
         op.success(f"{items_added} items moved to cart")
         return BaseResultWithData(

@@ -1,5 +1,6 @@
 # apps/aso/commands/toggle_watchlist_command.py
 from http import HTTPStatus
+from django.db import transaction
 from apps.aso.models import WatchList
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
@@ -10,20 +11,21 @@ class ToggleWatchlistCommand:
     def execute(user, product_id):
         op = OperationLogger("Toggle watchlist item", user=user.id if user else "Anonymous", product_id=product_id)
         op.start()
-        watchlist_item, created = WatchList.objects.get_or_create(
-            user=user,
-            product_id=product_id,
-            is_deleted=False
-        )
-
-        if not created:
-            watchlist_item.delete()
-            op.success(f"Removed product {product_id} from watchlist")
-            return BaseResultWithData(
-                data={"watchlisted": False},
-                status_code=HTTPStatus.OK,
-                message="Product removed from watchlist"
+        with transaction.atomic():
+            watchlist_item, created = WatchList.objects.get_or_create(
+                user=user,
+                product_id=product_id,
+                is_deleted=False
             )
+
+            if not created:
+                watchlist_item.delete()
+                op.success(f"Removed product {product_id} from watchlist")
+                return BaseResultWithData(
+                    data={"watchlisted": False},
+                    status_code=HTTPStatus.OK,
+                    message="Product removed from watchlist"
+                )
             
         op.success(f"Added product {product_id} to watchlist")
         return BaseResultWithData(

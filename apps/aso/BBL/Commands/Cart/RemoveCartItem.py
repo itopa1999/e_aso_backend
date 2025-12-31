@@ -1,4 +1,5 @@
 from http import HTTPStatus
+from django.db import transaction
 from apps.aso.models import CartItem
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
@@ -21,13 +22,14 @@ class RemoveCartItemCommand:
         item_id = serializer.validated_data["item_id"]        
         
         try:
-            item = CartItem.objects.get(
-                id=item_id,
-                cart__user=user,
-                is_deleted=False
-            )
+            with transaction.atomic():
+                item = CartItem.objects.get(
+                    id=item_id,
+                    cart__user=user,
+                    is_deleted=False
+                )
 
-            item.delete()
+                item.delete()
             
             op.success(f"Removed cart item {item_id}")
 

@@ -170,6 +170,8 @@ def watchlist_model_changed(sender, instance, **kwargs):
 def product_model_changed(sender, instance, **kwargs):
     cache_key = CacheKeys.PRODUCT_LIST
     GlobalCache.delete(cache_key)
+    highest_price_key = CacheKeys.HIGHEST_PRICE_PRODUCTS.value
+    GlobalCache.delete(highest_price_key)
     
     
 @receiver([post_save, post_delete], sender=Product)

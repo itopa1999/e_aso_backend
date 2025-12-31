@@ -40,6 +40,7 @@ urlpatterns = [
                 path("recent-searches/add/", AddRecentSearchView.as_view(), name='add-recent-search'),
                 path("recent-searches/<int:search_id>/", DeleteRecentSearchView.as_view(), name='delete-recent-search'),
                 path("recent-searches/delete-all/", DeleteAllRecentSearchesView.as_view(), name='delete-all-recent-searches'),
+                path("highest-price/", HighestPriceProductsView.as_view(), name='highest-price-products'),
             ]
         )
     ),                

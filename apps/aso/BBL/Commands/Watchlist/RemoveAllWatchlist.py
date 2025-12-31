@@ -1,5 +1,6 @@
 # apps/aso/commands/remove_all_watchlist_command.py
 from http import HTTPStatus
+from django.db import transaction
 from apps.aso.models import WatchList
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
@@ -11,9 +12,10 @@ class RemoveAllWatchlistCommand:
         op = OperationLogger("Remove all watchlist items", user=user.id if user else "Anonymous")
         op.start()
         
-        deleted_count, _ = WatchList.objects.filter(
-            user=user, is_deleted=False
-        ).delete()
+        with transaction.atomic():
+            deleted_count, _ = WatchList.objects.filter(
+                user=user, is_deleted=False
+            ).delete()
         
         op.success(f"Deleted {deleted_count} watchlist items")
 

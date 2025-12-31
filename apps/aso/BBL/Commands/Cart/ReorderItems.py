@@ -1,6 +1,7 @@
 from apps.aso.models import Order, Cart, CartItem
 from apps.aso.serializers import AddToCartCountResponseSerializer
 from http import HTTPStatus
+from django.db import transaction
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
 
@@ -28,17 +29,18 @@ class ReorderItemsCommand:
                 message="Order not found"
             )
 
-        cart, _ = Cart.objects.get_or_create(user=user, is_deleted = False)
-        items_added = 0
+        with transaction.atomic():
+            cart, _ = Cart.objects.get_or_create(user=user, is_deleted = False)
+            items_added = 0
 
-        for item in order.items.all():
-            cart_item, created = CartItem.objects.get_or_create(
-                cart=cart,
-                product=item.product,
-                defaults={"quantity": item.quantity}, is_deleted = False
-            )
-            if created:
-                items_added += 1
+            for item in order.items.all():
+                cart_item, created = CartItem.objects.get_or_create(
+                    cart=cart,
+                    product=item.product,
+                    defaults={"quantity": item.quantity}, is_deleted = False
+                )
+                if created:
+                    items_added += 1
 
         serializer = AddToCartCountResponseSerializer({"items_added": items_added})
         

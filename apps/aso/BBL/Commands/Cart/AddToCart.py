@@ -1,6 +1,7 @@
 from http import HTTPStatus
 import json
 import logging
+from django.db import transaction
 from apps.aso.models import Product, Cart, CartItem
 from utils.base_result import BaseResultWithData
 from utils.log_helpers import OperationLogger
@@ -37,24 +38,25 @@ class AddToCartCommand:
                 message="Invalid desc format"
             )
 
-        cart, _ = Cart.objects.get_or_create(user=user, is_deleted=False)
-        items_added = 0
+        with transaction.atomic():
+            cart, _ = Cart.objects.get_or_create(user=user, is_deleted=False)
+            items_added = 0
 
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-            defaults={"quantity": int(quantity) if quantity else 1, "desc": desc_data or {}},
-            is_deleted=False
-        )
+            cart_item, created = CartItem.objects.get_or_create(
+                cart=cart,
+                product=product,
+                defaults={"quantity": int(quantity) if quantity else 1, "desc": desc_data or {}},
+                is_deleted=False
+            )
 
-        if not created:
-            if quantity:
-                cart_item.quantity = int(quantity)
-            if desc_data:
-                cart_item.desc = desc_data
-            cart_item.save()
-        else:
-            items_added += 1
+            if not created:
+                if quantity:
+                    cart_item.quantity = int(quantity)
+                if desc_data:
+                    cart_item.desc = desc_data
+                cart_item.save()
+            else:
+                items_added += 1
 
         op.success("Item added to cart")
         return BaseResultWithData(

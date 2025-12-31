@@ -27,6 +27,7 @@ from apps.aso.BBL.Queries.LookUpList import LookUpListQuery
 from apps.aso.BBL.Queries.Order.TrackingDetails import TrackingDetailsQuery
 from apps.aso.BBL.Queries.Product.LimitedProducts import LimitedProductsQuery
 from apps.aso.BBL.Queries.Product.ProductDetails import ProductDetailQuery
+from apps.aso.BBL.Queries.Product.HighestPriceProducts import HighestPriceProductsQuery
 from apps.aso.BBL.Queries.Watchlist.GetWatchlistProducts import GetWatchlistProductsQuery
 from apps.aso.BBL.Queries.Order.OrderDetails import OrderDetailQuery
 from apps.aso.BBL.Queries.Order.UserOrderList import UserOrderListQuery
@@ -361,6 +362,8 @@ class LimitedProductsView(APIView):
         result = LimitedProductsQuery.query(request)
         return Response(result.to_dict(), status=result.status_code)
     
+
+    
     
 class SmartSearchProductsView(APIView):
     authentication_classes = [OptionalJWTAuthentication]
@@ -406,6 +409,16 @@ class DeleteAllRecentSearchesView(APIView):
 
     def delete(self, request):
         result = DeleteAllRecentSearchesCommand.execute(request.user)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class HighestPriceProductsView(APIView):
+    """Get top 15 products with highest price"""
+    authentication_classes = [OptionalJWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, *args, **kwargs):
+        result = HighestPriceProductsQuery.query(request)
         return Response(result.to_dict(), status=result.status_code)
 
     
