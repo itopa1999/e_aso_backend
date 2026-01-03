@@ -151,7 +151,7 @@ class ActivateProductsAPIView(APIView):
     
      
 class CreateCustomerFeedbackView(generics.GenericAPIView):
-    permission_classes = [IsAuthenticated, IsAdminPermission]
+    permission_classes = [IsAuthenticated]
     """ to create a new customer feedback"""
     serializer_class = CustomerFeedbackSerializer
     queryset = CustomerFeedback.objects.all()

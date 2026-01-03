@@ -418,11 +418,29 @@ class OrderTracking(BaseModel):
         ('delivered', 'Delivered'),
         ('cancelled', 'Cancelled'),
     ]
+    
+    STATUS_DESCRIPTIONS = {
+        'placed': "Your order has been updated to Placed. 🎉 We've received your order! Our team is now processing it and will get it ready for shipment soon.",
+        'processing': "Your order has been updated to Processing. 📦 Your order is being carefully prepared and packaged. We're almost ready to ship!",
+        'shipped': "Your order has been updated to Shipped. 🚚 Your package is on its way to you! You can track it using the tracking number provided.",
+        'in_transit': "Your order has been updated to In Transit. 🚛 Your order is on its way! It should arrive soon. Thank you for your patience!",
+        'delivered': "Your order has been updated to Delivered. ✅ Your order has been delivered! We hope you enjoy your purchase. Thank you for shopping with us!",
+        'cancelled': "Your order has been updated to Cancelled. ❌ Your order has been cancelled. If you have any questions, please contact our support team.",
+    }
+    
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='tracking_events', editable=False)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='placed')
-    date = models.DateTimeField()
-    description = models.TextField()
+    date = models.DateTimeField(default=timezone.now)
+    description = models.TextField(blank=True, null=True)
     completed = models.BooleanField(default=False)
+    
+    def save(self, *args, **kwargs):
+        if not self.description or self.description.strip() == "":
+            self.description = self.STATUS_DESCRIPTIONS.get(
+                self.status,
+                "Your order status has been updated. We're working to get your order to you as quickly as possible."
+            )
+        super().save(*args, **kwargs)
     
     class Meta:
         unique_together = ('status', 'order')
