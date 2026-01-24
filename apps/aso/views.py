@@ -33,6 +33,7 @@ from apps.aso.BBL.Queries.Order.OrderDetails import OrderDetailQuery
 from apps.aso.BBL.Queries.Order.UserOrderList import UserOrderListQuery
 from apps.aso.BBL.Queries.Product.ProductList import ProductListQuery
 from apps.aso.BBL.Queries.RecentSearch.GetRecentSearches import GetRecentSearchesQuery
+from apps.aso.BBL.Commands.Order.RecoverFailedOrder import RecoverFailedOrderCommand
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsCustomerPermission
@@ -421,5 +422,18 @@ class HighestPriceProductsView(APIView):
         result = HighestPriceProductsQuery.query(request)
         return Response(result.to_dict(), status=result.status_code)
 
-    
-    
+
+class RecoverFailedOrderView(APIView):
+    """
+    Endpoint to retry processing a failed order.
+    Useful when Celery task fails but payment is confirmed.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsCustomerPermission]
+
+    def post(self, request, order_id):
+        """
+        Retry processing a failed order
+        """
+        result = RecoverFailedOrderCommand.execute(request.user, order_id)
+        return Response(result.to_dict(), status=result.status_code)

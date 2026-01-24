@@ -6,10 +6,9 @@ from django.urls import reverse
 import requests as req
 from django.db import transaction
 
-from apps.aso.models import Cart, Order, OrderItem, OrderTracking, PaymentDetail, ShippingAddress
-from apps.users.models import Transaction
+from apps.aso.models import Cart, Order
 from utils.Tasks.process_order import process_paystack_order
-from utils.enum import TransactionChannel, TransactionStatus, TransactionType
+from utils.enum import PaymentGateway, PaymentStatus
 from utils.log_helpers import OperationLogger
 
 def initiate(request, user, cart_id, data):
@@ -79,6 +78,26 @@ def validate(reference):
         data = metadata.get('data', {})
                 
         with transaction.atomic():
+            # Check if an order already exists for this payment reference
+            existing_order = Order.objects.filter(
+                payment_reference=reference,
+                payment_method=PaymentGateway.PAYSTACK.value
+            ).first()
+            
+            if existing_order:
+                # Order already created for this reference, return it
+                op.success("Order already exists for this reference (retry)")
+                return {
+                    "success": False,
+                    "error": "Order already confirmed for this payment.",
+                    "order": {
+                        "id": existing_order.id,
+                        "order_number": existing_order.order_number,
+                        "amount": float(existing_order.total),
+                        "created_at": existing_order.created_at
+                    }
+                }
+            
             cart = Cart.objects.get(id=cart_id, is_deleted=False)
             user = cart.user
 
@@ -89,10 +108,29 @@ def validate(reference):
                 discount=cart.discount(),
                 total=cart.total(),
                 other_info=data.get("otherInfo"),
+                payment_status=PaymentStatus.PENDING.name.lower(),
+                payment_reference=reference,
+                payment_method=PaymentGateway.PAYSTACK.value,
             )
 
-            # Run the task in background
-            process_paystack_order(order.id, reference, data)
+            cart.locked = True
+            cart.save(update_fields=['locked'])
+
+            try:
+                process_paystack_order(order.id, reference, data)
+                
+                order.payment_status = PaymentStatus.CONFIRMED.name.lower()
+                order.save(update_fields=['payment_status'])
+                op.success("Order processing task queued successfully")
+            except Exception as e:
+                
+                cart.locked = False
+                cart.save(update_fields=['locked'])
+                
+                order.payment_status = PaymentStatus.FAILED.name.lower()
+                order.save(update_fields=['payment_status'])
+                op.fail(f"Task failed to queue: {str(e)}")
+                return {"success": False, "error": f"Order processing failed: {str(e)}"}
             
         op.success("Transaction validated and order created")
         return {

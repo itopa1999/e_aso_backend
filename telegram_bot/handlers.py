@@ -2,10 +2,12 @@
 Main handlers module that consolidates all telegram bot handlers.
 """
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 from telegram_bot.utils import NIGERIAN_STATES
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
+import asyncio
 
 from .login_handler import handle_login, handle_email_input, handle_code_input
 from .products_handler import handle_list_products, handle_product_details
@@ -26,11 +28,35 @@ from .notification_handler import (
 from .back_to_menu import handle_back_to_menu
 
 
+# ===========================
+# Loader Helper Function
+# ===========================
+async def show_typing_action(message, context: ContextTypes.DEFAULT_TYPE):
+    """
+    Show typing action to user while processing.
+    This creates a loader effect that indicates the bot is working.
+    """
+    try:
+        await context.bot.send_chat_action(
+            chat_id=message.chat.id,
+            action=ChatAction.TYPING
+        )
+    except:
+        pass  # Silently fail if unable to send action
+
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle /start command - shows main menu.
     Handles both message and callback query contexts.
     """
+    user_id = update.callback_query.from_user.id if update.callback_query else update.message.from_user.id
+    
+    # Check if user is logged in
+    token_key = CacheKeys.format(CacheKeys.telegram_user_tokens, user_id=user_id)
+    user_token = GlobalCache.get(token_key)
+    
+    # Build keyboard with dynamic login/logout button
     keyboard = [
         [InlineKeyboardButton("🛍️ List Products", callback_data="list_products_1")],
         [InlineKeyboardButton("📂 List Categories", callback_data="list_categories")],
@@ -39,8 +65,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🔔 Notifications", callback_data="notification_subscription")],
         [InlineKeyboardButton("📝 Contact / Special Request", callback_data="contact_request")],
         [InlineKeyboardButton("ℹ️ Help", callback_data="help")],
-        [InlineKeyboardButton("🔐 Login", callback_data="login")]
     ]
+    
+    # Add login or logout button based on authentication state
+    if user_token:
+        keyboard.append([InlineKeyboardButton("🚪 Logout", callback_data="logout")])
+    else:
+        keyboard.append([InlineKeyboardButton("🔐 Login", callback_data="login")])
+    
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     # Handle both message and callback query contexts
@@ -58,12 +90,65 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
+async def handle_logout(query, user_id, context=None):
+    """
+    Handle user logout - clear all user cache keys.
+    """
+    # List of all cache keys to clear
+    cache_keys_to_clear = [
+        CacheKeys.format(CacheKeys.telegram_user_tokens, user_id=user_id),
+        CacheKeys.format(CacheKeys.telegram_user_login_stage, user_id=user_id),
+        CacheKeys.format(CacheKeys.telegram_user_shipping_stage, user_id=user_id),
+        CacheKeys.format(CacheKeys.telegram_user_shipping_info, user_id=user_id),
+        CacheKeys.format(CacheKeys.telegram_user_contact_stage, user_id=user_id),
+        CacheKeys.format(CacheKeys.telegram_user_contact_info, user_id=user_id),
+        CacheKeys.format(CacheKeys.telegram_user_search_stage, user_id=user_id),
+    ]
+    
+    # Clear all user-related cache
+    for key in cache_keys_to_clear:
+        GlobalCache.set(key, None)
+    
+    # Notify user
+    await query.message.reply_text(
+        "👋 <b>Logged out successfully!</b>\n\nYou have been logged out and all your session data has been cleared.",
+        parse_mode="HTML"
+    )
+    
+    # Update commands to show login (logged out state)
+    if context:
+        try:
+            from telegram import BotCommand, BotCommandScopeChat
+            commands = [
+                BotCommand("start", "🏠 Show main menu"),
+                BotCommand("login", "🔐 Login to account"),
+                BotCommand("help", "ℹ️ Get help"),
+                BotCommand("cancel", "❌ Cancel current operation"),
+            ]
+            scope = BotCommandScopeChat(chat_id=user_id)
+            await context.bot.set_my_commands(commands, scope=scope)
+        except:
+            pass  # Silently fail if unable to update commands
+    
+    # Show main menu
+    class MockUpdate:
+        def __init__(self, query_obj):
+            self.callback_query = query_obj
+            self.message = None
+    
+    mock_update = MockUpdate(query)
+    await start(mock_update, context)
+
+
 async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """
     Handle text messages - processes login flow or shows menu.
     """
     user_id = update.message.from_user.id
     text = update.message.text.strip()
+    
+    # Show typing action to indicate loading
+    await show_typing_action(update.message, context)
     
     if text.lower().startswith("/cancel") or text.lower() == "cancel":
         print(f"User {user_id} cancelled the operation.")
@@ -232,10 +317,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     choice = query.data
     user_id = query.from_user.id
+    
+    # Show typing action to indicate loading
+    await show_typing_action(query.message, context)
 
     # Login Handler
     if choice == "login":
         await handle_login(query, user_id)
+    
+    # Logout Handler
+    elif choice == "logout":
+        await handle_logout(query, user_id, context)
 
     # Products Handlers
     elif choice.startswith("list_products"):

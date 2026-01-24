@@ -10,7 +10,7 @@ from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.aso.deliveryFee import DELIVERY_FEES
 from utils.base_model import BaseModel
-from utils.enum import FeatureNames
+from utils.enum import FeatureNames, PaymentStatus
 from django.contrib.postgres.indexes import Index
 from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFont
@@ -235,6 +235,7 @@ User = get_user_model()
 class Cart(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart', editable=False)
     state = models.CharField(max_length=100, blank=True, null=True)
+    locked = models.BooleanField(default=False, help_text="Cart is locked during payment processing. Prevents user modifications.")
     
     _cached_flags = None
 
@@ -312,6 +313,11 @@ class Order(BaseModel):
     shipping_fee = models.DecimalField(max_digits=10, decimal_places=2)
     discount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # Payment tracking
+    payment_status = models.CharField(max_length=20, choices=PaymentStatus.choices(), default='pending', db_index=True)
+    payment_reference = models.CharField(max_length=255, null=True, blank=True, unique=True, db_index=True)
+    payment_method = models.CharField(max_length=50, null=True, blank=True)  # paystack, flutterwave, monnify
 
     tracking_number = models.CharField(max_length=50, null=True, blank=True, editable=False)
     carrier = models.CharField(max_length=100, blank=True, default="Aso Oke Express")

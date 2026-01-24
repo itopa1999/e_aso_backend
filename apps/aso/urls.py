@@ -41,6 +41,7 @@ urlpatterns = [
                 path("recent-searches/<int:search_id>/", DeleteRecentSearchView.as_view(), name='delete-recent-search'),
                 path("recent-searches/delete-all/", DeleteAllRecentSearchesView.as_view(), name='delete-all-recent-searches'),
                 path("highest-price/", HighestPriceProductsView.as_view(), name='highest-price-products'),
+                path("recover-order/<int:order_id>/", RecoverFailedOrderView.as_view(), name='recover-failed-order'),
             ]
         )
     ),                

@@ -4,6 +4,7 @@ from datetime import datetime
 from .config import ASO_URL
 from .utils import check_authentication, handle_auth_error
 from asgiref.sync import sync_to_async
+import asyncio
 
 async def handle_list_orders(query, user_id, page="1"):
     """
@@ -29,8 +30,22 @@ async def handle_list_orders(query, user_id, page="1"):
         return
     
     data = resp.json()
-    # Handle both paginated response and simple data response
-    orders = data.get("results") or data.get("data", [])
+    # The API returns: {"data": {...}} from BaseResultWithData
+    # Extract the actual response data
+    if "data" in data:
+        response_data = data.get("data", {})
+    else:
+        response_data = data
+    
+    # Get orders from "results" field
+    orders = response_data.get("results", [])
+    
+    # Ensure orders is a list of dictionaries
+    if not isinstance(orders, list):
+        orders = [orders] if orders else []
+    
+    # Filter out non-dict items (in case there are strings or other types)
+    orders = [o for o in orders if isinstance(o, dict)]
     
     if not orders:
         if page == "1":
@@ -75,14 +90,15 @@ async def handle_list_orders(query, user_id, page="1"):
         ])
 
         await query.message.reply_text(text, parse_mode="HTML", reply_markup=keyboard)
+        await asyncio.sleep(0.3)
     
     # Pagination buttons
     pagination_buttons = []
-    if data.get("previous"):
-        prev_page = data["previous"].split("page=")[-1]
+    if response_data.get("previous"):
+        prev_page = response_data["previous"].split("page=")[-1]
         pagination_buttons.append(InlineKeyboardButton("⬅️ Previous", callback_data=f"list_orders_{prev_page}"))
-    if data.get("next"):
-        next_page = data["next"].split("page=")[-1]
+    if response_data.get("next"):
+        next_page = response_data["next"].split("page=")[-1]
         pagination_buttons.append(InlineKeyboardButton("➡️ Next", callback_data=f"list_orders_{next_page}"))
     
     if pagination_buttons:

@@ -153,3 +153,24 @@ class TransactionStatus(Enum):
     @classmethod
     def choices(cls):
         return [(key.value, key.value) for key in cls]
+
+
+class PaymentStatus(Enum):
+    PENDING = "Pending Payment"
+    FAILED = "Payment Failed"
+    CONFIRMED = "Payment Confirmed"
+    CANCELLED = "Cancelled"
+
+    @classmethod
+    def choices(cls):
+        return [(key.name.lower(), key.value) for key in cls]
+
+
+class PaymentGateway(Enum):
+    PAYSTACK = "paystack"
+    FLUTTERWAVE = "flutterwave"
+    MONNIFY = "monnify"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.value) for key in cls]
