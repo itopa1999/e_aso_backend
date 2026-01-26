@@ -147,18 +147,18 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ("user", "state", "items_count", "subtotal_display", "created_at", "modified_at")
+    list_display = ("user", "state", "items_count", "subtotal_display", "lock_status", "created_at", "modified_at")
     list_display_links = ("user",)
     search_fields = ("user__email", "user__first_name", "user__last_name", "state")
-    list_filter = ("state", "created_at")
-    readonly_fields = ("created_at", "modified_at")
+    list_filter = ("state", "locked", "created_at")
+    readonly_fields = ("user", "created_at", "modified_at")
     ordering = ("-modified_at",)
     date_hierarchy = "created_at"
     list_per_page = 50
 
     fieldsets = (
         ("Cart Information", {
-            "fields": ("user", "state")
+            "fields": ("user", "state", "locked")
         }),
         ("Base Model Info", {
             "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
@@ -176,14 +176,20 @@ class CartAdmin(admin.ModelAdmin):
         return format_html('<span style="font-weight: bold;">₦{}</span>', obj.subtotal())
     subtotal_display.short_description = "Subtotal"
 
+    def lock_status(self, obj):
+        if obj.locked:
+            return format_html('<span style="color: red; font-weight: bold;">🔒 Locked</span>')
+        return format_html('<span style="color: green;">🔓 Unlocked</span>')
+    lock_status.short_description = "Lock Status"
+
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ("order_number", "user", "tracking_number", "total_display", "current_status", "dispatcher", "created_at")
+    list_display = ("order_number", "user", "tracking_number", "total_display", "current_status", "payment_status_display", "payment_method_display", "dispatcher", "created_at")
     list_display_links = ("order_number", "user")
-    search_fields = ("order_number", "tracking_number", "user__email", "user__first_name", "user__last_name")
-    list_filter = ("carrier", "created_at", "estimated_delivery_date")
-    readonly_fields = ("order_number", "tracking_number", "subtotal", "shipping_fee", "discount", "total", "estimated_delivery_date", "user", "created_at", "modified_at")
+    search_fields = ("order_number", "tracking_number", "payment_reference", "user__email", "user__first_name", "user__last_name")
+    list_filter = ("carrier", "payment_status", "payment_method", "created_at", "estimated_delivery_date")
+    readonly_fields = ("order_number", "tracking_number", "subtotal", "shipping_fee", "discount", "total", "estimated_delivery_date", "user", "payment_reference", "created_at", "modified_at")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
     list_per_page = 50
@@ -195,6 +201,9 @@ class OrderAdmin(admin.ModelAdmin):
         }),
         ("Financial Summary", {
             "fields": ("subtotal", "shipping_fee", "discount", "total")
+        }),
+        ("Payment Information", {
+            "fields": ("payment_status", "payment_method", "payment_reference")
         }),
         ("Delivery Information", {
             "fields": ("dispatcher", "delivery_date", "estimated_delivery_date")
@@ -229,6 +238,26 @@ class OrderAdmin(admin.ModelAdmin):
             return format_html(f'<span style="color: {color};">●</span> {latest.get_status_display()}')
         return format_html('<span style="color: gray;">●</span> Unknown')
     current_status.short_description = "Status"
+
+    def payment_status_display(self, obj):
+        colors = {
+            "pending": "orange",
+            "confirmed": "green",
+            "failed": "red",
+            "cancelled": "gray",
+        }
+        color = colors.get(obj.payment_status, "gray")
+        return format_html(f'<span style="color: {color}; font-weight: bold;">●</span> {obj.payment_status.upper()}')
+    payment_status_display.short_description = "Payment Status"
+
+    def payment_method_display(self, obj):
+        method_icons = {
+            "paystack": "💳 Paystack",
+            "flutterwave": "🌊 Flutterwave",
+            "monnify": "💰 Monnify",
+        }
+        return method_icons.get(obj.payment_method, obj.payment_method)
+    payment_method_display.short_description = "Payment Method"
 
 
 @admin.register(WatchList)
