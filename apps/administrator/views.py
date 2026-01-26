@@ -2,6 +2,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import status, generics
 from rest_framework.views import APIView
+from rest_framework.throttling import ScopedRateThrottle
 from apps.administrator.BLL.Commands.BulkUpdateProductBadges import BulkUpdateProductBadgesCommand
 from apps.administrator.BLL.Commands.MarkCustomerFeedbackDone import MarkCustomerFeedbackDoneCommand
 from apps.administrator.BLL.Commands.ProductBulkImport import ProductBulkImportCommand
@@ -320,7 +321,9 @@ class TelegramLoginVerificationView(generics.GenericAPIView):
 class LoginAPIView(generics.GenericAPIView):
     serializer_class = LoginSerializer
     allow_any = [AllowAny]
-    authentication_classes = [OptionalJWTAuthentication] 
+    authentication_classes = [OptionalJWTAuthentication]
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = 'login'
     
     def post(self, request, *args, **kwargs):
         # Validate incoming data
@@ -356,16 +359,11 @@ class ResetPasswordAPIView(generics.GenericAPIView):
 
 
 class UserAgentAnalysisView(generics.GenericAPIView):
-    """Analyze user agents - optionally filter by email"""
-    allow_any = [AllowAny]
-    authentication_classes = [OptionalJWTAuthentication] 
+    """Analyze user agents - Admin only access"""
+    permission_classes = [IsAuthenticated, IsAdminPermission]
     serializer_class = UserAgentAnalysisSerializer
     
     def get(self, request, *args, **kwargs):
-        """
-        Analyze user agents globally or by email filter
-        Query: ?email=user@example.com (optional)
-        """
         email = request.query_params.get('email', None)
         result = UserAgentAnalysisQuery.query(email, request=request)
         return Response(result.to_dict(), status=result.status_code)

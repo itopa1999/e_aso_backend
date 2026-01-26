@@ -131,16 +131,25 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = []
+CORS_ALLOW_CREDENTIALS = False
+
+# 🔒 CSRF Protection Configuration
+# Prevent CSRF attacks while working with CORS
+CSRF_TRUSTED_ORIGINS = []  # Explicitly list trusted origins in dev/prod settings
+CSRF_COOKIE_SECURE = True  # Only send cookie over HTTPS
+CSRF_COOKIE_HTTPONLY = False  # Allow JavaScript access to read CSRF token (required for forms)
+CSRF_COOKIE_SAMESITE = 'Strict'  # Strict same-site policy to prevent cross-site attacks
 
 APPEND_SLASH = False
 
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=10),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=2),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": False,
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
@@ -192,9 +201,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': '20000/hour',     
-        'anon': '20000/hour',
-        "magic_link": "50/minute",
+        'user': '20000/hour',
+        'anon': '300/hour',
+        'magic_link': '10/minute',
+        'login': '10/minute',
+        'otp': '5/minute',
     },
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 

@@ -43,7 +43,20 @@ class AdminVerifyOtpCommand:
                 message="Token has expired. Please request a new one."
             )
 
-        op.success(f"Token verified for {email}")
+        # 🔒 Check if token has already been used to prevent replay attacks
+        if verification.is_verified:
+            op.fail(f"Token already used for {email} - replay attack detected")
+            return BaseResultWithData(
+                data=None,
+                status_code=HTTPStatus.BAD_REQUEST,
+                message="Token has already been used. Please request a new one."
+            )
+
+        # 🔒 Mark token as used immediately to prevent replay attacks
+        verification.is_verified = True
+        verification.save()
+        op.success(f"Token verified and invalidated for {email}")
+
         return BaseResultWithData(
             data=user,
             status_code=HTTPStatus.OK,
