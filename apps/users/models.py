@@ -106,6 +106,32 @@ class UserVerification(BaseModel):
     
     
 
+# 🔒 Magic Login Token - Separate from email verification
+class MagicLoginToken(BaseModel):
+    """
+    Store cryptographically signed magic login tokens.
+    
+    Separated from UserVerification to avoid token format conflicts:
+    - UserVerification: 6-digit numeric tokens for email verification + admin OTP
+    - MagicLoginToken: Cryptographically signed tokens for passwordless user login
+    """
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='magic_login_token')
+    signed_token = models.TextField()  # Cryptographically signed token
+    is_used = models.BooleanField(default=False)  # Prevent token reuse
+    
+    def is_token_expired(self):
+        """Check if token is expired (valid for 10 minutes)"""
+        return timezone.now() > self.created_at + timedelta(minutes=10)
+    
+    def mark_used(self):
+        """Mark token as used to prevent replay attacks"""
+        self.is_used = True
+        self.save(update_fields=['is_used'])
+    
+    def __str__(self):
+        return f"Magic Login Token for {self.user.email}"
+    
+
 class Referral(BaseModel):
     referrer = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name="referrals_made"

@@ -9,9 +9,10 @@ def generate_magic_token(email):
 
 def validate_magic_token(token, max_age=600):  # 10 minutes by default
     """
-    Validate magic token with double-checking:
+    Validate magic token with triple-layer security:
     1. Check cryptographic signature and age
-    2. Verify against database token record
+    2. Verify against database MagicLoginToken record
+    3. Ensure token hasn't been used already
     
     Args:
         token: The signed token to validate
@@ -25,23 +26,24 @@ def validate_magic_token(token, max_age=600):  # 10 minutes by default
         email = signer.unsign(token, max_age=max_age)
         
         # ✅ Second check: Verify against database record
-        from apps.users.models import UserVerification, User
+        from apps.users.models import MagicLoginToken, User
         
         user = User.objects.filter(email=email, is_deleted=False).first()
         if not user:
             return None
         
-        verification = UserVerification.objects.filter(
+        # Check if magic login token exists and hasn't been used
+        magic_token = MagicLoginToken.objects.filter(
             user=user,
-            token=token,
-            is_verified=False  # Token must not already be used
+            signed_token=token,
+            is_used=False  # Token must not already be used
         ).first()
         
-        if not verification:
+        if not magic_token:
             return None
         
         # ✅ Third check: Verify expiration on database record
-        if verification.is_token_expired():
+        if magic_token.is_token_expired():
             return None
         
         return email

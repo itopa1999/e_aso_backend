@@ -4,7 +4,7 @@ from django.utils.http import urlsafe_base64_decode
 from urllib.parse import urlencode
 from rest_framework_simplejwt.tokens import RefreshToken
 from utils.base_result import BaseResultWithData
-from apps.users.models import User
+from apps.users.models import User, MagicLoginToken
 from http import HTTPStatus
 from utils.log_helpers import OperationLogger
 from apps.users.user_agent_utils import save_user_agent
@@ -28,6 +28,15 @@ class MagicLoginCommand:
         email = validate_magic_token(token)
         if not email or email != user.email:
             op.fail(f"Invalid magic token for {url_email}")
+            return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=true")
+
+        # 🔒 Mark magic token as used to prevent replay attacks
+        try:
+            magic_token = MagicLoginToken.objects.get(user=user, signed_token=token)
+            magic_token.mark_used()
+            op.success(f"Magic token marked as used for {url_email}")
+        except MagicLoginToken.DoesNotExist:
+            op.fail(f"Magic token record not found for {url_email}")
             return redirect(f"{settings.BASE_URL}/verified-email-failed.html?email={url_email}&is_login=true")
 
         # Save user agent information if request is provided

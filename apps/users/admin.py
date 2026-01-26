@@ -126,6 +126,55 @@ class UserVerificationAdmin(admin.ModelAdmin):
             return format_html('<span style="color: red;">●</span> Expired')
         return format_html('<span style="color: green;">●</span> Valid')
     is_expired.short_description = "Token Status"
+
+
+# 🔒 Magic Login Token Admin
+@admin.register(MagicLoginToken)
+class MagicLoginTokenAdmin(admin.ModelAdmin):
+    """Admin for magic login token management."""
+    list_display = ("user", "token_preview", "usage_status", "expiration_status", "created_at")
+    list_display_links = ("user",)
+    search_fields = ("user__email", "user__first_name", "user__last_name")
+    list_filter = ("is_used", "created_at")
+    readonly_fields = ("signed_token", "created_at", "modified_at")
+    ordering = ("-created_at",)
+    date_hierarchy = "created_at"
+    list_per_page = 50
+
+    fieldsets = (
+        ("Magic Login Token Info", {
+            "fields": (
+                "user",
+                "signed_token",
+                "is_used",
+            ),
+        }),
+        ("Base Model Info", {
+            "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
+            "classes": ("collapse",)
+        }),
+    )
+
+    def token_preview(self, obj):
+        """Show preview of signed token"""
+        if len(obj.signed_token) > 30:
+            return f"{obj.signed_token[:30]}..."
+        return obj.signed_token
+    token_preview.short_description = "Token (Preview)"
+
+    def usage_status(self, obj):
+        """Show if token has been used"""
+        if obj.is_used:
+            return format_html('<span style="color: red;">✓</span> Used')
+        return format_html('<span style="color: green;">●</span> Available')
+    usage_status.short_description = "Usage Status"
+
+    def expiration_status(self, obj):
+        """Show if token has expired"""
+        if obj.is_token_expired():
+            return format_html('<span style="color: red;">●</span> Expired')
+        return format_html('<span style="color: green;">●</span> Valid')
+    expiration_status.short_description = "Expiration Status"
     
     
 @admin.register(Referral)

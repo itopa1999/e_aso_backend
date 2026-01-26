@@ -2,7 +2,7 @@ from http import HTTPStatus
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
-from apps.users.models import User, UserVerification
+from apps.users.models import User, UserVerification, MagicLoginToken
 from apps.users.serializers import RegUserSerializer
 from utils.base_result import BaseResultWithData
 from utils.email_sender import send_custom_email
@@ -90,10 +90,16 @@ class SendMagicLinkCommand:
                 message="Account inactive. Please verify your email first."
             )
 
+        # 🔒 Create or update magic login token (cryptographically signed)
+        signed_token = generate_magic_token(email)
+        magic_token, created = MagicLoginToken.objects.update_or_create(
+            user=user,
+            defaults={'signed_token': signed_token, 'is_used': False}
+        )
+        
         uidb64 = urlsafe_base64_encode(force_bytes(user.id))
-        token = generate_magic_token(email)
         verification_link = request.build_absolute_uri(
-            reverse("verify-magic-login", kwargs={"uidb64": uidb64, "token": token, "url_email": email})
+            reverse("verify-magic-login", kwargs={"uidb64": uidb64, "token": signed_token, "url_email": email})
         )
         
         send_custom_email(
