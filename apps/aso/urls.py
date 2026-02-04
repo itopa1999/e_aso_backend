@@ -42,6 +42,11 @@ urlpatterns = [
                 path("recent-searches/delete-all/", DeleteAllRecentSearchesView.as_view(), name='delete-all-recent-searches'),
                 path("highest-price/", HighestPriceProductsView.as_view(), name='highest-price-products'),
                 path("recover-order/<int:order_id>/", RecoverFailedOrderView.as_view(), name='recover-failed-order'),
+                path('notifications/', NotificationListView.as_view(), name='notification-list'),
+                path('notifications/recent/', RecentNotificationsView.as_view(), name='notification-recent'),
+                path('notifications/<int:notification_id>/read/', MarkNotificationReadView.as_view(), name='notification-mark-read'),
+                path('notifications/<int:notification_id>/', DeleteNotificationView.as_view(), name='notification-delete'),
+                path("notifications/mark-all-read/", MarkAllNotificationsReadView.as_view()),
             ]
         )
     ),                

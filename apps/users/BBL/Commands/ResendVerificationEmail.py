@@ -1,12 +1,10 @@
 
 from http import HTTPStatus
 from django.urls import reverse
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from apps.users.models import User, UserVerification
+import secrets
+from apps.users.models import User, UserVerification, MagicLoginToken
 from utils.base_result import BaseResult
 from utils.email_sender import send_custom_email
-from utils.magic_link import generate_magic_token
 from utils.log_helpers import OperationLogger
 
 
@@ -36,16 +34,22 @@ class ResendVerificationEmailCommand:
                         status_code=HTTPStatus.BAD_REQUEST
                     )
 
-                uidb64 = urlsafe_base64_encode(force_bytes(user.id))
-                token = generate_magic_token(email)
-
-                verificationLink = request.build_absolute_uri(
-                    reverse("verify-magic-login", kwargs={
-                        "uidb64": uidb64,
-                        "token": token,
-                        "url_email": email
-                    })
+                # ✅ Generate simple random token (URL-safe)
+                token = secrets.token_urlsafe(24)
+                
+                # ✅ Delete old tokens and create fresh one
+                MagicLoginToken.objects.filter(user=user).delete()
+                magic_token = MagicLoginToken.objects.create(
+                    user=user,
+                    signed_token=token,
+                    is_used=False
                 )
+                
+                # ✅ Build simple link with token and email as query params
+                verificationLink = request.build_absolute_uri(
+                    reverse("verify-magic-login")
+                )
+                verificationLink = f"{verificationLink}?token={token}&email={email}"
 
                 send_custom_email(
                     subject="Your Magic Login Link",

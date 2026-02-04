@@ -83,6 +83,10 @@ class CacheKeys(Enum):
     USER_ORDERS = "user_orders_{user_id}"
     USER_ORDER_TRACKING = "user_order_tracking_{user_id}_{order_id}"
 
+    # Notification-related keys
+    USER_NOTIFICATIONS = "user_notifications_{user_id}"
+    USER_NOTIFICATIONS_RECENT = "user_notifications_recent_{user_id}"
+
     # Misc / site-wide
     LOOKUP = "lookup"
     CUSTOMER_FEEDBACK_LIST = "customer_feedback_list"
@@ -170,6 +174,16 @@ class PaymentGateway(Enum):
     PAYSTACK = "paystack"
     FLUTTERWAVE = "flutterwave"
     MONNIFY = "monnify"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.value) for key in cls]
+
+
+class NotificationType(Enum):
+    SYSTEM = "system"
+    UPDATES = "updates"
+    PROMOTION = "promos"
 
     @classmethod
     def choices(cls):

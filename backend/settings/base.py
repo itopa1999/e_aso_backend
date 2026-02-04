@@ -201,11 +201,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.ScopedRateThrottle",
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': '20000/hour',
-        'anon': '300/hour',
-        'magic_link': '10/minute',
-        'login': '10/minute',
-        'otp': '5/minute',
+        'user': '20000000/hour',
+        'anon': '300000/hour',
+        'magic_link': '10000/minute',
+        'login': '10000/minute',
+        'otp': '5000/minute',
     },
     "EXCEPTION_HANDLER": "drf_standardized_errors.handler.exception_handler",
 

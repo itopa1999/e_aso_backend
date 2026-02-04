@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Cart, CartItem, LookUp, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress, WatchList, RecentSearch
+from .models import Cart, CartItem, LookUp, Order, OrderItem, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress, WatchList, RecentSearch, Notification
 
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.title')
@@ -394,3 +394,9 @@ class SimpleRecentSearchSerializer(serializers.ModelSerializer):
         if obj.product.main_image and hasattr(obj.product.main_image, 'url'):
             return request.build_absolute_uri(obj.product.main_image.url) if request else obj.product.main_image.url
         return None
+
+class NotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Notification
+        fields = ['id', 'title', 'message', 'type', 'is_read', 'action_url', 'created_at']
+        read_only_fields = ['id', 'created_at']

@@ -12,7 +12,7 @@ from utils.Tasks.UnsetLimitedProduct import unset_limited_product
 from utils.cache_manager import GlobalCache
 from utils.email_sender import send_custom_email
 from utils.enum import CacheKeys, FeatureNames
-from .models import Cart, CartItem, FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ShippingAddress, WatchList
+from .models import Cart, CartItem, FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ShippingAddress, WatchList, Notification
 from utils.telegram_helpers import send_notification
 import textwrap
 
@@ -294,4 +294,17 @@ def handle_featureflag_update(sender, instance, created, **kwargs):
 
     except Exception as e:
         print(f"❌ Error while running feature handler for {feature_name}: {e}")
+        
+
+@receiver([post_save, post_delete], sender=Notification)
+def invalidate_notification_cache(sender, instance, **kwargs):
+    """Invalidate notification cache whenever a notification is saved or deleted."""
+    user_id = instance.user.id
+    
+    # Invalidate both notification caches
+    notifications_cache_key = CacheKeys.format(CacheKeys.USER_NOTIFICATIONS, user_id=user_id)
+    recent_cache_key = CacheKeys.format(CacheKeys.USER_NOTIFICATIONS_RECENT, user_id=user_id)
+    
+    GlobalCache.delete(notifications_cache_key)
+    GlobalCache.delete(recent_cache_key)
         

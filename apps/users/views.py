@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework.throttling import ScopedRateThrottle
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from apps.users.BBL.Commands.ContactFormSubmission import ContactFormSubmissionCommand
 from apps.users.BBL.Commands.MagicLogin import MagicLoginCommand
 from apps.users.BBL.Commands.UpdateUser import UpdateUserCommand
@@ -65,9 +66,14 @@ class SendMagicLinkView(generics.GenericAPIView):
     
     
 class MagicLoginView(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
     
-    def get(self, request, uidb64, token, url_email):
-        return MagicLoginCommand.Execute(uidb64, token, url_email, request=request)
+    def get(self, request):
+        # ✅ Get token and email from query params
+        token = request.query_params.get('token') or request.GET.get('token')
+        email = request.query_params.get('email') or request.GET.get('email')
+        return MagicLoginCommand.Execute(token, email, request=request)
     
     
 

@@ -71,6 +71,7 @@ class UserOrderListView(generics.ListAPIView):
     
     
 class OrderDetailView(generics.RetrieveAPIView):
+    queryset = Order.objects.all()
     serializer_class = OrderDetailSerializer
     permission_classes = [IsAuthenticated, IsCustomerPermission]
     # swagger_schema = TaggedAutoSchema
@@ -387,6 +388,8 @@ class AddRecentSearchView(APIView):
 
 class RecentSearchListView(generics.ListAPIView):
     """Get all recent searches for the authenticated user"""
+    queryset = RecentSearch.objects.all()
+    serializer_class = RecentSearchSerializer
     authentication_classes = [OptionalJWTAuthentication]
     permission_classes = [AllowAny]
 
@@ -436,4 +439,61 @@ class RecoverFailedOrderView(APIView):
         Retry processing a failed order
         """
         result = RecoverFailedOrderCommand.execute(request.user, order_id)
+        return Response(result.to_dict(), status=result.status_code)
+
+class NotificationListView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from apps.aso.BBL.Queries.NotificationList import NotificationListQuery
+        result = NotificationListQuery.Execute(request.user, request)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+
+class MarkNotificationReadView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request, notification_id):
+        from apps.aso.BBL.Commands.MarkNotificationRead import MarkNotificationReadCommand
+        result = MarkNotificationReadCommand.Execute(request.user, notification_id)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class DeleteNotificationView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, notification_id):
+        from apps.aso.BBL.Commands.DeleteNotification import DeleteNotificationCommand
+        result = DeleteNotificationCommand.Execute(request.user, notification_id)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class RecentNotificationsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        from apps.aso.BBL.Queries.RecentNotificationsList import RecentNotificationsListQuery
+        result = RecentNotificationsListQuery.Execute(request.user)
+        return Response(result.to_dict(), status=result.status_code)
+    
+
+
+
+class MarkAllNotificationsReadView(APIView):
+    """
+    Mark all unread notifications as read for the authenticated user.
+    
+    PUT /user/notifications/mark-all-read/
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def put(self, request):
+        from apps.aso.BBL.Commands.MarkAllNotificationsRead import MarkAllNotificationsReadCommand
+        result = MarkAllNotificationsReadCommand.Execute(request.user)
         return Response(result.to_dict(), status=result.status_code)

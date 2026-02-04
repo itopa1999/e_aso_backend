@@ -10,7 +10,7 @@ from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.aso.deliveryFee import DELIVERY_FEES
 from utils.base_model import BaseModel
-from utils.enum import FeatureNames, PaymentStatus
+from utils.enum import FeatureNames, PaymentStatus, NotificationType
 from django.contrib.postgres.indexes import Index
 from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFont
@@ -582,3 +582,21 @@ class FeatureFlag(BaseModel):
         # Ensure validation runs before saving
         self.full_clean()
         super().save(*args, **kwargs)
+
+class Notification(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    type = models.CharField(max_length=20, choices=NotificationType.choices(), default=NotificationType.SYSTEM.value)
+    is_read = models.BooleanField(default=False, db_index=True)
+    action_url = models.URLField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['user', 'is_read']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.user.email}"

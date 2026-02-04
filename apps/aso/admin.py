@@ -3,7 +3,7 @@ from django.utils.html import format_html
 from .models import (
     Cart, CartItem, FeatureFlag, Order, OrderFeedBack, OrderItem, OrderReturn, 
     OrderTracking, PaymentDetail, Product, ProductColor, ProductSize, 
-    ProductDetail, ProductImage, LookUp, ShippingAddress, WatchList, RecentSearch
+    ProductDetail, ProductImage, LookUp, ShippingAddress, WatchList, RecentSearch, Notification
 )
 
 
@@ -365,3 +365,28 @@ class FeatureFlagAdmin(admin.ModelAdmin):
             return format_html('<span style="color: green;">✓</span> Enabled')
         return format_html('<span style="color: red;">✗</span> Disabled')
     enabled_status.short_description = "Status"
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("id", "user_email", "title", "type", "is_read", "created_at")
+    list_filter = ("type", "is_read", "created_at")
+    search_fields = ("user__email", "title", "message")
+    readonly_fields = ("id", "created_at", "modified_at", "created_by", "modified_by", "deleted_at", "deleted_by")
+    
+    fieldsets = (
+        ("Notification Information", {
+            "fields": ("user", "title", "message", "type", "action_url")
+        }),
+        ("Status", {
+            "fields": ("is_read",)
+        }),
+        ("Base Model Info", {
+            "fields": ("id", "created_at", "modified_at", "created_by", "modified_by", "deleted_at", "deleted_by"),
+            "classes": ("collapse",)
+        }),
+    )
+    
+    def user_email(self, obj):
+        return obj.user.email
+    user_email.short_description = "User Email"
