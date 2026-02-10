@@ -27,6 +27,7 @@ app.conf.imports = (
     'utils.Tasks.Emails.EmailForFeedback',
     'utils.Tasks.Emails.EmailRemiderForAbadonnedCart',
     'utils.Tasks.process_order',
+    'utils.Tasks.notifications',
     'utils.Tasks.scheduled_tasks',
     'utils.email_sender',
     'utils.telegram_helpers',

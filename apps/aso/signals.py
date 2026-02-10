@@ -77,6 +77,15 @@ def send_tracking_update_email(sender, instance, created, **kwargs):
                 message=telegram_message,
                 chat_id=user.telegram_user_chat_id
             )
+        
+        # --- Create In-App Notification ---
+        from utils.NotificationHelper import NotificationHelper
+        NotificationHelper.create_order_update_notification(
+            user=user,
+            order=order,
+            status=instance.status,
+            description=instance.description
+        )
                 
 @receiver(pre_save, sender=OrderTracking)
 def enforce_order_tracking_rules(sender, instance, **kwargs):

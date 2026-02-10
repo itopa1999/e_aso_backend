@@ -27,7 +27,7 @@ class NotificationListQuery:
         notifications = Notification.objects.filter(user=user).order_by('-created_at')
         
         paginator = PageNumberPagination()
-        paginator.page_size = 10
+        paginator.page_size = 100
         
         paginated_notifs = paginator.paginate_queryset(notifications, request)
         serializer = NotificationSerializer(paginated_notifs, many=True)
