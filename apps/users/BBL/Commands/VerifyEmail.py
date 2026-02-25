@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.utils.http import urlsafe_base64_decode
 from django.shortcuts import get_object_or_404, redirect
-from urllib.parse import urlencode
 from apps.users.models import User, UserVerification
 from rest_framework_simplejwt.tokens import RefreshToken
 from utils.log_helpers import OperationLogger
@@ -37,19 +36,52 @@ class VerifyEmailCommand:
         verification.save()
         op.success(f"Email verified for user {user.id}")
         
+        # Generate JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = str(refresh.access_token)
+        refresh_token = str(refresh)
 
-        group_names = ", ".join(user.groups.values_list('name', flat=True))
+        group_names = ",".join(user.groups.values_list('name', flat=True))
 
-        # Build redirect with query params
-        params = urlencode({
-            "access": access_token,
-            "refresh": str(refresh),
-            "email": user.email,
-            "name": user.first_name,
-            "group": group_names
-        })
-
-        return redirect(f"{settings.BASE_URL}/index.html?{params}")
+        # Create response and set cookies - redirect to clean index.html without query params
+        response = redirect(f"{settings.BASE_URL}/index.html")
+        
+        response.set_cookie(
+            'access', 
+            value=access_token, 
+            max_age=3600,  # 1 hour
+            path='/', 
+            samesite='Lax',
+        )
+        response.set_cookie(
+            'refresh', 
+            value=refresh_token, 
+            max_age=2592000,  # 30 days
+            path='/', 
+            samesite='Lax',
+        )
+        response.set_cookie(
+            'email', 
+            value=user.email, 
+            max_age=2592000, 
+            path='/', 
+            samesite='Lax',
+        )
+        response.set_cookie(
+            'name', 
+            value=user.first_name or user.get_full_name() or 'User', 
+            max_age=2592000, 
+            path='/', 
+            samesite='Lax',
+        )
+        response.set_cookie(
+            'group', 
+            value=group_names, 
+            max_age=2592000, 
+            path='/', 
+            samesite='Lax',
+        )
+        
+        op.success(f"Cookies set and redirecting to index for user {user.id}")
+        return response
 

@@ -62,6 +62,7 @@ class MagicLoginCommand:
         group_names = ",".join(user.groups.values_list("name", flat=True))
         
         # ✅ Create response and set cookies
+        # Redirect to index.html without query params - cookies handle auth
         response = redirect(f"{settings.BASE_URL}/index.html")
         
         response.set_cookie(

@@ -1,5 +1,7 @@
 from http import HTTPStatus
 from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 import secrets
 from apps.users.models import User, UserVerification, MagicLoginToken
 from apps.users.serializers import RegUserSerializer
