@@ -1,0 +1,7 @@
+to lauch this in a new env
+
+- create new featureFlag background task 
+- check redis and celery worker running
+- check if bot.py is running as well please
+- hero banner firstly
+- add products

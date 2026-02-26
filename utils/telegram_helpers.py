@@ -87,7 +87,8 @@ def send_product(product_id: int) -> bool:
                 {
                     "inline_keyboard": [
                         [
-                            {"text": "✅ View details", "url": link},
+                            {"text": "📋 View Full Details", "callback_data": f"details_{product_id}"},
+                            {"text": "🛒 Order Now", "callback_data": f"place_order_{product_id}"},
                         ]
                     ]
                 }

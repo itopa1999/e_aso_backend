@@ -38,9 +38,10 @@ async def handle_list_products(query, page="1"):
         await query.message.reply_text("Navigate pages:", reply_markup=InlineKeyboardMarkup([pagination_buttons]))
 
 
-async def handle_product_details(query, product_id):
+async def handle_product_details(query, product_id, user_id=None, context=None):
     """
     Handle product details view.
+    Sends details to user's private DM for privacy if context and user_id provided.
     """
     resp = await sync_to_async(requests.get)(f"{ASO_URL}/{product_id}/")
     product = resp.json()
@@ -75,4 +76,37 @@ async def handle_product_details(query, product_id):
 {details_text}
     """
     buttons = [[InlineKeyboardButton("🛒 Order Now", callback_data=f"place_order_{product_id}")]]
-    await send_product_photo(query, product, text, buttons)
+    
+    # Send to private DM if context and user_id provided, otherwise reply in channel
+    if context and user_id:
+        from telegram import InlineKeyboardMarkup
+        
+        # Send product image to DM
+        image_url = product.get("main_image")
+        if image_url:
+            # Handle both full URLs and relative paths
+            if not image_url.startswith("http"):
+                image_url = f"{ASO_URL.rsplit('/', 1)[0]}{image_url}"
+            
+            await context.bot.send_photo(
+                chat_id=user_id,
+                photo=image_url,
+                caption=text,
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        else:
+            # Send as text if no image
+            await context.bot.send_message(
+                chat_id=user_id,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+        
+        # Notify user in channel only if they're NOT already in DM
+        if query.message.chat.type != 'private':
+            await query.message.reply_text("📨 Product details sent to your private messages! Check your DM.")
+    else:
+        # Fallback to channel reply for backward compatibility
+        await send_product_photo(query, product, text, buttons)

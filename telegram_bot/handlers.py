@@ -336,7 +336,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif choice.startswith("details_"):
         product_id = choice.split("_")[1]
-        await handle_product_details(query, product_id)
+        await handle_product_details(query, product_id, user_id, context)
 
     # Categories Handlers
     elif choice == "list_categories":
@@ -363,7 +363,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # orders Handlers
     elif choice.startswith("place_order"):
         product_id = choice.split("_")[2]
-        await item_order_handler(query, user_id, product_id)
+        await item_order_handler(query, user_id, product_id, context)
         
     elif choice.startswith("start_shipping_"):
         product_id = choice.split("_")[2]

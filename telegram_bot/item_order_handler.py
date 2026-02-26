@@ -8,9 +8,10 @@ from .config import ASO_URL
 from .utils import check_authentication, handle_auth_error
 from apps.users.models import User
 
-async def item_order_handler(query, user_id, product_id):
+async def item_order_handler(query, user_id, product_id, context=None):
     """
     Handle item order button press.
+    Sends order flow to user's private DM for privacy if context provided.
     """
     token, headers = await check_authentication(query, user_id)
     if not token:
@@ -36,7 +37,20 @@ async def item_order_handler(query, user_id, product_id):
     buttons = [[InlineKeyboardButton("✅ Okay, proceed", callback_data=f"start_shipping_{product_id}")]]
     reply_markup = InlineKeyboardMarkup(buttons)
 
-    await query.message.reply_text(info_text, reply_markup=reply_markup)
+    # Send to private DM if context provided, otherwise reply in channel
+    if context:
+        await context.bot.send_message(
+            chat_id=user_id,
+            text=info_text,
+            reply_markup=reply_markup
+        )
+        
+        # Notify user in channel only if they're NOT already in DM
+        if query.message.chat.type != 'private':
+            await query.message.reply_text("🛒 Continue ordering in your private messages!")
+    else:
+        # Fallback to channel reply for backward compatibility
+        await query.message.reply_text(info_text, reply_markup=reply_markup)
 
     
 

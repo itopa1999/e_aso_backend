@@ -1,0 +1,1251 @@
+[
+  {
+    "title": "Men's Classic White T-Shirt",
+    "badge": "Best Seller",
+    "description": "Soft cotton round-neck t-shirt for everyday comfort.",
+    "original_price": "25.00",
+    "discount_percent": 10,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Clothing", "Men", "T-Shirts"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}, {"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Made from 100% cotton."},
+      {"tab": "shipping", "content": "Free delivery for orders above $50."}
+    ]
+  },
+  {
+    "title": "Women's Floral Summer Dress",
+    "badge": "New",
+    "description": "Lightweight floral dress perfect for summer outings.",
+    "original_price": "55.00",
+    "rating": 3.8,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Dresses"],
+    "sizes": ["S", "M", "L"],
+    "colors": [{"name": "Floral Pink", "hex": "#FFB6C1"}],
+    "details": [
+      {"tab": "description", "content": "Floral print with breathable fabric."},
+      {"tab": "details", "content": "Machine washable, lightweight cotton."}
+    ]
+  },
+  {
+    "title": "Bluetooth Wireless Earbuds",
+    "badge": "Limited",
+    "description": "Noise-cancelling Bluetooth 5.0 earbuds with charging case.",
+    "original_price": "80.00",
+    "discount_percent": 20,
+    "rating": 3.5,
+    "display_product": true,
+    "category": ["Electronics", "Audio", "Accessories"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "Battery life up to 24 hours."},
+      {"tab": "shipping", "content": "Ships within 3 business days."}
+    ]
+  },
+  {
+    "title": "Stainless Steel Water Bottle",
+    "badge": "Best Seller",
+    "description": "Double-wall vacuum insulated water bottle.",
+    "original_price": "30.00",
+    "rating": 4.8,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Drinkware"],
+    "sizes": ["500ml", "1L"],
+    "colors": [{"name": "Silver", "hex": "#C0C0C0"}],
+    "details": [
+      {"tab": "description", "content": "Keeps drinks cold for 12 hours."},
+      {"tab": "shipping", "content": "Ships within 2 days."}
+    ]
+  },
+  {
+    "title": "Kids' Cartoon Backpack",
+    "badge": "New",
+    "description": "Durable backpack with cartoon design for kids.",
+    "original_price": "40.00",
+    "discount_percent": 10,
+    "rating": 4.0,
+    "display_product": true,
+    "category": ["Accessories", "Kids", "Bags"],
+    "sizes": ["Small", "Medium"],
+    "colors": [{"name": "Blue", "hex": "#1E90FF"}],
+    "details": [
+      {"tab": "description", "content": "Multiple compartments for storage."},
+      {"tab": "shipping", "content": "Ships next day."}
+    ]
+  },
+  {
+    "title": "Leather Office Chair",
+    "badge": "Limited",
+    "description": "Ergonomic leather chair for long working hours.",
+    "original_price": "220.00",
+    "discount_percent": 25,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Furniture", "Office", "Seating"],
+    "sizes": [],
+    "colors": [{"name": "Brown", "hex": "#8B4513"}],
+    "details": [
+      {"tab": "description", "content": "Adjustable height and tilt."},
+      {"tab": "details", "content": "Made from genuine leather."}
+    ]
+  },
+  {
+    "title": "Smart LED Bulb",
+    "badge": "New",
+    "description": "Wi-Fi enabled smart bulb with RGB lighting.",
+    "original_price": "18.00",
+    "discount_percent": 10,
+    "rating": 3.0,
+    "display_product": true,
+    "category": ["Electronics", "Lighting", "Smart Home"],
+    "sizes": [],
+    "colors": [{"name": "Multi-color", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "details", "content": "Compatible with Alexa and Google Home."}
+    ]
+  },
+  {
+    "title": "Men's Running Sneakers",
+    "badge": "Best Seller",
+    "description": "Lightweight and comfortable sneakers for runners.",
+    "original_price": "90.00",
+    "discount_percent": 15,
+    "rating": 4.6,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Footwear"],
+    "sizes": ["40", "41", "42", "43", "44"],
+    "colors": [{"name": "Gray", "hex": "#808080"}],
+    "details": [
+      {"tab": "description", "content": "Shock absorbing sole."},
+      {"tab": "shipping", "content": "Free shipping on all sneakers."}
+    ]
+  },
+  {
+    "title": "Women's Handbag",
+    "badge": "Limited",
+    "description": "Elegant leather handbag for everyday use.",
+    "original_price": "120.00",
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Accessories", "Women", "Bags"],
+    "sizes": [],
+    "colors": [{"name": "Beige", "hex": "#F5F5DC"}],
+    "details": [
+      {"tab": "description", "content": "Includes detachable shoulder strap."},
+      {"tab": "details", "content": "Zipper closure and inner pockets."}
+    ]
+  },
+  {
+    "title": "Wireless Gaming Mouse",
+    "badge": "New",
+    "description": "High precision mouse with RGB lights and fast response.",
+    "original_price": "50.00",
+    "discount_percent": 10,
+    "rating": 3.2,
+    "display_product": true,
+    "category": ["Electronics", "Gaming", "Accessories"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "Rechargeable via USB-C."}
+    ]
+  },
+  {
+    "title": "Kitchen Knife Set",
+    "badge": "Best Seller",
+    "description": "Professional 5-piece stainless steel kitchen knife set.",
+    "original_price": "75.00",
+    "discount_percent": 12,
+    "rating": 4.7,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Tools"],
+    "sizes": [],
+    "colors": [{"name": "Silver", "hex": "#C0C0C0"}],
+    "details": [
+      {"tab": "shipping", "content": "Free shipping nationwide."}
+    ]
+  },
+  {
+    "title": "Men's Denim Jeans",
+    "badge": "New",
+    "description": "Stylish stretch denim jeans for men.",
+    "original_price": "60.00",
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Jeans"],
+    "sizes": ["30", "32", "34", "36"],
+    "colors": [{"name": "Blue", "hex": "#0000FF"}],
+    "details": [
+      {"tab": "description", "content": "Slim fit with stretch fabric."},
+      {"tab": "shipping", "content": "Delivered in 2–4 days."}
+    ]
+  },
+  {
+    "title": "Women's Sports Bra",
+    "badge": "Limited",
+    "description": "Comfortable and breathable sports bra for workouts.",
+    "original_price": "30.00",
+    "discount_percent": 10,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Sportswear"],
+    "sizes": ["S", "M", "L"],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Moisture-wicking material."}
+    ]
+  },
+  {
+    "title": "Ceramic Coffee Mug",
+    "badge": "Best Seller",
+    "description": "Durable mug with elegant matte finish.",
+    "original_price": "15.00",
+    "discount_percent": 5,
+    "rating": 4.6,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Drinkware"],
+    "sizes": ["250ml", "500ml"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "shipping", "content": "Ships within 24 hours."}
+    ]
+  },
+  {
+    "title": "Bluetooth Speaker",
+    "badge": "Limited",
+    "description": "Portable Bluetooth speaker with deep bass.",
+    "original_price": "70.00",
+    "discount_percent": 20,
+    "rating": 3.9,
+    "display_product": true,
+    "category": ["Electronics", "Audio", "Speakers"],
+    "sizes": [],
+    "colors": [{"name": "Red", "hex": "#FF0000"}],
+    "details": [
+      {"tab": "details", "content": "Battery life up to 12 hours."}
+    ]
+  },
+  {
+    "title": "Kids' Sneakers",
+    "badge": "New",
+    "description": "Comfortable sneakers for kids' daily activities.",
+    "original_price": "45.00",
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Clothing", "Kids", "Footwear"],
+    "sizes": ["28", "30", "32", "34"],
+    "colors": [{"name": "Pink", "hex": "#FFC0CB"}],
+    "details": [
+      {"tab": "description", "content": "Soft sole with secure grip."}
+    ]
+  },
+  {
+    "title": "Wireless Keyboard",
+    "badge": "Best Seller",
+    "description": "Compact wireless keyboard with silent keys.",
+    "original_price": "40.00",
+    "discount_percent": 10,
+    "rating": 4.6,
+    "display_product": true,
+    "category": ["Electronics", "Accessories", "Office"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "Compatible with Windows and Mac."}
+    ]
+  },
+  {
+    "title": "Men's Leather Wallet",
+    "badge": "Limited",
+    "description": "Slim wallet with multiple compartments for cards and cash.",
+    "original_price": "50.00",
+    "discount_percent": 10,
+    "rating": 4.8,
+    "display_product": true,
+    "category": ["Accessories", "Men", "Wallets"],
+    "sizes": [],
+    "colors": [{"name": "Brown", "hex": "#8B4513"}],
+    "details": [
+      {"tab": "details", "content": "Genuine leather with RFID protection."}
+    ]
+  },
+  {
+    "title": "Women's Yoga Pants",
+    "badge": "New",
+    "description": "Stretchy and breathable yoga pants for workouts.",
+    "original_price": "45.00",
+    "discount_percent": 15,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Sportswear"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Gray", "hex": "#808080"}],
+    "details": [
+      {"tab": "description", "content": "High waist with comfort fit."}
+    ]
+  },
+  {
+    "title": "Gaming Headset",
+    "badge": "Best Seller",
+    "description": "Surround sound gaming headset with noise-cancelling mic.",
+    "original_price": "85.00",
+    "discount_percent": 20,
+    "rating": 4.7,
+    "display_product": true,
+    "category": ["Electronics", "Gaming", "Audio"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "LED lighting with adjustable headband."},
+      {"tab": "shipping", "content": "Ships within 3 business days."}
+    ]
+  },
+  {
+    "title": "Women's Winter Coat",
+    "badge": "New",
+    "description": "Warm and stylish winter coat with waterproof material.",
+    "original_price": "150.00",
+    "discount_percent": 20,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Outerwear"],
+    "sizes": ["XS", "S", "M", "L", "XL"],
+    "colors": [{"name": "Black", "hex": "#000000"}, {"name": "Navy", "hex": "#000080"}],
+    "details": [
+      {"tab": "description", "content": "100% waterproof exterior."},
+      {"tab": "details", "content": "Insulated with thermal lining."}
+    ]
+  },
+  {
+    "title": "Men's Formal Shirt",
+    "badge": "Best Seller",
+    "description": "Premium cotton formal shirt for business wear.",
+    "original_price": "65.00",
+    "discount_percent": 15,
+    "rating": 4.6,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Formal"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}, {"name": "Light Blue", "hex": "#ADD8E6"}],
+    "details": [
+      {"tab": "description", "content": "Wrinkle-resistant fabric."},
+      {"tab": "shipping", "content": "Free ironing service."}
+    ]
+  },
+  {
+    "title": "Kids' Educational Toy Set",
+    "badge": "Limited",
+    "description": "Interactive toy set for learning and development.",
+    "original_price": "35.00",
+    "discount_percent": 10,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Kids", "Toys", "Educational"],
+    "sizes": [],
+    "colors": [{"name": "Multicolor", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Safe and non-toxic materials."},
+      {"tab": "details", "content": "Suitable for ages 3+."}
+    ]
+  },
+  {
+    "title": "Portable Phone Charger",
+    "badge": "New",
+    "description": "Fast charging power bank with dual USB ports.",
+    "original_price": "28.00",
+    "discount_percent": 15,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Electronics", "Accessories", "Mobile"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}, {"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "details", "content": "20000mAh capacity."},
+      {"tab": "shipping", "content": "Express shipping available."}
+    ]
+  },
+  {
+    "title": "Women's Sunglasses",
+    "badge": "Best Seller",
+    "description": "Stylish UV protection sunglasses with polarized lenses.",
+    "original_price": "55.00",
+    "discount_percent": 20,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Accessories", "Women", "Eyewear"],
+    "sizes": [],
+    "colors": [{"name": "Dark Brown", "hex": "#654321"}],
+    "details": [
+      {"tab": "description", "content": "100% UV protection."},
+      {"tab": "details", "content": "Includes protective case."}
+    ]
+  },
+  {
+    "title": "Men's Running Watch",
+    "badge": "Limited",
+    "description": "Advanced fitness tracking running watch with GPS.",
+    "original_price": "120.00",
+    "discount_percent": 10,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Accessories", "Men", "Watches"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "Water resistant up to 50m."},
+      {"tab": "shipping", "content": "Ships with free warranty."}
+    ]
+  },
+  {
+    "title": "Desk Lamp with USB Charger",
+    "badge": "New",
+    "description": "Modern desk lamp with integrated USB charging port.",
+    "original_price": "32.00",
+    "discount_percent": 12,
+    "rating": 3.8,
+    "display_product": true,
+    "category": ["Home", "Office", "Lighting"],
+    "sizes": [],
+    "colors": [{"name": "Silver", "hex": "#C0C0C0"}],
+    "details": [
+      {"tab": "description", "content": "LED technology for energy efficiency."},
+      {"tab": "details", "content": "3 brightness levels."}
+    ]
+  },
+  {
+    "title": "Yoga Mat Premium",
+    "badge": "Best Seller",
+    "description": "Non-slip premium yoga mat with carrying strap.",
+    "original_price": "35.00",
+    "discount_percent": 15,
+    "rating": 4.7,
+    "display_product": true,
+    "category": ["Fitness", "Accessories", "Home"],
+    "sizes": ["Small", "Large"],
+    "colors": [{"name": "Purple", "hex": "#800080"}],
+    "details": [
+      {"tab": "description", "content": "6mm thick for comfort."},
+      {"tab": "shipping", "content": "Free delivery nationwide."}
+    ]
+  },
+  {
+    "title": "Coffee Maker Automatic",
+    "badge": "Limited",
+    "description": "Programmable coffee maker with thermal carafe.",
+    "original_price": "65.00",
+    "discount_percent": 20,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Appliances"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Brews up to 12 cups."},
+      {"tab": "details", "content": "Programmable timer."}
+    ]
+  },
+  {
+    "title": "Hair Straightener Professional",
+    "badge": "New",
+    "description": "Ceramic hair straightener with temperature control.",
+    "original_price": "45.00",
+    "discount_percent": 10,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Beauty", "Hair Care", "Accessories"],
+    "sizes": [],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "3 heat settings."},
+      {"tab": "shipping", "content": "Ships with travel case."}
+    ]
+  },
+  {
+    "title": "Kids' Bicycle Helmet",
+    "badge": "Best Seller",
+    "description": "Safety certified kids bicycle helmet with LED light.",
+    "original_price": "40.00",
+    "discount_percent": 15,
+    "rating": 4.6,
+    "display_product": true,
+    "category": ["Kids", "Accessories", "Sports"],
+    "sizes": ["Small", "Medium"],
+    "colors": [{"name": "Blue", "hex": "#1E90FF"}],
+    "details": [
+      {"tab": "description", "content": "Adjustable fit system."},
+      {"tab": "details", "content": "CE certified for safety."}
+    ]
+  },
+  {
+    "title": "Women's Athletic Shoes",
+    "badge": "Limited",
+    "description": "Lightweight athletic shoes for gym and training.",
+    "original_price": "75.00",
+    "discount_percent": 20,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Footwear"],
+    "sizes": ["35", "36", "37", "38", "39", "40"],
+    "colors": [{"name": "Pink", "hex": "#FFC0CB"}],
+    "details": [
+      {"tab": "description", "content": "Breathable mesh upper."},
+      {"tab": "shipping", "content": "Free returns within 30 days."}
+    ]
+  },
+  {
+    "title": "USB-C Charging Cable",
+    "badge": "New",
+    "description": "Durable USB-C charging cable with fast charging support.",
+    "original_price": "12.00",
+    "discount_percent": 10,
+    "rating": 4.1,
+    "display_product": true,
+    "category": ["Electronics", "Accessories", "Mobile"],
+    "sizes": ["1m", "2m"],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Supports up to 100W charging."},
+      {"tab": "shipping", "content": "2-year warranty."}
+    ]
+  },
+  {
+    "title": "Reading Lamp LED",
+    "badge": "Best Seller",
+    "description": "Adjustable LED reading lamp with touch control.",
+    "original_price": "28.00",
+    "discount_percent": 12,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Home", "Office", "Lighting"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "5 brightness levels."},
+      {"tab": "details", "content": "Flexible gooseneck."}
+    ]
+  },
+  {
+    "title": "Men's Casual Sneakers",
+    "badge": "Limited",
+    "description": "Comfortable casual sneakers for everyday wear.",
+    "original_price": "55.00",
+    "discount_percent": 15,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Footwear"],
+    "sizes": ["40", "41", "42", "43", "44"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Memory foam insole."},
+      {"tab": "shipping", "content": "Ships within 2 days."}
+    ]
+  },
+  {
+    "title": "Phone Screen Protector",
+    "badge": "New",
+    "description": "Tempered glass screen protector with anti-glare.",
+    "original_price": "15.00",
+    "discount_percent": 20,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Electronics", "Accessories", "Mobile"],
+    "sizes": [],
+    "colors": [{"name": "Clear", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "9H hardness rating."},
+      {"tab": "shipping", "content": "Easy installation."}
+    ]
+  },
+  {
+    "title": "Women's Casual Dress",
+    "badge": "Best Seller",
+    "description": "Comfortable casual dress for everyday occasions.",
+    "original_price": "48.00",
+    "discount_percent": 15,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Dresses"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Navy", "hex": "#000080"}],
+    "details": [
+      {"tab": "description", "content": "100% cotton blend."},
+      {"tab": "shipping", "content": "Machine washable."}
+    ]
+  },
+  {
+    "title": "Portable Bluetooth Speaker Mini",
+    "badge": "Limited",
+    "description": "Compact portable Bluetooth speaker with 10 hour battery.",
+    "original_price": "35.00",
+    "discount_percent": 20,
+    "rating": 3.9,
+    "display_product": true,
+    "category": ["Electronics", "Audio", "Speakers"],
+    "sizes": [],
+    "colors": [{"name": "Blue", "hex": "#1E90FF"}],
+    "details": [
+      {"tab": "details", "content": "Waterproof design."},
+      {"tab": "shipping", "content": "Perfect for travel."}
+    ]
+  },
+  {
+    "title": "Fitness Tracker Band",
+    "badge": "New",
+    "description": "Smart fitness tracker with heart rate monitor.",
+    "original_price": "45.00",
+    "discount_percent": 15,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Electronics", "Fitness", "Accessories"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "7-day battery life."},
+      {"tab": "shipping", "content": "Smartphone app included."}
+    ]
+  },
+  {
+    "title": "Kitchen Towel Set",
+    "badge": "Best Seller",
+    "description": "Set of 6 premium kitchen towels with designs.",
+    "original_price": "25.00",
+    "discount_percent": 10,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Textiles"],
+    "sizes": [],
+    "colors": [{"name": "Mixed", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "100% cotton material."},
+      {"tab": "shipping", "content": "Easy care, machine wash."}
+    ]
+  },
+  {
+    "title": "Men's Polo Shirt",
+    "badge": "Limited",
+    "description": "Classic polo shirt with embroidered logo.",
+    "original_price": "38.00",
+    "discount_percent": 12,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Polo"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Black", "hex": "#000000"}, {"name": "Red", "hex": "#FF0000"}],
+    "details": [
+      {"tab": "description", "content": "Breathable cotton fabric."},
+      {"tab": "shipping", "content": "Preshrunk for perfect fit."}
+    ]
+  },
+  {
+    "title": "Laptop Stand Adjustable",
+    "badge": "New",
+    "description": "Adjustable laptop stand for ergonomic workspace.",
+    "original_price": "35.00",
+    "discount_percent": 15,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Electronics", "Office", "Accessories"],
+    "sizes": [],
+    "colors": [{"name": "Silver", "hex": "#C0C0C0"}],
+    "details": [
+      {"tab": "description", "content": "Supports up to 15 inch laptops."},
+      {"tab": "details", "content": "Aluminum construction."}
+    ]
+  },
+  {
+    "title": "Women's Scarf Silk",
+    "badge": "Best Seller",
+    "description": "Luxurious silk scarf with elegant patterns.",
+    "original_price": "45.00",
+    "discount_percent": 20,
+    "rating": 4.6,
+    "display_product": true,
+    "category": ["Accessories", "Women", "Scarves"],
+    "sizes": [],
+    "colors": [{"name": "Red", "hex": "#FF0000"}],
+    "details": [
+      {"tab": "description", "content": "100% premium silk."},
+      {"tab": "shipping", "content": "Hypoallergenic fabric."}
+    ]
+  },
+  {
+    "title": "Kids' Rain Coat",
+    "badge": "Limited",
+    "description": "Waterproof rain coat for kids with fun prints.",
+    "original_price": "32.00",
+    "discount_percent": 15,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Clothing", "Kids", "Outerwear"],
+    "sizes": ["4", "6", "8", "10"],
+    "colors": [{"name": "Yellow", "hex": "#FFFF00"}],
+    "details": [
+      {"tab": "description", "content": "100% waterproof material."},
+      {"tab": "shipping", "content": "Lightweight and comfortable."}
+    ]
+  },
+  {
+    "title": "Webcam Full HD",
+    "badge": "New",
+    "description": "Full HD 1080p webcam with noise-cancelling mic.",
+    "original_price": "55.00",
+    "discount_percent": 15,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Electronics", "Office", "Accessories"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "Auto-focus feature."},
+      {"tab": "shipping", "content": "USB plug and play."}
+    ]
+  },
+  {
+    "title": "Men's Belt Leather",
+    "badge": "Best Seller",
+    "description": "Premium leather belt with metal buckle.",
+    "original_price": "42.00",
+    "discount_percent": 15,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Accessories", "Men", "Belts"],
+    "sizes": ["30", "32", "34", "36"],
+    "colors": [{"name": "Brown", "hex": "#8B4513"}],
+    "details": [
+      {"tab": "description", "content": "Genuine leather material."},
+      {"tab": "shipping", "content": "Adjustable fit."}
+    ]
+  },
+  {
+    "title": "Digital Scale Weight",
+    "badge": "Limited",
+    "description": "Bathroom scale with digital display and body analysis.",
+    "original_price": "35.00",
+    "discount_percent": 20,
+    "rating": 4.1,
+    "display_product": true,
+    "category": ["Home", "Fitness", "Health"],
+    "sizes": [],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "details", "content": "Measures body fat and BMI."},
+      {"tab": "shipping", "content": "App connectivity included."}
+    ]
+  },
+  {
+    "title": "Women's Hair Clip Set",
+    "badge": "New",
+    "description": "Set of 10 stylish hair clips with storage box.",
+    "original_price": "18.00",
+    "discount_percent": 10,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Accessories", "Women", "Hair"],
+    "sizes": [],
+    "colors": [{"name": "Assorted", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Non-slip design."},
+      {"tab": "shipping", "content": "High quality materials."}
+    ]
+  },
+  {
+    "title": "Blender Smoothie Maker",
+    "badge": "Best Seller",
+    "description": "Powerful smoothie blender with multiple speeds.",
+    "original_price": "60.00",
+    "discount_percent": 15,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Appliances"],
+    "sizes": [],
+    "colors": [{"name": "Red", "hex": "#FF0000"}],
+    "details": [
+      {"tab": "description", "content": "1000W power motor."},
+      {"tab": "shipping", "content": "Easy cleaning design."}
+    ]
+  },
+  {
+    "title": "Men's Jacket Bomber",
+    "badge": "Limited",
+    "description": "Stylish bomber jacket with modern design.",
+    "original_price": "85.00",
+    "discount_percent": 20,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Outerwear"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Premium polyester blend."},
+      {"tab": "shipping", "content": "Weather resistant."}
+    ]
+  },
+  {
+    "title": "Phone Case Protective",
+    "badge": "New",
+    "description": "Shockproof phone case with raised edges.",
+    "original_price": "20.00",
+    "discount_percent": 15,
+    "rating": 4.1,
+    "display_product": true,
+    "category": ["Electronics", "Accessories", "Mobile"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Drop protection up to 6ft."},
+      {"tab": "shipping", "content": "Multiple phone models available."}
+    ]
+  },
+  {
+    "title": "Moisturizer Cream Face",
+    "badge": "Best Seller",
+    "description": "Hydrating face moisturizer for all skin types.",
+    "original_price": "32.00",
+    "discount_percent": 10,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Beauty", "Skincare", "Face Care"],
+    "sizes": ["50ml"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Contains natural ingredients."},
+      {"tab": "shipping", "content": "Dermatologist tested."}
+    ]
+  },
+  {
+    "title": "Kids' Cartoon T-Shirt",
+    "badge": "Limited",
+    "description": "Fun cartoon printed t-shirt for kids.",
+    "original_price": "22.00",
+    "discount_percent": 15,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Clothing", "Kids", "T-Shirts"],
+    "sizes": ["4", "6", "8", "10"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "100% cotton fabric."},
+      {"tab": "shipping", "content": "Bright, fade-resistant print."}
+    ]
+  },
+  {
+    "title": "Sunscreen SPF 50",
+    "badge": "New",
+    "description": "Broad spectrum sunscreen with SPF 50 protection.",
+    "original_price": "25.00",
+    "discount_percent": 10,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Beauty", "Skincare", "Sun Care"],
+    "sizes": ["100ml"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Water resistant for 80 minutes."},
+      {"tab": "shipping", "content": "Reef safe formula."}
+    ]
+  },
+  {
+    "title": "Women's Leggings",
+    "badge": "Best Seller",
+    "description": "High-waist leggings with pockets.",
+    "original_price": "42.00",
+    "discount_percent": 15,
+    "rating": 4.6,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Activewear"],
+    "sizes": ["XS", "S", "M", "L", "XL"],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Moisture-wicking fabric."},
+      {"tab": "shipping", "content": "Squat-proof design."}
+    ]
+  },
+  {
+    "title": "Desk Chair Mesh",
+    "badge": "Limited",
+    "description": "Ergonomic mesh office chair for comfort.",
+    "original_price": "150.00",
+    "discount_percent": 25,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Furniture", "Office", "Seating"],
+    "sizes": [],
+    "colors": [{"name": "Gray", "hex": "#808080"}],
+    "details": [
+      {"tab": "description", "content": "Breathable mesh back."},
+      {"tab": "shipping", "content": "Adjustable armrests and height."}
+    ]
+  },
+  {
+    "title": "Shampoo Professional",
+    "badge": "New",
+    "description": "Professional shampoo for healthy hair growth.",
+    "original_price": "18.00",
+    "discount_percent": 10,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Beauty", "Hair Care", "Hair Products"],
+    "sizes": ["250ml", "500ml"],
+    "colors": [{"name": "Brown", "hex": "#8B4513"}],
+    "details": [
+      {"tab": "description", "content": "Sulfate-free formula."},
+      {"tab": "shipping", "content": "Suitable for all hair types."}
+    ]
+  },
+  {
+    "title": "Mirror Makeup Vanity",
+    "badge": "Best Seller",
+    "description": "LED makeup mirror with magnification.",
+    "original_price": "38.00",
+    "discount_percent": 15,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Home", "Beauty", "Accessories"],
+    "sizes": [],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "10x magnification available."},
+      {"tab": "shipping", "content": "Portable and lightweight."}
+    ]
+  },
+  {
+    "title": "Kids' Bicycle 20 Inch",
+    "badge": "Limited",
+    "description": "Sturdy kids bicycle with training wheels.",
+    "original_price": "95.00",
+    "discount_percent": 20,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Kids", "Sports", "Bicycles"],
+    "sizes": [],
+    "colors": [{"name": "Red", "hex": "#FF0000"}],
+    "details": [
+      {"tab": "description", "content": "Safety certified."},
+      {"tab": "shipping", "content": "Assembly required."}
+    ]
+  },
+  {
+    "title": "Men's Shorts Athletic",
+    "badge": "New",
+    "description": "Breathable athletic shorts for sports and gym.",
+    "original_price": "35.00",
+    "discount_percent": 15,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Activewear"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Quick-dry material."},
+      {"tab": "shipping", "content": "Built-in liner."}
+    ]
+  },
+  {
+    "title": "Conditioner Hair",
+    "badge": "Best Seller",
+    "description": "Nourishing hair conditioner for smooth and shiny hair.",
+    "original_price": "16.00",
+    "discount_percent": 10,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Beauty", "Hair Care", "Hair Products"],
+    "sizes": ["250ml", "500ml"],
+    "colors": [{"name": "Brown", "hex": "#8B4513"}],
+    "details": [
+      {"tab": "description", "content": "Paraben-free formula."},
+      {"tab": "shipping", "content": "Deep conditioning treatment."}
+    ]
+  },
+  {
+    "title": "Toaster 4 Slice",
+    "badge": "Limited",
+    "description": "4-slice toaster with multiple browning levels.",
+    "original_price": "45.00",
+    "discount_percent": 15,
+    "rating": 4.1,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Appliances"],
+    "sizes": [],
+    "colors": [{"name": "Stainless Steel", "hex": "#C0C0C0"}],
+    "details": [
+      {"tab": "description", "content": "Adjustable browning levels."},
+      {"tab": "shipping", "content": "Bagel and defrost functions."}
+    ]
+  },
+  {
+    "title": "Headphones Over Ear",
+    "badge": "New",
+    "description": "Premium over-ear headphones with active noise cancellation.",
+    "original_price": "95.00",
+    "discount_percent": 20,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Electronics", "Audio", "Headphones"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "details", "content": "30 hour battery life."},
+      {"tab": "shipping", "content": "Foldable design for portability."}
+    ]
+  },
+  {
+    "title": "Women's Tank Top",
+    "badge": "Best Seller",
+    "description": "Comfortable tank top for casual wear.",
+    "original_price": "20.00",
+    "discount_percent": 15,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Tops"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "100% cotton blend."},
+      {"tab": "shipping", "content": "Machine washable."}
+    ]
+  },
+  {
+    "title": "Men's Sweater Knit",
+    "badge": "Limited",
+    "description": "Cozy knit sweater perfect for fall and winter.",
+    "original_price": "58.00",
+    "discount_percent": 15,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Sweaters"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Navy", "hex": "#000080"}],
+    "details": [
+      {"tab": "description", "content": "100% acrylic blend."},
+      {"tab": "shipping", "content": "Comfortable fit."}
+    ]
+  },
+  {
+    "title": "Moisturizing Lip Balm",
+    "badge": "New",
+    "description": "SPF 30 lip balm with natural ingredients.",
+    "original_price": "8.00",
+    "discount_percent": 10,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Beauty", "Skincare", "Lip Care"],
+    "sizes": [],
+    "colors": [{"name": "Natural", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Hydrating formula."},
+      {"tab": "shipping", "content": "SPF protection included."}
+    ]
+  },
+  {
+    "title": "Nightstand Table",
+    "badge": "Best Seller",
+    "description": "Modern nightstand with drawer storage.",
+    "original_price": "75.00",
+    "discount_percent": 15,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Furniture", "Bedroom", "Tables"],
+    "sizes": [],
+    "colors": [{"name": "Walnut", "hex": "#654321"}],
+    "details": [
+      {"tab": "description", "content": "Compact design."},
+      {"tab": "shipping", "content": "Easy assembly."}
+    ]
+  },
+  {
+    "title": "Kids' Lunch Box",
+    "badge": "Limited",
+    "description": "Insulated lunch box with compartments for kids.",
+    "original_price": "28.00",
+    "discount_percent": 10,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Kids", "Accessories", "School"],
+    "sizes": [],
+    "colors": [{"name": "Blue", "hex": "#1E90FF"}],
+    "details": [
+      {"tab": "description", "content": "Keeps food fresh for hours."},
+      {"tab": "shipping", "content": "Waterproof lining."}
+    ]
+  },
+  {
+    "title": "Women's Flip Flops",
+    "badge": "New",
+    "description": "Comfortable flip flops with cushioned sole.",
+    "original_price": "18.00",
+    "discount_percent": 15,
+    "rating": 4.1,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Footwear"],
+    "sizes": ["5", "6", "7", "8", "9", "10"],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Non-slip sole."},
+      {"tab": "shipping", "content": "Lightweight design."}
+    ]
+  },
+  {
+    "title": "Printer Inkjet Wireless",
+    "badge": "Best Seller",
+    "description": "Wireless inkjet printer with color printing.",
+    "original_price": "120.00",
+    "discount_percent": 20,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Electronics", "Office", "Printers"],
+    "sizes": [],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "details", "content": "Print speed up to 15 pages per minute."},
+      {"tab": "shipping", "content": "Mobile printing support."}
+    ]
+  },
+  {
+    "title": "Men's Boxer Shorts Set",
+    "badge": "Limited",
+    "description": "Comfortable boxer shorts set of 3 pieces.",
+    "original_price": "32.00",
+    "discount_percent": 15,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Underwear"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Multi", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "100% cotton fabric."},
+      {"tab": "shipping", "content": "Breathable and comfortable."}
+    ]
+  },
+  {
+    "title": "Body Lotion Moisturizing",
+    "badge": "New",
+    "description": "Hydrating body lotion for soft and smooth skin.",
+    "original_price": "22.00",
+    "discount_percent": 10,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Beauty", "Skincare", "Body Care"],
+    "sizes": ["200ml", "400ml"],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Non-greasy formula."},
+      {"tab": "shipping", "content": "Suitable for all skin types."}
+    ]
+  },
+  {
+    "title": "Desk Organizer Set",
+    "badge": "Best Seller",
+    "description": "5-piece desk organizer for office organization.",
+    "original_price": "35.00",
+    "discount_percent": 15,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Home", "Office", "Organization"],
+    "sizes": [],
+    "colors": [{"name": "Black", "hex": "#000000"}],
+    "details": [
+      {"tab": "description", "content": "Premium plastic material."},
+      {"tab": "shipping", "content": "Easy assembly."}
+    ]
+  },
+  {
+    "title": "Women's Hoodie Sweatshirt",
+    "badge": "Limited",
+    "description": "Cozy hoodie sweatshirt for casual wear.",
+    "original_price": "48.00",
+    "discount_percent": 20,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Clothing", "Women", "Sweatshirts"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Gray", "hex": "#808080"}],
+    "details": [
+      {"tab": "description", "content": "Soft cotton blend."},
+      {"tab": "shipping", "content": "Kangaroo pocket."}
+    ]
+  },
+  {
+    "title": "Electric Kettle Fast Boil",
+    "badge": "New",
+    "description": "Electric kettle with fast boiling technology.",
+    "original_price": "32.00",
+    "discount_percent": 15,
+    "rating": 4.1,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Appliances"],
+    "sizes": [],
+    "colors": [{"name": "Stainless Steel", "hex": "#C0C0C0"}],
+    "details": [
+      {"tab": "description", "content": "Boils in under 3 minutes."},
+      {"tab": "shipping", "content": "Auto shut-off feature."}
+    ]
+  },
+  {
+    "title": "Kids' Dress Princess Style",
+    "badge": "Best Seller",
+    "description": "Princess style dress for special occasions.",
+    "original_price": "52.00",
+    "discount_percent": 10,
+    "rating": 4.4,
+    "display_product": true,
+    "category": ["Clothing", "Kids", "Dresses"],
+    "sizes": ["4", "6", "8", "10"],
+    "colors": [{"name": "Pink", "hex": "#FFC0CB"}],
+    "details": [
+      {"tab": "description", "content": "Beautiful floral design."},
+      {"tab": "shipping", "content": "Perfect for parties."}
+    ]
+  },
+  {
+    "title": "Men's Casual Shirt",
+    "badge": "Limited",
+    "description": "Casual button-up shirt for relaxed occasions.",
+    "original_price": "45.00",
+    "discount_percent": 15,
+    "rating": 4.3,
+    "display_product": true,
+    "category": ["Clothing", "Men", "Casual"],
+    "sizes": ["S", "M", "L", "XL"],
+    "colors": [{"name": "Blue", "hex": "#0000FF"}],
+    "details": [
+      {"tab": "description", "content": "Wrinkle-free fabric."},
+      {"tab": "shipping", "content": "Easy to care for."}
+    ]
+  },
+  {
+    "title": "Bath Bomb Set",
+    "badge": "New",
+    "description": "Set of 6 natural bath bombs with essential oils.",
+    "original_price": "28.00",
+    "discount_percent": 10,
+    "rating": 4.5,
+    "display_product": true,
+    "category": ["Beauty", "Bath", "Personal Care"],
+    "sizes": [],
+    "colors": [{"name": "Assorted", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Natural ingredients."},
+      {"tab": "shipping", "content": "Relaxing aromatherapy."}
+    ]
+  },
+  {
+    "title": "Serving Bowl Set",
+    "badge": "Best Seller",
+    "description": "Set of 3 ceramic serving bowls.",
+    "original_price": "38.00",
+    "discount_percent": 15,
+    "rating": 4.2,
+    "display_product": true,
+    "category": ["Home", "Kitchen", "Dinnerware"],
+    "sizes": [],
+    "colors": [{"name": "White", "hex": "#FFFFFF"}],
+    "details": [
+      {"tab": "description", "content": "Microwave and dishwasher safe."},
+      {"tab": "shipping", "content": "Modern design."}
+    ]
+  }
+]
