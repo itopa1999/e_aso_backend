@@ -18,17 +18,28 @@ class AdminVerifyOtpCommand:
         
         # Logic to verify the OTP token for the given email
         try:
-            user = User.objects.get(email=email, is_deleted = False)
-            verification = UserVerification.objects.get(user=user, is_deleted = False)
-        except (User.DoesNotExist, UserVerification.DoesNotExist):
-            op.fail(f"User or verification record not found for {email}")
+            user = User.objects.get(email=email, is_deleted=False)
+            # Use filter().first() to handle soft deletes properly
+            verification = UserVerification.objects.filter(user=user, is_deleted=False).first()
+            
+            if not verification:
+                op.fail(f"Verification record not found for {email}")
+                return BaseResultWithData(
+                    data=None,
+                    status_code=HTTPStatus.BAD_REQUEST,
+                    message="User or verification record not found"
+                )
+        except User.DoesNotExist:
+            op.fail(f"User not found for {email}")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,
                 message="User or verification record not found"
             )
+        
         if verification.token != token:
-            op.fail(f"Invalid token for {email}")
+            # Debug: Log the actual values being compared
+            op.fail(f"Invalid token for {email} | Stored: '{verification.token}' (type: {type(verification.token).__name__}) | Received: '{token}' (type: {type(token).__name__})")
             return BaseResultWithData(
                 data=None,
                 status_code=HTTPStatus.BAD_REQUEST,

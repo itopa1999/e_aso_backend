@@ -26,14 +26,11 @@ class ResendOtpCommand:
                 message="User with this email does not exist"
             )
 
-        verification, created = UserVerification.objects.get_or_create(user=user, is_deleted = False)
-
-        # if not verification.is_token_expired():
-        #     return BaseResult(
-        #         status_code=HTTPStatus.BAD_REQUEST,
-        #         message="Otp still valid. Please use the existing code"
-        #     )
-
+        # Get or create verification record - only use 'user' as lookup parameter
+        verification, created = UserVerification.objects.get_or_create(user=user)
+        
+        # Mark as not verified when regenerating token (to allow re-verification)
+        verification.is_verified = False
         verification.generate_token()
         verification.save()
         

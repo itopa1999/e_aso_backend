@@ -38,7 +38,8 @@ class SendOtpCommand:
                 message="Order is not currently in transit, OTP cannot be sent.")
 
         user = order.user
-        verification, _ = UserVerification.objects.get_or_create(user=user, is_deleted=False)
+        # Use get_or_create with only user parameter
+        verification, _ = UserVerification.objects.get_or_create(user=user)
         verification.token = str(random.randint(100000, 999999))
         verification.created_at = timezone.now()
         verification.is_verified = False

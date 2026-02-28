@@ -79,8 +79,9 @@ class ResendVerificationEmailCommand:
                     status_code=HTTPStatus.BAD_REQUEST
                 )
 
-            verification, _ = UserVerification.objects.get_or_create(user=user, is_deleted = False)
+            verification, _ = UserVerification.objects.get_or_create(user=user)
             verification.generate_token()
+            verification.is_verified = False
             verification.save()
 
             uidb64 = urlsafe_base64_encode(force_bytes(user.id))

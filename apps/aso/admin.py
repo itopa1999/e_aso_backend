@@ -266,7 +266,7 @@ class WatchListAdmin(admin.ModelAdmin):
     list_display_links = ("user", "product")
     search_fields = ("user__email", "user__first_name", "product__title")
     list_filter = ("created_at",)
-    readonly_fields = ("created_at", "modified_at")
+    readonly_fields = ("user", "created_at", "modified_at")
     ordering = ("-created_at",)
     date_hierarchy = "created_at"
     list_per_page = 50
