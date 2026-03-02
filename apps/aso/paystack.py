@@ -6,7 +6,7 @@ from django.urls import reverse
 import requests as req
 from django.db import transaction
 
-from apps.aso.models import Cart, Order
+from apps.aso.models import Cart, Order, OrderItem
 from utils.Tasks.process_order import process_paystack_order
 from utils.enum import PaymentGateway, PaymentStatus
 from utils.log_helpers import OperationLogger
@@ -24,6 +24,31 @@ def initiate(request, user, cart_id, data):
         ref = secrets.token_urlsafe(15)
         amount = int(float(data["total"])) * 100
         
+        # Fetch cart and create order + order items immediately
+        cart = Cart.objects.get(id=cart_id, is_deleted=False)
+        
+        order = Order.objects.create(
+            user=user,
+            subtotal=cart.subtotal(),
+            shipping_fee=cart.shipping_cost(),
+            discount=cart.discount(),
+            total=cart.total(),
+            other_info=data.get("otherInfo"),
+            payment_status=PaymentStatus.PENDING.name.lower(),
+            payment_reference=ref,
+            payment_method=PaymentGateway.PAYSTACK.value,
+        )
+        
+        # Create order items from cart items
+        for cart_item in cart.items.all():
+            OrderItem.objects.create(
+                order=order,
+                product=cart_item.product,
+                quantity=cart_item.quantity,
+                price=cart_item.product.current_price,
+                desc=cart_item.desc
+            )
+        
         redirect_url = request.build_absolute_uri(
             reverse('paystack-confirm-subscription', kwargs={"reference": ref})
         )
@@ -34,7 +59,8 @@ def initiate(request, user, cart_id, data):
             "reference": ref,
             "metadata": {
                 "data": json.loads(json.dumps(data, default=str)),
-                "cart_id":cart_id
+                "cart_id": cart_id,
+                "order_id": order.id
             },
             "callback_url": redirect_url,
         }
@@ -48,9 +74,11 @@ def initiate(request, user, cart_id, data):
         response = req.post(paystack_url, headers=headers, json=paystack_data)
 
         if response.status_code == 200:
-            op.success("Paystack initialization successful")
+            op.success(f"Paystack initialization successful, order {order.order_number} created")
             return response.json()["data"]["authorization_url"]
 
+        # If paystack initialization fails, delete the order
+        order.delete()
         op.fail("Paystack initialization failed")
         return None
             
@@ -113,9 +141,6 @@ def validate(reference):
                 payment_method=PaymentGateway.PAYSTACK.value,
             )
 
-            cart.locked = True
-            cart.save(update_fields=['locked'])
-
             try:
                 process_paystack_order(order.id, reference, data)
                 
@@ -123,10 +148,6 @@ def validate(reference):
                 order.save(update_fields=['payment_status'])
                 op.success("Order processing task queued successfully")
             except Exception as e:
-                
-                cart.locked = False
-                cart.save(update_fields=['locked'])
-                
                 order.payment_status = PaymentStatus.FAILED.name.lower()
                 order.save(update_fields=['payment_status'])
                 op.fail(f"Task failed to queue: {str(e)}")

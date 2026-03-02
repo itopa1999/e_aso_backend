@@ -180,6 +180,30 @@ class PaymentGateway(Enum):
         return [(key.value, key.value) for key in cls]
 
 
+class OrderTrackingStatus(Enum):
+    PLACED = "placed"
+    PROCESSING = "processing"
+    SHIPPED = "shipped"
+    IN_TRANSIT = "in_transit"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
+
+    @classmethod
+    def choices(cls):
+        return [(key.value, key.value) for key in cls]
+    
+    @classmethod
+    def get_descriptions(cls):
+        return {
+            'placed': "Your order has been updated to Placed. 🎉 We've received your order! Our team is now processing it and will get it ready for shipment soon.",
+            'processing': "Your order has been updated to Processing. 📦 Your order is being carefully prepared and packaged. We're almost ready to ship!",
+            'shipped': "Your order has been updated to Shipped. 🚚 Your package is on its way to you! You can track it using the tracking number provided.",
+            'in_transit': "Your order has been updated to In Transit. 🚛 Your order is on its way! It should arrive soon. Thank you for your patience!",
+            'delivered': "Your order has been updated to Delivered. ✅ Your order has been delivered! We hope you enjoy your purchase. Thank you for shopping with us!",
+            'cancelled': "Your order has been updated to Cancelled. ❌ Your order has been cancelled. If you have any questions, please contact our support team.",
+        }
+
+
 class NotificationType(Enum):
     SYSTEM = "system"
     UPDATES = "updates"

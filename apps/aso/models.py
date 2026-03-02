@@ -10,7 +10,7 @@ from datetime import timedelta
 from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.aso.deliveryFee import DELIVERY_FEES
 from utils.base_model import BaseModel
-from utils.enum import FeatureNames, PaymentStatus, NotificationType
+from utils.enum import FeatureNames, PaymentStatus, NotificationType, OrderTrackingStatus
 from django.contrib.postgres.indexes import Index
 from django.utils.text import slugify
 from PIL import Image, ImageDraw, ImageFont
@@ -235,7 +235,6 @@ User = get_user_model()
 class Cart(BaseModel):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart', editable=False)
     state = models.CharField(max_length=100, blank=True, null=True)
-    locked = models.BooleanField(default=False, help_text="Cart is locked during payment processing. Prevents user modifications.")
     
     _cached_flags = None
 
@@ -416,33 +415,16 @@ class PaymentDetail(BaseModel):
 
 
 class OrderTracking(BaseModel):
-    STATUS_CHOICES = [
-        ('placed', 'Order Placed'),
-        ('processing', 'Processing'),
-        ('shipped', 'Shipped'),
-        ('in_transit', 'In Transit'),
-        ('delivered', 'Delivered'),
-        ('cancelled', 'Cancelled'),
-    ]
-    
-    STATUS_DESCRIPTIONS = {
-        'placed': "Your order has been updated to Placed. 🎉 We've received your order! Our team is now processing it and will get it ready for shipment soon.",
-        'processing': "Your order has been updated to Processing. 📦 Your order is being carefully prepared and packaged. We're almost ready to ship!",
-        'shipped': "Your order has been updated to Shipped. 🚚 Your package is on its way to you! You can track it using the tracking number provided.",
-        'in_transit': "Your order has been updated to In Transit. 🚛 Your order is on its way! It should arrive soon. Thank you for your patience!",
-        'delivered': "Your order has been updated to Delivered. ✅ Your order has been delivered! We hope you enjoy your purchase. Thank you for shopping with us!",
-        'cancelled': "Your order has been updated to Cancelled. ❌ Your order has been cancelled. If you have any questions, please contact our support team.",
-    }
-    
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='tracking_events', editable=False)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='placed')
+    status = models.CharField(max_length=20, choices=OrderTrackingStatus.choices(), default=OrderTrackingStatus.PLACED.value)
     date = models.DateTimeField(default=timezone.now)
     description = models.TextField(blank=True, null=True)
     completed = models.BooleanField(default=False)
     
     def save(self, *args, **kwargs):
         if not self.description or self.description.strip() == "":
-            self.description = self.STATUS_DESCRIPTIONS.get(
+            descriptions = OrderTrackingStatus.get_descriptions()
+            self.description = descriptions.get(
                 self.status,
                 "Your order status has been updated. We're working to get your order to you as quickly as possible."
             )

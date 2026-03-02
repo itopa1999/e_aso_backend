@@ -147,10 +147,10 @@ class ProductAdmin(admin.ModelAdmin):
 
 @admin.register(Cart)
 class CartAdmin(admin.ModelAdmin):
-    list_display = ("user", "state", "items_count", "subtotal_display", "lock_status", "created_at", "modified_at")
+    list_display = ("user", "state", "items_count", "subtotal_display", "created_at", "modified_at")
     list_display_links = ("user",)
     search_fields = ("user__email", "user__first_name", "user__last_name", "state")
-    list_filter = ("state", "locked", "created_at")
+    list_filter = ("state", "created_at")
     readonly_fields = ("user", "created_at", "modified_at")
     ordering = ("-modified_at",)
     date_hierarchy = "created_at"
@@ -158,7 +158,7 @@ class CartAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Cart Information", {
-            "fields": ("user", "state", "locked")
+            "fields": ("user", "state")
         }),
         ("Base Model Info", {
             "fields": ("created_at", "modified_at", "deleted_at", "created_by", "modified_by", "deleted_by"),
@@ -175,12 +175,6 @@ class CartAdmin(admin.ModelAdmin):
     def subtotal_display(self, obj):
         return format_html('<span style="font-weight: bold;">₦{}</span>', obj.subtotal())
     subtotal_display.short_description = "Subtotal"
-
-    def lock_status(self, obj):
-        if obj.locked:
-            return format_html('<span style="color: red; font-weight: bold;">🔒 Locked</span>')
-        return format_html('<span style="color: green;">🔓 Unlocked</span>')
-    lock_status.short_description = "Lock Status"
 
 
 @admin.register(Order)

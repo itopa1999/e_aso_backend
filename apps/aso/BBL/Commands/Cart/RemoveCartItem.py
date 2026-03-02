@@ -11,14 +11,6 @@ class RemoveCartItemCommand:
         op = OperationLogger("Remove cart item", user=user.id if user else "Anonymous")
         op.start()
         
-        if user.cart.locked:
-            op.fail("Cart is locked during payment processing")
-            return BaseResultWithData(
-                data=None,
-                status_code=HTTPStatus.LOCKED,
-                message="Cannot modify cart while payment is being processed. Please wait or retry your payment."
-            )
-        
         if not serializer.is_valid():
             op.fail("Invalid serializer data")
             return BaseResultWithData(

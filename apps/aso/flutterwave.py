@@ -167,8 +167,6 @@ def validate(reference):
                 payment_method=PaymentGateway.FLUTTERWAVE.value,
             )
 
-            cart.locked = True
-            cart.save(update_fields=['locked'])
 
             try:
                 process_paystack_order(order.id, reference, shipping_data)

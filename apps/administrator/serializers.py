@@ -5,7 +5,7 @@ from apps.administrator.models import Banner, CustomerFeedback
 from apps.aso.models import FeatureFlag, LookUp, Order, OrderFeedBack, OrderItem, OrderReturn, OrderTracking, PaymentDetail, Product, ProductColor, ProductDetail, ProductImage, ProductSize, ShippingAddress
 from apps.users.models import ContactFormSubmission, Transaction, User
 from utils.decorators import checkBackgroundFeatureFlag
-from utils.enum import LookUpsCategories
+from utils.enum import LookUpsCategories, OrderTrackingStatus
 from utils.telegram_helpers import send_notification, send_product
 from django.conf import settings
 
@@ -242,7 +242,7 @@ class AdminOrderDetailSerializer(serializers.ModelSerializer):
 from django.utils import timezone
 class OrderTrackingUpdateSerializer(serializers.Serializer):
     order_number = serializers.CharField()
-    new_status = serializers.ChoiceField(choices=OrderTracking.STATUS_CHOICES)
+    new_status = serializers.ChoiceField(choices=OrderTrackingStatus.choices())
     comment = serializers.CharField()
 
     def validate_order_number(self, value):
