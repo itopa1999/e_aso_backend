@@ -20,26 +20,15 @@ def process_paystack_order(self, order_id, reference, data):
     """
     
     from apps.users.models import Transaction
-    from apps.aso.models import Order, OrderItem, OrderTracking, PaymentDetail, ShippingAddress
+    from apps.aso.models import Order, PaymentDetail, ShippingAddress
     
     try:
         order = Order.objects.get(id=order_id, is_deleted=False)
         user = order.user
-        cart = user.cart
         
         logger.info(f"Processing order {order_id} for user {user.id}")
         
-        # 2. Create Order Items
-        for item in cart.items.all():
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                quantity=item.quantity,
-                price=item.product.current_price,
-                desc = item.desc
-            )
-
-        # 3. Save Shipping Address
+        # Save Shipping Address
         ShippingAddress.objects.create(
             order=order,
             first_name=data.get("first_name"),
@@ -55,18 +44,12 @@ def process_paystack_order(self, order_id, reference, data):
         PaymentDetail.objects.create(
             order=order,
             method = data.get("payment_type", "Paystack"),
-            amount = cart.total(),
-        )
-        
-        OrderTracking.objects.create(
-            order = order,
-            date = timezone.now(),
-            description = "Order has been placed and ready for processing."
+            amount = order.total,
         )
 
         Transaction.objects.create(
             user=user,
-            amount=cart.total(),
+            amount=order.total,
             transaction_type=TransactionType.PURCHASE.value,
             reference=reference,
             channel=TransactionChannel.PAYSTACK.value,
@@ -76,15 +59,13 @@ def process_paystack_order(self, order_id, reference, data):
         user.referral_used_purchase = True
         user.save(update_fields=["referral_used_purchase"])
 
-        # 4. Delete Cart and Items
-        cart.items.all().delete()
-        cart.delete()
+        
         
         logger.info(f"Order {order_id} processed successfully")
         
         send_mail(
-            subject="New Order Confirmation",
-            message=f"A new order has been placed.\n\nOrder ID: {order.id}\nOrder Number: {order.order_number}\nAmount: {order.total}\nCreated At: {order.created_at}\nLink: {settings.BASE_URL}/admin/orders.html",
+            subject="Order Initiated",
+            message=f"An order has been initiated.\n\nOrder ID: {order.id}\nOrder Number: {order.order_number}\nAmount: {order.total}\nCreated At: {order.created_at}\nLink: {settings.BASE_URL}/admin/orders.html",
             from_email=settings.EMAIL_HOST_USER,
             recipient_list=[settings.EMAIL_HOST_USER],
         )

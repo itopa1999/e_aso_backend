@@ -43,12 +43,12 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = [
             'id', 'order_number', 'created_at', 'order_status', 'other_info',
-            'order_items', 'subtotal', 'shipping', 'discount', 'total'
+            'order_items', 'subtotal', 'shipping', 'discount', 'total', 'payment_status'
         ]
 
     def get_order_status(self, obj):
         latest_status = obj.tracking_events.order_by('-id').first()
-        return latest_status.status if latest_status else "placed"
+        return latest_status.status if latest_status else ""
 
     def get_order_items(self, obj):
         items = obj.items.all()
@@ -85,12 +85,12 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'order_number', 'created_at', 'subtotal', 'shipping_fee', 'discount', 'other_info',
             'total', 'tracking_number', 'carrier','order_status', 'estimated_delivery_date',
-            'items', 'tracking', 'shipping_address', 'payment_detail'
+            'items', 'tracking', 'shipping_address', 'payment_detail', 'payment_status'
         ]
     
     def get_order_status(self, obj):
         latest_status = obj.tracking_events.order_by('-id').first()
-        return latest_status.status if latest_status else "placed"
+        return latest_status.status if latest_status else ""
     
 
 class WatchlistProductSerializer(serializers.ModelSerializer):

@@ -89,6 +89,8 @@ def send_tracking_update_email(sender, instance, created, **kwargs):
                 
 @receiver(pre_save, sender=OrderTracking)
 def enforce_order_tracking_rules(sender, instance, **kwargs):
+    from utils.enum import PaymentStatus
+    
     # Define allowed status order
     STATUS_SEQUENCE = [
         'placed',
@@ -101,6 +103,12 @@ def enforce_order_tracking_rules(sender, instance, **kwargs):
     # Get all existing tracking entries for the same order
     existing_entries = OrderTracking.objects.filter(order=instance.order, is_deleted = False).order_by('id')
 
+    # Rule 0: Check if order is confirmed (except for initial "placed" status)
+    if instance.status != 'placed' and existing_entries.count() == 0:
+        # If this is the first tracking entry and status is NOT 'placed', order must be confirmed
+        if instance.order.payment_status != PaymentStatus.CONFIRMED.name.lower():
+            raise ValidationError(f"Order {instance.order.order_number} must have confirmed payment before adding tracking status '{instance.status}'.")
+    
     # Rule 1: Stop if delivered or cancelled already exists
     if existing_entries.filter(status='delivered').exists() or existing_entries.filter(status='cancelled').exists():
         # But allow cancelled to be added anytime

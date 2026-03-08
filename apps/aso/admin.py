@@ -9,6 +9,14 @@ from .models import (
 
 # ==================== INLINES ====================
 
+@admin.register(OrderTracking)
+class OrderTrackingAdmin(admin.ModelAdmin):
+    list_display = ("order", "date", "description")
+    search_fields = ("order__order_number", "description")
+    list_filter = ("date",)
+    readonly_fields = ("order", "date", "description")
+
+
 class ProductColorInline(admin.TabularInline):
     model = ProductColor
     extra = 1

@@ -6,14 +6,13 @@ from django.urls import reverse
 import requests as req
 from django.db import transaction
 
-from apps.aso.models import Cart, Order, OrderItem, OrderTracking, PaymentDetail, ShippingAddress
-from apps.users.models import Transaction
+from apps.aso.models import Cart, Order, OrderItem, OrderTracking
 from utils.Tasks.process_order import process_paystack_order
-from utils.enum import TransactionChannel, TransactionStatus, TransactionType, PaymentGateway, PaymentStatus
+from utils.enum import PaymentGateway, PaymentStatus
 from utils.log_helpers import OperationLogger
 
 
-def initiate(request, user, cart_id, data):
+def initiate(request, user, cart_id, data, order_id=None):
     """
     Initialize Flutterwave payment
     """
@@ -21,13 +20,25 @@ def initiate(request, user, cart_id, data):
         "FlutterwaveInitiate",
         user=user.id if user else "Anonymous",
         cart_id=cart_id,
+        order_id=order_id,
         data=data
     )
     op.start()
     
     with transaction.atomic():    
         ref = secrets.token_urlsafe(15)
-        amount = float(data["total"])
+        
+        # If order_id is provided (retry), fetch existing order
+        if order_id:
+            try:
+                order = Order.objects.get(id=order_id, is_deleted=False)
+                amount = float(order.total)
+            except Order.DoesNotExist:
+                op.fail("Order not found for retry")
+                return None
+        else:
+            # New order flow
+            amount = float(data["total"])
         
         redirect_url = request.build_absolute_uri(
             reverse('flutterwave-confirm', kwargs={"reference": ref})
@@ -39,8 +50,8 @@ def initiate(request, user, cart_id, data):
             "currency": "NGN",
             "customer": {
                 "email": user.email,
-                "phonenumber": data.get("phone", ""),
-                "name": f"{data.get('first_name', '')} {data.get('last_name', '')}"
+                "phonenumber": data.get("phone", "") if data else "",
+                "name": f"{data.get('first_name', '') if data else ''} {data.get('last_name', '') if data else ''}"
             },
             "customizations": {
                 "title": "Esther's Fabrics Order Payment",
@@ -48,16 +59,6 @@ def initiate(request, user, cart_id, data):
                 "logo": ""
             },
             "meta": {
-                "first_name": data.get("first_name", ""),
-                "last_name": data.get("last_name", ""),
-                "address": data.get("address", ""),
-                "city": data.get("city", ""),
-                "state": data.get("state", ""),
-                "phone": data.get("phone", ""),
-                "alt_phone": data.get("alt_phone", ""),
-                "otherInfo": data.get("otherInfo", ""),
-                "telegram_user_chat_id": data.get("telegram_user_chat_id", ""),
-                "payment_type": data.get("payment_type", "Flutterwave"),
                 "cart_id": cart_id,
             },
             "redirect_url": redirect_url,
@@ -74,9 +75,59 @@ def initiate(request, user, cart_id, data):
         if response.status_code == 200:
             response_data = response.json()
             if response_data.get("status") == "success":
-                op.success("Flutterwave initialization successful")
+                
+                # If retry (order_id provided), just update reference and return URL
+                if order_id:
+                    order.payment_reference = ref
+                    order.payment_status = PaymentStatus.PENDING.name.lower()
+                    order.save(update_fields=['payment_reference', 'payment_status'])
+                    op.success(f"Flutterwave retry initialized for order {order.order_number}")
+                    return response_data["data"]["link"]
+                
+                # New order flow
+                 # Fetch cart and create order + order items immediately
+                cart = Cart.objects.get(id=cart_id, is_deleted=False)
+                
+                order = Order.objects.create(
+                    user=user,
+                    subtotal=cart.subtotal(),
+                    shipping_fee=cart.shipping_cost(),
+                    discount=cart.discount(),
+                    total=cart.total(),
+                    other_info=data.get("otherInfo"),
+                    payment_status=PaymentStatus.PENDING.name.lower(),
+                    payment_reference=ref,
+                    payment_method=PaymentGateway.FLUTTERWAVE.value,
+                )
+                
+                # Create order items from cart items
+                for cart_item in cart.items.all():
+                    OrderItem.objects.create(
+                        order=order,
+                        product=cart_item.product,
+                        quantity=cart_item.quantity,
+                        price=cart_item.product.current_price,
+                        desc=cart_item.desc
+                    )
+                    
+                try:
+                    shipping_data = data
+                    
+                    process_paystack_order(order.id, ref, shipping_data)
+                    
+                    # Delete Cart and Items
+                    cart.items.all().delete()
+                    cart.delete()
+            
+                    op.success(f"Flutterwave initialization successful, order {order.order_number} created and processing")
+                except Exception as e:
+                    order.payment_status = PaymentStatus.FAILED.name.lower()
+                    order.save(update_fields=['payment_status'])
+                    op.fail(f"Order processing failed: {str(e)}")
+                    return None
+                
                 return response_data["data"]["link"]
-
+        
         op.fail("Flutterwave initialization failed")
         return None
             
@@ -114,85 +165,59 @@ def validate(reference):
             return {"success": False, "error": "Transaction not successful."}
         
         meta = transaction_data.get("meta", {})
-        cart_id = meta.get("cart_id") if isinstance(meta, dict) else None
-        
-        # Extract shipping data from meta
-        shipping_data = {
-            "first_name": meta.get("first_name", ""),
-            "last_name": meta.get("last_name", ""),
-            "address": meta.get("address", ""),
-            "city": meta.get("city", ""),
-            "state": meta.get("state", ""),
-            "phone": meta.get("phone", ""),
-            "alt_phone": meta.get("alt_phone", ""),
-            "otherInfo": meta.get("otherInfo", ""),
-            "telegram_user_chat_id": meta.get("telegram_user_chat_id", ""),
-            "payment_type": meta.get("payment_type", "Flutterwave"),
-        } if isinstance(meta, dict) else {}
+
                 
         with transaction.atomic():
-            # Check if an order already exists for this payment reference (idempotency)
-            existing_order = Order.objects.filter(
+            # Find existing order by payment reference
+            order = Order.objects.filter(
                 payment_reference=reference,
                 payment_method=PaymentGateway.FLUTTERWAVE.value
             ).first()
             
-            if existing_order:
-                # Order already created for this reference, return it
-                op.success("Order already exists for this reference (retry)")
+            if not order:
+                op.fail("Order not found for this payment reference")
+                return {"success": False, "error": "Order not found for this payment reference."}
+            
+            # If order already confirmed, return it
+            if order.payment_status == PaymentStatus.CONFIRMED.name.lower():
+                op.success("Order already confirmed for this reference (retry)")
                 return {
-                    "success": False,
-                    "error": "Order already confirmed for this payment.",
+                    "success": True,
+                    "message": "Payment already confirmed.",
                     "order": {
-                        "id": existing_order.id,
-                        "order_number": existing_order.order_number,
-                        "amount": str(existing_order.total),
-                        "created_at": existing_order.created_at.isoformat() if existing_order.created_at else "",
-                    },
-                    "reference": reference,
+                        "id": order.id,
+                        "order_number": order.order_number,
+                        "amount": float(order.total),
+                        "created_at": order.created_at
+                    }
                 }
             
-            cart = Cart.objects.get(id=cart_id, is_deleted=False)
-            user = cart.user
-
-            order = Order.objects.create(
-                user=user,
-                subtotal=cart.subtotal(),
-                shipping_fee=cart.shipping_cost(),
-                discount=cart.discount(),
-                total=cart.total(),
-                other_info=shipping_data.get("otherInfo"),
-                payment_status=PaymentStatus.PENDING.name.lower(),
-                payment_reference=reference,
-                payment_method=PaymentGateway.FLUTTERWAVE.value,
-            )
-
-
+            # Update order status to confirmed and process
             try:
-                process_paystack_order(order.id, reference, shipping_data)
-                
+                OrderTracking.objects.create(
+                    order = order,
+                    date = timezone.now(),
+                    description = "Order has been placed and ready for processing."
+                )
                 order.payment_status = PaymentStatus.CONFIRMED.name.lower()
                 order.save(update_fields=['payment_status'])
-                op.success("Order processing task queued successfully")
+                op.success("Order confirmed")
             except Exception as e:
-                cart.locked = False
-                cart.save(update_fields=['locked'])
-                
                 order.payment_status = PaymentStatus.FAILED.name.lower()
                 order.save(update_fields=['payment_status'])
-                op.fail(f"Task failed to queue: {str(e)}")
-                return {"success": False, "error": f"Order processing failed: {str(e)}"}
+                op.fail(f"Status update failed: {str(e)}")
+                return {"success": False, "error": f"Order status update failed: {str(e)}"}
             
-        op.success("Transaction validated and order created")
+        op.success("Transaction validated and order confirmed")
         return {
             "success": True,
+            "message": "Payment confirmed successfully.",
             "order": {
                 "id": order.id,
                 "order_number": order.order_number,
-                "amount": str(order.total),
-                "created_at": order.created_at.isoformat() if order.created_at else "",
-            },
-            "reference": reference,
+                "amount": float(order.total),
+                "created_at": order.created_at
+            }
         }
         
     except Exception as e:

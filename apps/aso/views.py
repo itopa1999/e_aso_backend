@@ -34,6 +34,8 @@ from apps.aso.BBL.Queries.Order.UserOrderList import UserOrderListQuery
 from apps.aso.BBL.Queries.Product.ProductList import ProductListQuery
 from apps.aso.BBL.Queries.RecentSearch.GetRecentSearches import GetRecentSearchesQuery
 from apps.aso.BBL.Commands.Order.RecoverFailedOrder import RecoverFailedOrderCommand
+from apps.aso.BBL.Commands.Order.RetryPayment import RetryPaymentCommand
+
 from utils.cache_manager import GlobalCache
 from utils.enum import CacheKeys
 from utils.permissions import IsCustomerPermission
@@ -485,15 +487,20 @@ class RecentNotificationsView(APIView):
 
 
 class MarkAllNotificationsReadView(APIView):
-    """
-    Mark all unread notifications as read for the authenticated user.
-    
-    PUT /user/notifications/mark-all-read/
-    """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def put(self, request):
         from apps.aso.BBL.Commands.MarkAllNotificationsRead import MarkAllNotificationsReadCommand
         result = MarkAllNotificationsReadCommand.Execute(request.user)
+        return Response(result.to_dict(), status=result.status_code)
+
+
+class RetryPaymentView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, order_id, *args, **kwargs):
+        result = RetryPaymentCommand.execute(request, order_id)
+        print(result.to_dict())
         return Response(result.to_dict(), status=result.status_code)
