@@ -128,6 +128,6 @@ class SendMagicLinkCommand:
         return BaseResultWithData(
             data={"email": email},
             status_code=HTTPStatus.OK,
-            message="Magic login link sent successfully."
+            message="Login link sent successfully."
         )
 

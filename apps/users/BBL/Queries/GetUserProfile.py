@@ -19,7 +19,7 @@ class GetUserProfileSummaryQuery:
                 status_code=HTTPStatus.OK,
                 message="User profile fetched successfully"
             )
-        orders = Order.objects.filter(user=user, is_deleted = False).order_by('-created_at')
+        orders = Order.objects.filter(user=user, is_deleted = False).order_by('-created_at')[:5]
         transactions = user.transactions.order_by('-created_at')
         data = {
             "first_name": user.first_name or "Not set",
@@ -27,7 +27,7 @@ class GetUserProfileSummaryQuery:
             "email": user.email,
             "phone": user.phone or "Not set",
             "total_orders": orders.count(),
-            "recent_orders": orders[:5],
+            "recent_orders": orders,
             "transactions": transactions,
             "referral_code": user.referral_code or "Not set",
             "is_referral_qualified": user.check_referral_qualification,

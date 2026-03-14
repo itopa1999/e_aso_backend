@@ -41,7 +41,7 @@ class RecentOrderSerializer(serializers.ModelSerializer):
     latest_tracking_status = serializers.SerializerMethodField()
     class Meta:
         model = Order
-        fields = ['id', 'total', 'order_number', 'latest_tracking_status', 'created_at']
+        fields = ['id', 'total', 'order_number', 'payment_status', 'latest_tracking_status', 'created_at']
         
     def get_latest_tracking_status(self, obj):
         latest_tracking = obj.tracking_events.order_by('-date').first()
