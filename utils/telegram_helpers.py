@@ -9,13 +9,14 @@ from utils.decorators import checkBackgroundFeatureFlag
 # Config
 TELEGRAM_BOT_TOKEN = settings.TELEGRAM_BOT_TOKEN
 TELEGRAM_CHANNEL_ID = settings.TELEGRAM_CHANNEL_ID
+TELEGRAM_API_BASE_URL = settings.TELEGRAM_API_BASE_URL
 
 
 def send_announcement(message: str) -> bool:
     """
     Send a simple announcement text to the Telegram channel.
     """
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    url = f"{TELEGRAM_API_BASE_URL}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": TELEGRAM_CHANNEL_ID,
         "text": message,
@@ -32,7 +33,7 @@ def send_notification(message: str, chat_id: str) -> bool:
     Send a notification (like order updates) to Telegram channel.
     Can be reused for different types of notifications.
     """
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    url = f"{TELEGRAM_API_BASE_URL}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     payload = {
         "chat_id": chat_id,
         "text": message,
@@ -54,7 +55,7 @@ def send_product(product_id: int) -> bool:
         product = Product.objects.get(id=product_id, is_deleted=False, display_product=True)
     except Product.DoesNotExist:
         return False
-    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
+    url = f"{TELEGRAM_API_BASE_URL}/bot{TELEGRAM_BOT_TOKEN}/sendPhoto"
     link = f"{settings.BASE_URL}/product-info.html?id={product.id}"
     # Use product image or default logo
     image_path = None

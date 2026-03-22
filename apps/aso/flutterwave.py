@@ -69,7 +69,7 @@ def initiate(request, user, cart_id, data, order_id=None):
             "Content-Type": "application/json",
         }
 
-        flutterwave_url = "https://api.flutterwave.com/v3/payments"
+        flutterwave_url = f"{settings.FLUTTERWAVE_INITIALIZE_URL}"
         response = req.post(flutterwave_url, headers=headers, json=flutterwave_data)
 
         if response.status_code == 200:
@@ -146,7 +146,7 @@ def validate(reference):
     
     try:
         # Flutterwave requires querying by tx_ref or transaction ID
-        url = f"https://api.flutterwave.com/v3/transactions/verify_by_reference?tx_ref={reference}"
+        url = f"{settings.FLUTTERWAVE_VERIFY_URL}?tx_ref={reference}"
         response = req.get(url, headers=headers)
         result = response.json()
         

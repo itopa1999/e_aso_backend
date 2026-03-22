@@ -239,10 +239,21 @@ COOKIE_SETTINGS = {
     'secure': os.getenv('SECURE', 'False').lower() == 'true',
 }
 
-
+# Payment Gateway Keys
 PAYSTACK_SECRET_KEY=os.getenv('PAYSTACK_SECRET_KEY')
-FLUTTERWAVE_SECRET_KEY=os.getenv('FLUTTERWAVE_SECRET_KEY')
+PAYSTACK_INITIALIZE_URL=os.getenv('PAYSTACK_INITIALIZE_URL')
+PAYSTACK_VERIFY_URL=os.getenv('PAYSTACK_VERIFY_URL')
 
+# Flutterwave Gateway Keys
+FLUTTERWAVE_SECRET_KEY=os.getenv('FLUTTERWAVE_SECRET_KEY')
+FLUTTERWAVE_INITIALIZE_URL=os.getenv('FLUTTERWAVE_INITIALIZE_URL')
+FLUTTERWAVE_VERIFY_URL=os.getenv('FLUTTERWAVE_VERIFY_URL')
+
+# Telegram API Configuration
+TELEGRAM_API_BASE_URL=os.getenv('TELEGRAM_API_BASE_URL', 'https://api.telegram.org')
+
+# Business Configuration
+TERMS_OF_SERVICE_URL=os.getenv('TERMS_OF_SERVICE_URL', 'https://www.google.com/policies/terms/')
 
 
 

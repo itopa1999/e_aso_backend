@@ -56,7 +56,7 @@ def initiate(request, user, cart_id, data, order_id=None):
             "Content-Type": "application/json",
         }
 
-        paystack_url = "https://api.paystack.co/transaction/initialize"
+        paystack_url = f"{settings.PAYSTACK_INITIALIZE_URL}"
         response = req.post(paystack_url, headers=headers, json=paystack_data)
 
         if response.status_code == 200:
@@ -121,7 +121,7 @@ def validate(reference):
     op = OperationLogger("PaystackValidate", reference=reference)
     op.start()
     
-    url = f"https://api.paystack.co/transaction/verify/{reference}"
+    url = f"{settings.PAYSTACK_VERIFY_URL}/{reference}"
     headers = {
         "Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"
     }
