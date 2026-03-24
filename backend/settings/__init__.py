@@ -1,12 +1,15 @@
+# backend/settings/__init__.py
 from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-# Load .env before any settings import
+# Base directory
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load .env **first**, before reading ENV
 load_dotenv(dotenv_path=BASE_DIR / ".env")
 
-# Now read ENV and import the appropriate settings
+# Now read ENV
 env = os.environ.get("ENV", "dev").lower()
 
 if env == "prod":
