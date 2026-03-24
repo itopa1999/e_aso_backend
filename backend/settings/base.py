@@ -1,14 +1,13 @@
 from dotenv import load_dotenv
 import os
-from datetime import timedelta
 from pathlib import Path
+from datetime import timedelta
 import pytz
 
-
-load_dotenv()
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env
+load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 # If settings.py is nested deeper (e.g. backend/settings.py), go one level up again
 if (BASE_DIR / "manage.py").exists() is False:
