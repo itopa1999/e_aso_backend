@@ -6,13 +6,14 @@ ALLOWED_HOSTS = ["51.21.127.109"]
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("PROD_DB_NAME"),
-        "USER": os.environ.get("PROD_DB_USER"),
-        "PASSWORD": os.environ.get("PROD_DB_PASSWORD"),
-        "HOST": os.environ.get("PROD_DB_HOST", "localhost"),
-        "PORT": os.environ.get("PROD_DB_PORT", "5432"),
+        "NAME": os.environ.get("DB_NAME"),
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
+        "HOST": os.environ.get("DB_HOST", "localhost"),
+        "PORT": os.environ.get("DB_PORT", "5432"),
     }
 }
+
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
